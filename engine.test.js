@@ -4,17 +4,23 @@ const E = require('./engine.js');
 
 // A real new character can reach the first chapter without injected resources.
 const s = E.fresh();
-assert.equal(E.action(s, 'activity', 'meditate'), false);
+assert.equal(E.action(s, 'activity', 'meditate'), true);
+assert.equal(E.action(s, 'story'), true);
+E.action(s,'activity','work');E.advance(s,50);assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'build', 'dorm'), false);
 assert.equal(E.action(s, 'advance'), false);
 E.action(s, 'activity', 'explore'); E.advance(s, 599); assert.equal(s.found, false);
 E.advance(s, 1); assert.equal(s.found, true);
 E.action(s, 'activity', 'train'); E.advance(s, 700);
+assert.equal(E.action(s,'story'),true);
+E.action(s,'activity','meditate');E.advance(s,250);assert.equal(E.action(s,'story'),true);
+assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'fight'), true);
 assert.equal(E.action(s, 'fight'), false);
 E.action(s, 'activity', 'explore'); E.advance(s, 4000);
 assert.equal(s.xp, E.needed(s));
 assert.equal(E.action(s, 'breakthrough'), true);
+assert.equal(E.action(s,'story'),true);assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'advance'), true);
 assert.equal(s.stage, 1);
 
@@ -34,6 +40,7 @@ const capped = E.fresh(); E.advance(capped, 200000); assert.equal(capped.age, 86
 for (let stage = 0; stage < 7; stage++) {
   const character = E.fresh(); character.stage = stage; character.found = true;
   character.realm = E.stages[stage].realm; character.wins = E.stages[stage].wins;
+  character.storyStep = E.story.length;
   Object.assign(character.resources, E.stages[stage].cost);
   assert.equal(E.action(character, 'advance'), true); assert.equal(character.stage, stage + 1);
   assert.equal(E.action(character, 'advance'), false);
@@ -55,4 +62,32 @@ assert.throws(() => E.validate(invalid));
 const imported = E.validate(JSON.parse(JSON.stringify(offline))); assert.deepEqual(imported, offline);
 const legacy = E.fresh(); legacy.stage = 7; legacy.realm = 24; legacy.souls = 2;
 assert.equal(E.action(legacy, 'rebirth'), true); assert.equal(legacy.souls, 6); assert.equal(legacy.stage, 0); assert.equal(legacy.life, 2);
+assert.equal(legacy.storyStep,0);assert.equal(legacy.stamina,100);
+
+// Active actions share a cooldown and stamina budget; no unlimited instant gains.
+const active=E.fresh();assert.equal(E.action(active,'click','breathe'),true);
+assert.equal(active.xp,0);assert.equal(active.resources.qi,0);assert.equal(active.calm,.2);
+assert.equal(E.action(active,'click','sweep'),false);E.advance(active,.6);
+const goldBefore=active.resources.gold;assert.equal(E.action(active,'click','sweep'),true);assert.equal(active.resources.gold-goldBefore,.4);
+active.stamina=1;E.advance(active,.6);assert.equal(E.action(active,'click','run'),false);
+E.advance(active,20);assert.equal(E.action(active,'click','run'),true);assert.equal(active.body,.07);
+active.body=10;E.advance(active,1);assert.equal(E.action(active,'click','squat'),false);
+active.body=0;E.advance(active,250);assert.equal(active.stamina,100);
+active.explored=598;assert.equal(E.action(active,'click','scout'),true);assert.equal(active.found,true);
+E.advance(active,1);assert.equal(E.action(active,'click','scout'),false);
+assert.equal(E.action(active,'click','breathe'),true);assert(active.xp>=.12);assert.equal(active.resources.qi,.25);
+active.stage=2;E.advance(active,1);assert.equal(E.action(active,'click','sweep'),false);
+assert.deepEqual(E.validate(JSON.parse(JSON.stringify(active))),active);
+
+// Story rewards are claimed once and cannot bypass an unfinished objective.
+const plot=E.fresh();assert.equal(E.action(plot,'story'),true);assert.equal(plot.resources.gold,5);
+assert.equal(E.action(plot,'story'),false);assert.equal(plot.resources.gold,5);
+for(let i=0;i<10;i++){E.advance(plot,1);assert(E.action(plot,'click','sweep'));}
+assert.equal(E.action(plot,'story'),true);assert.equal(plot.storyStep,2);
+plot.realm=1;plot.wins=1;plot.found=true;plot.resources.herbs=100;
+assert.equal(E.canAdvance(plot),false);
+const old=E.fresh();old.stage=3;old.realm=8;old.resources.gold=123;
+for(const key of ['stamina','clickCooldown','calm','storyStep','clicks'])delete old[key];
+const upgraded=E.validate(old);assert.equal(upgraded.resources.gold,123);assert.equal(upgraded.realm,8);assert.equal(upgraded.storyStep,E.story.length);
+const malformed=E.fresh();malformed.stamina=101;assert.throws(()=>E.validate(malformed));
 console.log('PASS: first playable arc, chapter gates, offline parity, alchemy shortages, trade routes, portals, colonies, imports, rebirth');

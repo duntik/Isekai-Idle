@@ -18,13 +18,25 @@
       row('Подготовка',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
       row('Оптимизация',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Коэффициент обработки: ${f(E.speed(s))}`);
       row('Исходные данные',s.found?'Получены':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 секунд сбора для первого набора');
+      if(s.stage===0) {
+        const beat=E.story[s.storyStep];
+        const goals=['Подтвердить старт','10 малых операций или бюджет 15','Подготовка 2','Концентрация 5','Исходные данные получены','Уровень 1','Одна успешная проверка'];
+        if(beat)row('Контрольная точка',`${s.storyStep+1}/${E.story.length}`,`${goals[s.storyStep]}; ${cost(beat.reward)}`,btn('story','','Подтвердить',beat.ready(s)));
+        else row('Контрольные точки','Завершены','Доступен следующий контур');
+      }
+      if(s.stage<2) {
+        row('Лимит операций',`${f(s.stamina)}/100`,'Восстановление +0,4/сек; интервал 0,6 сек');
+        row('Концентрация',`${f(s.calm)}/100`,'Развитие коротким анализом или фоновым анализом');
+        const notes={squat:'Подготовка +0,04',run:'Подготовка +0,07',breathe:'Концентрация +0,2; после данных анализ +0,12, резерв +0,25',sweep:'Бюджет +0,4',haul:'Бюджет +0,7; подготовка +0,02',scout:'Исходные данные +2 сек; сырьё A +0,05'};
+        for(const [k,c] of Object.entries(E.clicks))row(c.neutral,s.clicks[k],`${notes[k]}; лимит −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
+      }
       for(const [k,a] of Object.entries(E.activities).filter(([,a])=>a.stage<=s.stage)) row(activityLabels[k],s.activity===k?'Активно':'Ожидание',Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие показателя',btn('activity',k,'Назначить',s.activity!==k));
       if(s.stage>=1) {
         for(const [k,label] of Object.entries({balanced:'Базовый',swift:'Профиль A',piercing:'Профиль B',ward:'Профиль C'})) row(label,s.style===k?'Выбран':'—','Конфигурация проверки',btn('style',k,'Применить'));
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
         row('Оснащение',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
-      if(s.stage<7) {const gate=E.stages[s.stage];row('Следующий контур',s.stage+2,`Уровень ${s.realm}/${gate.realm}; проверки ${s.wins}/${gate.wins}; ${cost(gate.cost)}`,btn('advance','','Перейти',s.found&&s.realm>=gate.realm&&s.wins>=gate.wins&&E.affordable(s,gate.cost)));}
+      if(s.stage<7) {const gate=E.stages[s.stage];row('Следующий контур',s.stage+2,`Уровень ${s.realm}/${gate.realm}; проверки ${s.wins}/${gate.wins}; ${cost(gate.cost)}${s.stage===0?`; контрольные точки ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',s.found&&s.realm>=gate.realm&&s.wins>=gate.wins&&E.affordable(s,gate.cost)&&(s.stage>0||s.storyStep>=E.story.length)));}
     }
     if(tab==='combat') {
       row('Проверка',s.wins+1,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('fight','','Выполнить',!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
