@@ -6,7 +6,7 @@ function boot(state,view='visual',language='en'){
   const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(state)],['isekai-idle-interface',view],['isekai-idle-language',language]]);
   const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(){}});return elements.get(id);};
   const context=vm.createContext({Isekai:E,document:{documentElement:{dataset:{}},querySelectorAll:()=>[],getElementById:element,addEventListener:(t,f)=>handlers[t]=f,createElement:()=>({append(){},click(){}}),createTextNode:t=>t},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},confirm:()=>true});
-  for(const path of ['i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
+  for(const path of ['event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
   return {context,element,handlers,storage};
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
@@ -19,6 +19,14 @@ for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
   const before=JSON.parse(storage.get('isekai-idle-v2'));handlers.click({target:{closest:()=>({dataset:{language:'ru'},disabled:false})}});assert.equal(storage.get('isekai-idle-language'),'ru');assert.equal(context.document.documentElement.lang,'ru');const after=JSON.parse(storage.get('isekai-idle-v2'));assert.deepEqual(after.cultivation,before.cultivation);assert.deepEqual(after.resources,before.resources);
 }
 const sample=boot(E.fresh()).context,L=sample.IsekaiLocale;
+// Generated continuations retain causal text and pending-task labels in either view.
+for(const view of ['visual','data'])for(const method of ['labor','study','supply','fight']){
+  const s=E.fresh();s.stage=1;s.realm=3;s.body=30;s.resources.herbs=100;s.cultivation.learned.herb={rank:1,progress:0};
+  const scene=E.world.encounters.forest.find(e=>e.id==='forest:generated:0:0:0:raiders');s.world.location='forest';s.world.encounter={location:'forest',id:scene.id,index:E.world.encounters.forest.indexOf(scene)};
+  assert(E.action(s,'choice',method));const app=boot(s,view);app.handlers.click({target:{closest:()=>({dataset:{tab:'world'},disabled:false})}});check(app.element('content').innerHTML);
+  for(const event of s.events)check(L.text(event.text));
+  s.world.encounter={location:'forest',id:scene.id+':return',index:E.world.encounters.forest.findIndex(e=>e.id===scene.id+':return')};const followup=boot(s,view);followup.handlers.click({target:{closest:()=>({dataset:{tab:'world'},disabled:false})}});check(followup.element('content').innerHTML);
+}
 for(const view of ['visual','data']){const app=boot(E.fresh(),view,'ru');assert.equal(app.context.document.documentElement.lang,'ru');app.handlers.click({target:{closest:()=>({dataset:{language:'en'},disabled:false})}});check(app.element('chapter').textContent);check(app.element('content').innerHTML);assert.equal(app.context.document.title,view==='data'?'Data overview':'Isekai Idle — a new life');}
 for(const[location,list]of Object.entries(E.world.encounters))for(let index=0;index<list.length;index++){const s=E.fresh();s.stage=1;s.world.location=location;s.world.encounter={location,index};check(L.html(sample.IsekaiDataView.render(s,'world',E)));const app=boot(s);app.handlers.click({target:{closest:()=>({dataset:{tab:'world'},disabled:false})}});check(app.element('content').innerHTML);}
 for(const beat of E.story)for(const key of ['title','text','goal','button'])check(L.text(beat[key]));

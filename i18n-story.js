@@ -70,5 +70,16 @@
     gates:['Cloud’s Edge · open recruitment','You came to the city sect office on your own. Without a sponsor, you must pass the general selection and begin as an outer disciple. Passing grants 10 reputation when you join.']
   };for(const[k,values]of Object.entries(admissions))register(E.world.admissions[k],values,['name','text']);
   const mentors={trainer:'Zhen’s guidance: body +15%',herbalist:'Lin’s advice: exploration herbs +20%',breathing:'Breathing method: insight +10%',scholar:'Wei’s manuscript: insight +15%',swordsman:'Yun’s lesson: martial mastery +15%'};for(const[k,en]of Object.entries(mentors))pairs.push([E.world.mentorNames[k],en]);
-  L.add(pairs);
+  L.add([...pairs,...root.IsekaiEventGenerator.pairs,
+    ['БЛИЖАЙШАЯ ЦЕЛЬ','NEXT GOAL'],['Ближайшая цель','Next goal'],['Ближайший горизонт','The next horizon'],['Признание','Recognition'],['признание','recognition'],['или','or'],
+    ['Помощь людям','Helping people'],['Знания и техники','Knowledge and techniques'],['Снабжение','Supply work'],['Защита от вымогателей','Protection from extortionists'],['Местное поручение','Local task'],
+    ['Неверное признание','Invalid recognition'],['Неверное поручение','Invalid local task'],
+    ['практики','practice'],
+    ['Ты принят во внешние ученики. За тебя говорят выполненные поручения и люди, которым ты помог. Доступ к библиотеке и доверие старших ещё предстоит заслужить.','You have been accepted as an outer disciple. Completed tasks and the people you helped speak for you. Library access and the elders’ trust must still be earned.'],
+    ['Твои знания и помощь объединили небольшую общину. Трое последователей доверили тебе разорённое убежище. Теперь предстоит превратить его в самостоятельную секту.','Your knowledge and help brought a small community together. Three followers entrusted a ruined shelter to you. Now you must build it into an independent sect.'],
+    ['Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.','The sect organised aid and supplies for the valley. Its settlements entrusted the city to you. Trade, reserves and stable administration are now needed.'],
+    ['Ожидают продолжения','Awaiting follow-up'],['Вернись в указанное место и ищи встречи. За каждое завершённое поручение: признание +1 в главе, где ты оказал помощь.','Return to the indicated location and search for encounters. Each completed task grants +1 recognition in the chapter where you helped.'],
+    ['Представительства находятся в городе Серебряного Моста. Выбери путь поступления. Затем подготовь третью ступень и запас снаряжения. Заслужи три победы или 12 признания за завершённые поручения. Можно сменить заявку до вступления.','The sect offices are in Silver Bridge City. Choose an admission path, prepare realm 3 and equipment supplies, then earn three victories or 12 recognition from completed tasks. You can change your application before joining.'],
+    ['Тебе известна только ближайшая цель. Дальнейший путь откроется, когда ты до неё доберёшься. Поручения, знания, помощь людям и испытания позволяют заслужить признание разными способами. Личная культивация и запас ресурсов по-прежнему необходимы.','You know only your next goal. More of the path is revealed when you reach it. Tasks, knowledge, helping people and trials offer different ways to earn recognition. Personal cultivation and resources are still required.']
+  ]);
 })(globalThis);

@@ -36,7 +36,7 @@
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
         row('Оружие',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
-      if(s.stage<7) {const gate=E.stages[s.stage];row('Следующая глава',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; победы ${s.wins}/${gate.wins}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
+      if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; победы ${s.wins}/${gate.wins}${s.stage>0?` или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`:''}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; город +25%');
       row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','В деревне и городе; уборка и разгрузка приостанавливаются в пути');
       const order=s.employment.order;
@@ -58,8 +58,9 @@
       const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
       for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.name,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
       row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
-      if(scene)row('Встреча',scene.title,scene.text);
-      if(scene)for(const c of scene.choices)row(c.label,c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${c.danger&&E.power(s)<c.danger?'Гибель: потеря 50% ресурсов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.mentor?'Урок наставника. ':''}${c.explore?`Исследование +${c.explore} сек. `:''}${c.restore?'Восстановление выносливости. ':''}${c.body?`Тело +${c.body}. `:''}${c.calm?`Спокойствие +${c.calm}. `:''}${c.mastery?`Освоение техники +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',E.affordable(s,c.cost||{})));
+      if(scene)row('Встреча',W.sceneText(scene,'title',root.IsekaiLocale?.language),W.sceneText(scene,'text',root.IsekaiLocale?.language,s));
+      for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
+      if(scene)for(const c of scene.choices)row(W.sceneText(c,'label',root.IsekaiLocale?.language),c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${W.sceneText(c,'requirement',root.IsekaiLocale?.language)} ${c.danger&&E.power(s)<c.danger?'Гибель: потеря 50% ресурсов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.practice?`+${c.practice.amount} практики. `:''}${c.recognition?'Признание +1. ':''}${c.mentor?'Урок наставника. ':''}${c.explore?`Исследование +${c.explore} сек. `:''}${c.restore?'Восстановление выносливости. ':''}${c.body?`Тело +${c.body}. `:''}${c.calm?`Спокойствие +${c.calm}. `:''}${c.mastery?`Освоение техники +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',W.canChoice(s,c,E)));
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));
       if(s.stage===1)for(const[k,a]of Object.entries(W.admissions))row(a.name,w.admission===k?'Выбран':'Не выбран',k==='gates'?'Общий набор в городе':w.admissionRoutes.includes(k)?'Поручительство получено; подай заявку в городе':'Найди встречу в лесу или храме',btn('apply-sect',k,'Оформить',W.canApply(s,k)));
       if(s.stage>=2&&w.admission)row('Твоя секта',W.admissions[w.admission].name,'Сохранено в личном деле');
@@ -88,7 +89,8 @@
     }
     if(['planet','galaxy'].includes(tab)) row('Экспедиция',s.expedition?`${Math.ceil(s.expedition.remaining/60)} мин`:'Отсутствует','Один слот; награда: мир и 80 эссенции');
     if(tab==='legacy') {row('Цикл',s.life,`Бонус душ +${s.souls*10}%`);row('Перерождение',`+${Math.max(1,Math.floor(s.realm/6))}`,'Требуется ступень 24; ресурсы и владения сбросятся',btn('rebirth','','Переродиться',s.realm>=24));}
-    if(tab==='roadmap') for(let i=0;i<8;i++) row(E.stages[i].name,i<s.stage?'Завершён':i===s.stage?'Активен':'Ожидание',['Древнее наследие','Техники и испытания','Жизнь ученика','Управление сектой','Управление городом','Мировые порталы','Звёздные колонии','Наследие души'][i]);
+    if(tab==='roadmap') for(let i=0;i<=Math.min(7,s.stage+1);i++) row(E.stages[i].name,i<s.stage?'Завершён':i===s.stage?'Активен':'Ожидание',['Древнее наследие','Техники и испытания','Жизнь ученика','Управление сектой','Управление городом','Мировые порталы','Звёздные колонии','Наследие души'][i]);
+    if(tab==='roadmap'&&s.stage>0&&s.stage<7){row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${E.stages[s.stage].realm}; победы ${s.wins}/${E.stages[s.stage].wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}; ${cost(E.stages[s.stage].cost)}`,btn('advance','','Перейти',E.canAdvance(s)));for(const[k,n]of Object.entries(s.world.director.paths[s.stage]||{}))row(E.world.pathNames[k],n);}
     return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · Активно: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div class="table-scroll"><table class="data-table"><caption>Показатели и действия</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th><th scope="col">Условия</th><th scope="col">Действие</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   }
   root.IsekaiDataView={labels,tabs,render};

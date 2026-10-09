@@ -14,6 +14,6 @@ const source=E.fresh();source.stage=1;source.world.location='forest';source.worl
 W.encounters.forest.reverse();try{const loaded=E.validate(saved);assert.equal(W.current(loaded).id,before);assert.equal(W.current(source).id,before);}finally{W.encounters.forest.reverse();}
 const clone=E.validate(JSON.parse(JSON.stringify(s)));for(let i=0;i<20;i++){for(const x of [s,clone]){x.world.encounter=null;x.world.encounterCooldown=0;E.action(x,'encounter');}assert.deepEqual(s.world,clone.world);}
 const death=E.fresh();death.world.director.decisions['city:1/avoid']=1;death.world.location='city';death.world.encounter={location:'city',index:1};assert(E.action(death,'choice','challenge'));assert.equal(death.world.director.decisions['city:1/avoid'],1);assert.equal(death.world.director.decisions['city:1/challenge'],undefined);
-const old=E.fresh();delete old.world.director;assert.deepEqual(E.validate(old).world.director,{misses:{},decisions:{}});
+const old=E.fresh();delete old.world.director;assert.deepEqual(E.validate(old).world.director,{misses:{},decisions:{},paths:{},pending:{}});
 const bad=E.fresh();bad.world.director.decisions['invented']=1;assert.throws(()=>E.validate(bad));
 console.log('PASS: bounded opportunities over 200 seeds, causal follow-ups, stable scene IDs, saved director, death and migration');

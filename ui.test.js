@@ -41,6 +41,7 @@ for (let stage = 0; stage < 8; stage++) {
   for (const tab of tabs) {
     handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});
     const html=element('content').innerHTML;
+    if(tab==='roadmap'){for(const future of E.stages.slice(stage+2))assert(!html.includes(future.name));assert(html.includes(E.stages[Math.min(7,stage+1)].name));}
     assert(html.length > 100); assert(!html.includes('NaN'));
     const controls=[...html.matchAll(/data-action="([^"]+)" data-value="([^"]*)"([^>]*)/g)].map(m=>`${m[1]}:${m[2]}:${m[3].includes('disabled')}`).sort();
     if(view==='visual') visualControls.set(`${stage}:${tab}`,controls);

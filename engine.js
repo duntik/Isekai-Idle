@@ -80,7 +80,14 @@
   const spend = (s, c) => Object.entries(c).forEach(([k, v]) => s.resources[k] -= v);
   const buildCost = (s, k) => Object.fromEntries(Object.entries(projects[k].cost).map(([r, v]) => [r, Math.ceil(v * 1.5 ** s.buildings[k])]));
   const breakthroughCost = s => ({ herbs: Math.ceil(10 * 1.45 ** s.realm), ...(s.realm >= 3 ? { relics: Math.ceil(s.realm / 2) } : {}), ...(s.realm >= 6 ? { pills: Math.ceil(s.realm * 2) } : {}) });
-  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && s.wins>=stages[s.stage].wins && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
+  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && (s.wins>=stages[s.stage].wins || (s.stage>0&&W.recognition(s)>=W.recognitionNeeded(s))) && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
+  function chapterIntro(s){
+    const peaceful=s.stage>1&&W.recognition(s,s.stage-1)>=W.recognitionNeeded({stage:s.stage-1});
+    if(peaceful&&s.stage===2)return 'Ты принят во внешние ученики. За тебя говорят выполненные поручения и люди, которым ты помог. Доступ к библиотеке и доверие старших ещё предстоит заслужить.';
+    if(peaceful&&s.stage===3)return 'Твои знания и помощь объединили небольшую общину. Трое последователей доверили тебе разорённое убежище. Теперь предстоит превратить его в самостоятельную секту.';
+    if(peaceful&&s.stage===4)return 'Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.';
+    return stages[s.stage].intro;
+  }
   const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||s.employment.order?.kind==='ledger')&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
   const activityRunning=s=>canActivity(s,s.activity);
   const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(!s.world.journey&&['village','city'].includes(s.world.location)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
@@ -116,7 +123,7 @@
     else if (type === 'advance') {
       const next = stages[s.stage];
       if (!canAdvance(s)) return false;
-      spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, stages[s.stage].intro);
+      spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, chapterIntro(s));
       if(s.stage===2){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
       const c = breakthroughCost(s);
@@ -254,6 +261,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
