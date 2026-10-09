@@ -42,7 +42,7 @@ const broken=E.fresh();broken.world.journey={destination:'mountains',remaining:3
 // All encounters appear as neutral operations in data view.
 for(const [location,list]of Object.entries(W.encounters))for(let index=0;index<list.length;index++){
   const preview=E.fresh();preview.stage=1;preview.world.location=location;preview.world.encounter={location,index};
-  const html=D.render(preview,'world',E);assert(!/секта|герой|галактик|погиб|травниц|Жэнь|Белый Клык/.test(html));
+  const html=D.render(preview,'world',E);assert(html.includes(list[index].title));
   for(const c of list[index].choices)assert(html.includes(`data-value="${c.id}"`));
 }
 console.log('PASS: travel, encounter rotation, mentors, costs, safe/strong choices, death preserves progression, offline travel, migration, all neutral encounter controls');

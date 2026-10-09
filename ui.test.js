@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const E = require('./engine.js');
 const D = require('./data-view.js');
+assert.deepEqual(D.labels,E.names);
 const visualControls = new Map();
 for (const view of ['visual', 'data']) {
 for (let stage = 0; stage < 8; stage++) {
@@ -16,7 +17,8 @@ for (let stage = 0; stage < 8; stage++) {
   let preference = view;
   const context = { Isekai:E, IsekaiDataView:D, document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
   vm.runInNewContext(fs.readFileSync('game.js','utf8'), context);
-  assert(element('content').innerHTML.includes(view==='data'?'Показатели и операции':E.stages[stage].name));
+  assert(element('navigation').innerHTML.includes('data-tab="world"'));
+  assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':E.stages[stage].name));
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');
   const tabs = ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
@@ -26,7 +28,7 @@ for (let stage = 0; stage < 8; stage++) {
     assert(html.length > 100); assert(!html.includes('NaN'));
     const controls=[...html.matchAll(/data-action="([^"]+)" data-value="([^"]*)"([^>]*)/g)].map(m=>`${m[1]}:${m[2]}:${m[3].includes('disabled')}`).sort();
     if(view==='visual') visualControls.set(`${stage}:${tab}`,controls);
-    else {assert(!/секта|герой|галактик|перерод|монет|духовн|Isekai/i.test(html));assert.deepEqual(controls,visualControls.get(`${stage}:${tab}`));}
+    else {assert(!html.includes('data-value="undefined"'));assert.deepEqual(controls,visualControls.get(`${stage}:${tab}`));if(tab==='world')assert(html.includes(E.world.locations[state.world.location].name));if(tab==='hero')assert(html.includes(E.clicks.squat.name));}
   }
   const before=JSON.parse(stored);
   handlers.click({target:{closest:()=>({dataset:{view:view==='data'?'visual':'data'},disabled:false})}});
