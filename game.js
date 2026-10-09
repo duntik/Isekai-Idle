@@ -2,6 +2,7 @@
   'use strict';
   const E = Isekai, KEY = 'isekai-idle-v2', $ = id => document.getElementById(id);
   let s = E.fresh(), tab = 'hero', storageWarning = false;
+  let saves;
   let view = 'visual';
   try { if (localStorage.getItem('isekai-idle-interface') === 'data') view = 'data'; } catch {}
   function applyView() {
@@ -57,14 +58,15 @@
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();
     if (['visual','data'].includes(b.dataset.view)) { view = b.dataset.view; try { localStorage.setItem('isekai-idle-interface',view); } catch {} applyView(); }
     if (b.dataset.tab) tab = b.dataset.tab;
-    if (b.dataset.action) { if (b.dataset.action === 'rebirth' && !confirm(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.')) return; if (E.action(s,b.dataset.action,b.dataset.value)) save(); else toast('Условия пока не выполнены'); }
+    if (b.dataset.action) { if (b.dataset.action === 'rebirth') { if (!confirm(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.')) return; saves?.backup('Перед новым циклом'); } if (E.action(s,b.dataset.action,b.dataset.value)) save(); else toast('Условия пока не выполнены'); }
     if (b.id === 'save') save(true);
-    if (b.id === 'export') { const url = URL.createObjectURL(new Blob([JSON.stringify(s)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = view === 'data' ? 'data-snapshot.json' : 'isekai-idle-v2.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+    if (b.id === 'export') { const value = typeof IsekaiSaveCode !== 'undefined' ? IsekaiSaveCode.envelope(s) : s; const url = URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = `${view === 'data' ? 'data-snapshot' : 'isekai-idle'}-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','roadmap'].includes(tab)) tab = 'hero'; render();
   });
-  $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const loaded = E.validate(JSON.parse(await file.text())); if (confirm('Заменить текущий прогресс?')) { s = loaded; tick(); tab = 'hero'; save(); render(); toast('Сохранение импортировано'); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
+  $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const text=await file.text();const loaded = typeof IsekaiSaveCode !== 'undefined' ? await IsekaiSaveCode.decode(text,E) : E.validate(JSON.parse(text)); if(saves) saves.replace(loaded,'Импорт файла'); else if (confirm('Заменить текущий прогресс?')) { s = loaded; tick(); tab = 'hero'; save(); render(); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
   if (!s.events.length) E.log(s,E.stages[0].intro);
   const elapsed = Math.max(0,(Date.now()-s.last)/1000); tick(); if (elapsed > 60) E.log(s,`Офлайн: занятие продолжалось ${duration(Math.min(elapsed,86400))}.`);
   applyView(); render(); save(); if (storageWarning) toast(view === 'data' ? 'Предыдущая запись недоступна для текущей версии.' : 'Новая система использует сохранения v2. Старое сохранение v1 остаётся в браузере.');
+  if(typeof IsekaiSaves !== 'undefined') saves=IsekaiSaves.init({get:()=>{tick();return E.validate(JSON.parse(JSON.stringify(s)));},set:state=>{s=E.validate(state);tick();tab='hero';save();render();}});
   setInterval(()=>{tick();render();},1000); setInterval(()=>save(),10000); window.addEventListener('pagehide',()=>{tick();save();});
 })();
