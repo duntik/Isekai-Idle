@@ -8,7 +8,7 @@
   function render(s,tab,E) {
     const f = n=>n.toLocaleString('ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
-    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled?'':'disabled'}>${label}</button>`;
+    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='activity'||value!=='work'||s.employment.order?.kind==='ledger')?'':'disabled'}>${label}</button>`;
     const rows=[];
     const row=(name,value,note,operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
@@ -24,11 +24,11 @@
         if(beat)row('Контрольная точка',`${s.storyStep+1}/${E.story.length}`,`${goals[s.storyStep]}; ${cost(beat.reward)}`,btn('story','','Подтвердить',beat.ready(s)));
         else row('Контрольные точки','Завершены','Доступен следующий контур');
       }
-      if(s.stage<2) {
+      {
         row('Лимит операций',`${f(s.stamina)}/100`,'Восстановление +0,4/сек; интервал 0,6 сек');
-        row('Концентрация',`${f(s.calm)}/100`,'Развитие коротким анализом или фоновым анализом');
-        const notes={squat:'Подготовка +0,04',run:'Подготовка +0,07',breathe:'Концентрация +0,2; после данных анализ +0,12, резерв +0,25',sweep:'Бюджет +0,4',haul:'Бюджет +0,7; подготовка +0,02',scout:'Исходные данные +2 сек; сырьё A +0,05'};
-        for(const [k,c] of Object.entries(E.clicks))row(c.neutral,s.clicks[k],`${notes[k]}; лимит −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
+        row('Концентрация',`${f(s.calm)}/100`,'Развитие фоновым анализом');
+        const notes={squat:'Подготовка +0,04',run:'Подготовка +0,07',sweep:'Заказ A: +1 шаг',haul:'Заказ B: +1 шаг',scout:'Исходные данные +2 сек; сырьё A +0,05'};
+        for(const [k,c] of Object.entries(E.clicks).filter(([k])=>k!=='scout'||s.stage<2))row(c.neutral,s.clicks[k],`${notes[k]}; лимит −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
       }
       for(const [k,a] of Object.entries(E.activities).filter(([,a])=>a.stage<=s.stage)) row(activityLabels[k],s.activity===k?'Активно':'Ожидание',Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие показателя',btn('activity',k,'Назначить',s.activity!==k));
       if(s.stage>=1) {
@@ -37,6 +37,10 @@
         row('Оснащение',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
       if(s.stage<7) {const gate=E.stages[s.stage];row('Следующий контур',s.stage+2,`Уровень ${s.realm}/${gate.realm}; проверки ${s.wins}/${gate.wins}; ${cost(gate.cost)}${s.stage===0?`; контрольные точки ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',s.found&&s.realm>=gate.realm&&s.wins>=gate.wins&&E.affordable(s,gate.cost)&&(s.stage>0||s.storyStep>=E.story.length)));}
+      row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; участок B +25%');
+      const order=s.employment.order;
+      if(order){row('Активный заказ',`${E.orders[order.kind].neutral}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Бюджет +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
+      for(const[k,o]of Object.entries(E.orders))row(o.neutral,`Бюджет +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; подготовка от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
     }
     if(tab==='combat') {
       row('Проверка',s.wins+1,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('fight','','Выполнить',!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
@@ -48,7 +52,7 @@
       const W=E.world,w=s.world,scene=W.current(s);
       row('Текущий участок',W.locations[w.location].neutral,'Процесс продолжается на маршруте');
       row('Переход',w.journey?`${W.locations[w.journey.destination].neutral}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна операция');
-      const bonuses={village:'Подготовка +10%',forest:'Сырьё A при сборе +50%',city:'Бюджет при обработке +50%',ruins:'Компоненты при сборе +50%',mountains:'Анализ +20%'};
+      const bonuses={village:'Подготовка +10%',forest:'Сырьё A при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Компоненты при сборе +50%',mountains:'Анализ +20%'};
       for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.neutral,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
       row('Локальная операция',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
       if(scene)for(const c of scene.choices)row(c.neutral,c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${c.danger&&E.power(s)<c.danger?'Сбой: потеря 50% запасов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.mentor?'Постоянная оптимизация. ':''}${c.explore?`Данные +${c.explore} сек. `:''}${c.restore?'Восстановление лимита. ':''}${c.body?`Подготовка +${c.body}. `:''}${c.calm?`Концентрация +${c.calm}. `:''}${c.mastery?`Оптимизация +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',E.affordable(s,c.cost||{})));

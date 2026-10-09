@@ -27,10 +27,10 @@ const safe=E.fresh();safe.world.location='ruins';safe.world.encounter={location:
 const helper=E.fresh();helper.world.location='city';helper.world.encounter={location:'city',index:0};assert(!E.action(helper,'choice','study'));
 helper.resources.gold=10;assert(E.action(helper,'choice','study'));assert.equal(helper.resources.gold,0);assert.equal(W.bonus(helper).xp,1.15);
 helper.world.encounter={location:'city',index:0};helper.resources.gold=10;assert(E.action(helper,'choice','study'));assert.equal(helper.world.mentors.length,1);
-helper.found=true;assert(E.action(helper,'click','breathe'));assert.equal(helper.xp,.12*1.15);
+helper.found=true;E.action(helper,'activity','meditate');E.advance(helper,1);assert.equal(helper.xp,.05*1.15);
 
 // Travel completes offline, but no choice or lethal encounter resolves itself.
-const traveler=E.fresh();traveler.activity='work';E.action(traveler,'travel','city');
+const traveler=E.fresh();E.action(traveler,'order','ledger');E.action(traveler,'travel','city');
 const online=structuredClone(traveler),offline=structuredClone(traveler);
 for(let i=0;i<180;i++)E.advance(online,1);E.advance(offline,180);
 assert.equal(offline.world.location,'city');assert.equal(offline.world.encounter.index,0);assert.equal(offline.world.deaths,0);

@@ -3,15 +3,15 @@
   const locations={
     village:{name:'Деревня у колодца',neutral:'Базовый участок',stage:0,time:30,desc:'Мэй и Жэнь, безопасная работа и помощь в тренировках.',bonus:'Тренировка тела +10%.'},
     forest:{name:'Лес Шепчущих Корней',neutral:'Участок A',stage:0,time:60,desc:'Лекарственные травы, травница Линь и звери на дальних тропах.',bonus:'При исследовании травы +50%.'},
-    city:{name:'Город Серебряного Моста',neutral:'Участок B',stage:0,time:90,desc:'Торговцы, библиотекарь Вэй и ученики влиятельных кланов.',bonus:'Монеты за фоновую работу +50%.'},
+    city:{name:'Город Серебряного Моста',neutral:'Участок B',stage:0,time:90,desc:'Торговцы, библиотекарь Вэй и ученики влиятельных кланов.',bonus:'Оплата принятых здесь заказов +25%.'},
     ruins:{name:'Заброшенный храм',neutral:'Участок C',stage:0,time:60,desc:'Осколки наследия, странник и опасные печати под алтарём.',bonus:'Осколки за исследование +50%.'},
     mountains:{name:'Перевал Облачного Меча',neutral:'Участок D',stage:1,time:120,desc:'Горная руда, одинокий мастер и стражи прохода.',bonus:'Понимание от медитации +20%.'}
   };
   const choice=(id,label,neutral,options={})=>({id,label,neutral,...options});
   const encounters={
     village:[
-      {title:'Жэнь поправляет стойку',text:'У колодца старик молча смотрит на твои приседания. «Ты толкаешь землю пятками, а должен держать спину. Повторишь?» Его урок может помочь во всех будущих тренировках.',choices:[choice('lesson','Принять урок Жэня','Оптимизировать подготовку',{mentor:'trainer',body:.5}),choice('help','Помочь Мэй с доставкой','Обработать заявку',{reward:{gold:8}})]},
-      {title:'У очага',text:'Мэй замечает усталость: «Сначала горячий чай. Потом снова в дорогу». У стола ждут возчики: им нужен помощник, а тебе — деньги или время перевести дыхание.',choices:[choice('rest','Выпить чай и отдохнуть','Восстановить лимит',{restore:true,reward:{herbs:2}}),choice('work','Разгрузить телегу','Получить оплату',{reward:{gold:12},body:.2})]},
+      {title:'Жэнь поправляет стойку',text:'У колодца старик молча смотрит на твои приседания. «Ты толкаешь землю пятками, а должен держать спину. Повторишь?» Его урок может помочь во всех будущих тренировках.',choices:[choice('lesson','Принять урок Жэня','Оптимизировать подготовку',{mentor:'trainer'}),choice('help','Помочь Мэй с доставкой','Обработать заявку',{reward:{gold:8}})]},
+      {title:'У очага',text:'Мэй замечает усталость: «Сначала горячий чай. Потом снова в дорогу». У стола ждут возчики: им нужен помощник, а тебе — деньги или время перевести дыхание.',choices:[choice('rest','Выпить чай и отдохнуть','Восстановить лимит',{restore:true,reward:{herbs:2}}),choice('work','Разгрузить телегу','Получить оплату',{reward:{gold:12}})]},
       {title:'Письмо из города',text:'Мальчик-посыльный перепутал адрес. Письмо предназначалось библиотекарю Вэю. Мэй предлагает доставить его или обменять старые травы у проезжего аптекаря.',choices:[choice('letter','Запомнить имя библиотекаря','Добавить контакт',{contact:'scholar',reward:{gold:5}}),choice('trade','Обменять 5 трав на 15 монет','Обменять сырьё',{cost:{herbs:5},reward:{gold:15}})]}
     ],
     forest:[
@@ -57,7 +57,7 @@
       const scene=current(s);w.encounterCooldown=300;
       if(c.danger&&E.power(s)<c.danger){die(s,E);return true;}
       for(const [k,v]of Object.entries(c.reward||{}))s.resources[k]+=v;
-      s.body=Math.min(10*(s.realm+1),s.body+(c.body||0));s.mastery=Math.min(10*(s.realm+1),s.mastery+(c.mastery||0));s.calm=Math.min(100,s.calm+(c.calm||0));
+      s.mastery=Math.min(10*(s.realm+1),s.mastery+(c.mastery||0));s.calm=Math.min(100,s.calm+(c.calm||0));
       if(c.restore)s.stamina=100;
       if(c.mentor&&!w.mentors.includes(c.mentor))w.mentors.push(c.mentor);
       if(c.contact&&!w.contacts.includes(c.contact))w.contacts.push(c.contact);

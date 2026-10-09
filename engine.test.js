@@ -6,18 +6,18 @@ const E = require('./engine.js');
 const s = E.fresh();
 assert.equal(E.action(s, 'activity', 'meditate'), true);
 assert.equal(E.action(s, 'story'), true);
-E.action(s,'activity','work');E.advance(s,50);assert.equal(E.action(s,'story'),true);
+E.action(s,'order','ledger');E.advance(s,180);E.action(s,'claim-order');assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'build', 'dorm'), false);
 assert.equal(E.action(s, 'advance'), false);
 E.action(s, 'activity', 'explore'); E.advance(s, 599); assert.equal(s.found, false);
 E.advance(s, 1); assert.equal(s.found, true);
-E.action(s, 'activity', 'train'); E.advance(s, 700);
+while(s.body<5){E.advance(s,10);assert(E.action(s,'click','squat'));}
 assert.equal(E.action(s,'story'),true);
 E.action(s,'activity','meditate');E.advance(s,250);assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'fight'), true);
 assert.equal(E.action(s, 'fight'), false);
-E.action(s, 'activity', 'explore'); E.advance(s, 4000);
+E.action(s, 'activity', 'meditate'); E.advance(s, 4000);
 assert.equal(s.xp, E.needed(s));
 assert.equal(E.action(s, 'breakthrough'), true);
 assert.equal(E.action(s,'story'),true);assert.equal(E.action(s,'story'),true);
@@ -64,24 +64,25 @@ const legacy = E.fresh(); legacy.stage = 7; legacy.realm = 24; legacy.souls = 2;
 assert.equal(E.action(legacy, 'rebirth'), true); assert.equal(legacy.souls, 6); assert.equal(legacy.stage, 0); assert.equal(legacy.life, 2);
 assert.equal(legacy.storyStep,0);assert.equal(legacy.stamina,100);
 
-// Active actions share a cooldown and stamina budget; no unlimited instant gains.
-const active=E.fresh();assert.equal(E.action(active,'click','breathe'),true);
-assert.equal(active.xp,0);assert.equal(active.resources.qi,0);assert.equal(active.calm,.2);
-assert.equal(E.action(active,'click','sweep'),false);E.advance(active,.6);
-const goldBefore=active.resources.gold;assert.equal(E.action(active,'click','sweep'),true);assert.equal(active.resources.gold-goldBefore,.4);
-active.stamina=1;E.advance(active,.6);assert.equal(E.action(active,'click','run'),false);
-E.advance(active,20);assert.equal(E.action(active,'click','run'),true);assert.equal(active.body,.07);
+// Active body development never accrues offline; meditation never needs clicks.
+const active=E.fresh();E.advance(active,3600);assert.equal(active.body,0);assert(Math.abs(active.calm-72)<1e-8);
+assert(E.action(active,'click','squat'));assert(Math.abs(active.body-.044)<1e-10);
+assert.equal(E.action(active,'click','run'),false);E.advance(active,1);
+active.stamina=1;assert.equal(E.action(active,'click','run'),false);
+E.advance(active,20);assert(E.action(active,'click','run'));
 active.body=10;E.advance(active,1);assert.equal(E.action(active,'click','squat'),false);
 active.body=0;E.advance(active,250);assert.equal(active.stamina,100);
-active.explored=598;assert.equal(E.action(active,'click','scout'),true);assert.equal(active.found,true);
+active.explored=598;assert(E.action(active,'click','scout'));assert(active.found);
 E.advance(active,1);assert.equal(E.action(active,'click','scout'),false);
-assert.equal(E.action(active,'click','breathe'),true);assert(active.xp>=.12);assert.equal(active.resources.qi,.25);
-active.stage=2;E.advance(active,1);assert.equal(E.action(active,'click','sweep'),false);
+assert.equal(E.action(active,'activity','train'),false);
+assert.equal(E.action(active,'click','breathe'),false);
+const beforeBody=active.body;E.advance(active,1200);assert.equal(active.body,beforeBody);assert.equal(active.xp,E.needed(active));
 assert.deepEqual(E.validate(JSON.parse(JSON.stringify(active))),active);
 
 // Story rewards are claimed once and cannot bypass an unfinished objective.
 const plot=E.fresh();assert.equal(E.action(plot,'story'),true);assert.equal(plot.resources.gold,5);
 assert.equal(E.action(plot,'story'),false);assert.equal(plot.resources.gold,5);
+assert(E.action(plot,'order','sweep'));
 for(let i=0;i<10;i++){E.advance(plot,1);assert(E.action(plot,'click','sweep'));}
 assert.equal(E.action(plot,'story'),true);assert.equal(plot.storyStep,2);
 plot.realm=1;plot.wins=1;plot.found=true;plot.resources.herbs=100;

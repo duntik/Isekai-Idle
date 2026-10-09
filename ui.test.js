@@ -8,6 +8,8 @@ const visualControls = new Map();
 for (const view of ['visual', 'data']) {
 for (let stage = 0; stage < 8; stage++) {
   const state = E.fresh(); state.stage = stage; state.found = stage > 0;
+  if(stage===1)state.employment.order={kind:'ledger',progress:180,pay:20};
+  if(stage===2)state.employment.order={kind:'sweep',progress:3,pay:8};
   const elements = new Map(), handlers = {};
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
   let stored = JSON.stringify(state);
