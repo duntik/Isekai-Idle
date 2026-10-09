@@ -3,10 +3,10 @@ const assert=require('node:assert/strict'),E=require('./engine.js'),W=E.world,D=
 const s=E.fresh();assert(!E.action(s,'travel','mountains'));assert(!E.action(s,'travel','village'));
 assert(E.action(s,'travel','forest'));assert(!E.action(s,'travel','city'));
 E.advance(s,59);assert.equal(s.world.location,'village');assert.equal(s.world.encounter,null);
-E.advance(s,1);assert.equal(s.world.location,'forest');assert.equal(W.current(s).title,'Травница на тропе');
+E.advance(s,1);assert.equal(s.world.location,'forest');assert(W.eligible(s,W.current(s)));s.world.encounter={location:'forest',index:0};
 assert(E.action(s,'choice','learn'));assert(s.world.mentors.includes('herbalist'));assert.equal(s.resources.herbs,6);
 assert(!E.action(s,'choice','learn'));assert(!E.action(s,'encounter'));E.advance(s,300);assert(E.action(s,'encounter'));
-assert.equal(W.current(s).title,'Зверь у ручья');
+assert(W.eligible(s,W.current(s)));s.world.encounter={location:'forest',index:1};
 
 // Death loses physical resources only, never progression or organization state.
 s.realm=1;s.xp=7;s.body=2;s.mastery=1;s.style='ward';s.weapon=0;s.storyStep=4;s.found=true;s.calm=12;
@@ -33,10 +33,10 @@ helper.found=true;E.action(helper,'activity','meditate');E.advance(helper,1);ass
 const traveler=E.fresh();E.action(traveler,'order','ledger');E.action(traveler,'travel','city');
 const online=structuredClone(traveler),offline=structuredClone(traveler);
 for(let i=0;i<180;i++)E.advance(online,1);E.advance(offline,180);
-assert.equal(offline.world.location,'city');assert.equal(offline.world.encounter.index,0);assert.equal(offline.world.deaths,0);
+assert.equal(offline.world.location,'city');assert(W.eligible(offline,W.current(offline)));assert.equal(offline.world.deaths,0);
 assert(Math.abs(online.resources.gold-offline.resources.gold)<1e-8);assert.deepEqual(online.world,offline.world);
 assert.deepEqual(E.validate(offline),offline);
-const old=E.fresh();delete old.world;assert.deepEqual(E.validate(old).world,W.fresh());
+const old=E.fresh();delete old.world;const migratedWorld=E.validate(old).world,defaults=W.fresh();defaults.seed=migratedWorld.seed;assert.deepEqual(migratedWorld,defaults);
 const broken=E.fresh();broken.world.journey={destination:'mountains',remaining:30};assert.throws(()=>E.validate(broken));
 
 // All encounters appear as neutral operations in data view.

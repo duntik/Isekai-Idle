@@ -39,6 +39,7 @@
       }
       if(s.stage<7) {const gate=E.stages[s.stage];row('Следующий контур',s.stage+2,`Уровень ${s.realm}/${gate.realm}; проверки ${s.wins}/${gate.wins}; ${cost(gate.cost)}${s.stage===0?`; контрольные точки ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',s.found&&s.realm>=gate.realm&&s.wins>=gate.wins&&E.affordable(s,gate.cost)&&(s.stage>0||s.storyStep>=E.story.length)));}
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; участок B +25%');
+      row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','На базовом участке и участке B; ручные операции приостанавливаются в пути и на других участках');
       const order=s.employment.order;
       if(order){row('Активный заказ',`${E.orders[order.kind].neutral}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Бюджет +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
       for(const[k,o]of Object.entries(E.orders))row(o.neutral,`Бюджет +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; подготовка от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
@@ -52,6 +53,7 @@
     if(tab==='world') {
       const W=E.world,w=s.world,scene=W.current(s);
       row('Текущий участок',W.locations[w.location].neutral,'Процесс продолжается на маршруте');
+      row('Выбор операции','Случайный','Зависит от участка, уровня и связей; исключены недавние операции и уже полученные уникальные документы');
       row('Переход',w.journey?`${W.locations[w.journey.destination].neutral}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна операция');
       const bonuses={village:'Подготовка +10%',forest:'Сырьё A при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Компоненты при сборе +50%',mountains:'Анализ +20%'};
       for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.neutral,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
