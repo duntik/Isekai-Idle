@@ -41,6 +41,7 @@ for (let stage = 0; stage < 7; stage++) {
   const character = E.fresh(); character.stage = stage; character.found = true;
   character.realm = E.stages[stage].realm; character.wins = E.stages[stage].wins;
   character.storyStep = E.story.length;
+  if(stage===1){character.world.location='city';assert(E.action(character,'apply-sect','gates'));}
   Object.assign(character.resources, E.stages[stage].cost);
   assert.equal(E.action(character, 'advance'), true); assert.equal(character.stage, stage + 1);
   assert.equal(E.action(character, 'advance'), false);

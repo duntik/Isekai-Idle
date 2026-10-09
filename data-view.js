@@ -57,6 +57,8 @@
       row('Локальная операция',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
       if(scene)for(const c of scene.choices)row(c.neutral,c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${c.danger&&E.power(s)<c.danger?'Сбой: потеря 50% запасов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.mentor?'Постоянная оптимизация. ':''}${c.explore?`Данные +${c.explore} сек. `:''}${c.restore?'Восстановление лимита. ':''}${c.body?`Подготовка +${c.body}. `:''}${c.calm?`Концентрация +${c.calm}. `:''}${c.mastery?`Оптимизация +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',E.affordable(s,c.cost||{})));
       row('Оптимизации',w.mentors.length,'A: подготовка +15%; B: сырьё +20%; C: анализ +10%; D: анализ +15%; E: оптимизация +15%');
+      if(s.stage===1)for(const[k,a]of Object.entries(W.admissions))row(a.neutral,w.admission===k?'Выбран':'Не выбран',k==='gates'?'Общий доступ на участке B':w.admissionRoutes.includes(k)?'Документ получен; оформление на участке B':'Требуется документ из участка A или C',btn('apply-sect',k,'Оформить',W.canApply(s,k)));
+      if(s.stage>=2&&w.admission)row('Основание допуска',W.admissions[w.admission].neutral,'Сохранено в личном деле');
       row('Восстановления',w.deaths,'После сбоя теряется 50% переносимых запасов; показатели, контур, персонал, охват и объекты сохраняются');
     }
     if(tab==='sect') {

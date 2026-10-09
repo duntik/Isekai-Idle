@@ -36,8 +36,21 @@
     ]
   };
   const mentorNames={trainer:'Наставления Жэня: тело +15%',herbalist:'Совет Линь: травы при исследовании +20%',breathing:'Дыхательный приём: понимание +10%',scholar:'Рукопись Вэя: понимание +15%',swordsman:'Урок Юня: освоение техники +15%'};
+  const admissions={
+    rescue:{name:'Нефритовая Роща · наставник Сэнь',neutral:'Допуск A',gift:{herbs:20},text:'Спасённый в лесу Сэнь поручился за тебя. Он примет тебя личным учеником и передаст 20 лекарственных трав при вступлении.'},
+    remains:{name:'Облачный Предел · наставница Юнь',neutral:'Допуск B',mastery:1,text:'Ты вернёшь останки пропавшего ученика. Юнь благодарна за возможность проститься и предлагает место в школе меча. Её личный урок при вступлении даст +1 освоения техники.'},
+    invitation:{name:'Пустое Небо · хранитель Вэй',neutral:'Допуск C',gift:{qi:40},text:'Найденная карта открывает доступ к отбору хранителей древних печатей. При вступлении хранитель передаст 40 духовной энергии для изучения наследия.'},
+    gates:{name:'Облачный Предел · общий набор',neutral:'Допуск D',gift:{reputation:10},text:'Ты самостоятельно пришёл в городское представительство. Без поручителя придётся пройти общий отбор и начинать с внешних учеников. Успешное испытание даст 10 репутации при вступлении.'}
+  };
+  encounters.forest[2].text='У дерева лежит раненый Сэнь, наставник Нефритовой Рощи. Если поделиться травами, он покажет дыхательный приём и предложит стать его учеником после подготовки к вступлению.';
+  encounters.forest[2].choices[0].admission='rescue';
+  encounters.ruins.push(
+    {title:'Последний путь ученика',text:'Под обвалом лежит погибший ученик Облачного Предела. На жетоне имя: Цзинь. Можно бережно завернуть останки и вернуть их школе через представительство в городе. Это поступок благодарности, а не добыча.',choices:[choice('return-remains','Забрать останки для возвращения в секту','Оформить передачу',{admission:'remains'}),choice('respect','Почтить память и уйти','Завершить осмотр',{calm:1})]},
+    {title:'Карта приглашения',text:'В тайнике сохранилась карта с печатью Пустого Неба. На обороте указан адрес городского представительства. Карта позволяет подать заявку, но испытание силы всё равно придётся пройти.',choices:[choice('invitation','Сохранить карту приглашения','Сохранить допуск',{admission:'invitation'}),choice('leave-card','Оставить карту в тайнике','Пропустить документ',{calm:1})]}
+  );
+  const canApply=(s,k)=>s.stage===1&&!s.world.journey&&s.world.location==='city'&&!!admissions[k]&&(k==='gates'||s.world.admissionRoutes.includes(k));
   const physical=['gold','herbs','qi','relics','wood','ore','pills','supplies','cosmic'];
-  const fresh=()=>({location:'village',journey:null,encounter:null,visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],deaths:0,encounterCooldown:0});
+  const fresh=()=>({location:'village',journey:null,encounter:null,visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],admissionRoutes:[],admission:null,deaths:0,encounterCooldown:0});
   const current=s=>s.world.encounter?encounters[s.world.encounter.location][s.world.encounter.index]:null;
   const canTravel=(s,k)=>!!locations[k]&&locations[k].stage<=s.stage&&!s.world.journey&&s.world.location!==k;
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
@@ -49,7 +62,8 @@
   }
   function action(s,type,value,E){
     const w=s.world;
-    if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:locations[value].time};E.log(s,`Ты отправился: ${locations[value].name}.`);}
+    if(type==='apply-sect'){if(!canApply(s,value))return false;w.admission=value;E.log(s,`${admissions[value].name}: ${admissions[value].text} Поручительство принято. Для вступления заверши подготовку и оплати общий запас снаряжения, указанный в следующей главе.`);}
+    else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:locations[value].time};E.log(s,`Ты отправился: ${locations[value].name}.`);}
     else if(type==='encounter'){if(!canEncounter(s))return false;offer(s);}
     else if(type==='choice'){
       const c=current(s)?.choices.find(c=>c.id===value);if(!c||w.journey||!E.affordable(s,c.cost||{}))return false;
@@ -61,6 +75,7 @@
       if(c.restore)s.stamina=100;
       if(c.mentor&&!w.mentors.includes(c.mentor))w.mentors.push(c.mentor);
       if(c.contact&&!w.contacts.includes(c.contact))w.contacts.push(c.contact);
+      if(c.admission&&!w.admissionRoutes.includes(c.admission)){w.admissionRoutes.push(c.admission);E.log(s,`Открыт путь: ${admissions[c.admission].name}. Обратись в представительство в городе, когда станешь начинающим практиком. Поручительство и сюжетные предметы сохраняются после смерти.`);}
       s.explored+=c.explore||0;
       if(!s.found&&s.explored>=600){s.found=true;E.log(s,'Находка в храме раскрыла технику Пустого Неба.');}
       E.log(s,`${scene.title}: ${c.label}.`);w.encounter=null;
@@ -72,6 +87,10 @@
   function validate(input,stage){
     if(input===undefined)return fresh();if(!input||typeof input!=='object')throw Error('Неверный мир');const w=fresh();
     if(!locations[input.location]||locations[input.location].stage>stage)throw Error('Неверное место');w.location=input.location;
+    const routes=input.admissionRoutes===undefined?[]:input.admissionRoutes;
+    if(!Array.isArray(routes)||routes.some(k=>!admissions[k]||k==='gates')||new Set(routes).size!==routes.length)throw Error('Неверное поручительство');w.admissionRoutes=[...routes];
+    const admission=input.admission===undefined?null:input.admission;
+    if(admission!==null&&(!admissions[admission]||stage===0||(admission!=='gates'&&!routes.includes(admission))))throw Error('Неверный допуск');w.admission=admission;
     for(const k of ['deaths','encounterCooldown']){if(!Number.isFinite(input[k])||input[k]<0||(k==='deaths'?!Number.isSafeInteger(input[k]):input[k]>300))throw Error('Неверное путешествие');w[k]=input[k];}
     for(const k of Object.keys(locations)){const n=input.visits?.[k];if(!Number.isSafeInteger(n)||n<0)throw Error('Неверные посещения');w.visits[k]=n;}
     if(!Array.isArray(input.mentors)||input.mentors.some(k=>!Object.hasOwn(mentorNames,k))||new Set(input.mentors).size!==input.mentors.length)throw Error('Неверный наставник');w.mentors=[...input.mentors];
@@ -80,5 +99,5 @@
     if(input.encounter!==null){const e=input.encounter;if(!e||e.location!==w.location||!Number.isInteger(e.index)||!encounters[e.location]?.[e.index]||w.journey)throw Error('Неверная встреча');w.encounter={location:e.location,index:e.index};}
     return w;
   }
-  const api={locations,encounters,mentorNames,physical,fresh,current,canTravel,canEncounter,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,canTravel,canEncounter,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

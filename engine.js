@@ -52,7 +52,7 @@
     { title: 'Тишина между вдохами', text: 'Старик у колодца представляется: Жэнь. «В твоём мире всё спешили? Здесь сначала слушай». Он учит считать вдохи. Когда мысли затихают, из заброшенного храма за деревней доносится тонкий звон. Остальные его не слышат.', goal: 'Накопить 5 спокойствия короткими вдохами или фоновым медитированием.', ready: s => s.calm >= 5, reward: { herbs: 3 }, button: 'Рассказать Жэню о звоне' },
     { title: 'Осколок под пеплом', text: 'Жэнь показывает тропу к храму. Под обвалившимся алтарём лежит чёрный осколок. Он теплеет в твоей ладони, и в сознании проступают слова: «Пустое Небо». Это лишь повреждённая первая страница. Но на ней есть путь, которого вчера у тебя не было.', goal: 'Найти технику: 10 минут исследования, ускоряемого осмотром развалин.', ready: s => s.found, reward: { relics: 1 }, button: 'Прочитать первую страницу' },
     { title: 'Первый прорыв', text: 'Травы горчат. Каждый вдох заставляет осколок отвечать слабым теплом. Ты снова и снова теряешь ощущение потока, пока однажды оно не остаётся. Жэнь впервые смотрит на тебя серьёзно: «Теперь это твоя сила. И твоя ответственность».', goal: 'Заполнить понимание, собрать травы и совершить первый прорыв.', ready: s => s.realm >= 1, reward: { herbs: 10 }, button: 'Принять наставление' },
-    { title: 'За право идти дальше', text: 'На дороге человек с повязкой Белого Клыка отбирает плату у возчиков. Ты узнаёшь телегу, на которой приехал. На этот раз ты можешь вмешаться. После победы Мэй вручает письмо: через горный перевал набирают новых учеников. А побеждённый обещает, что его старший брат тебя запомнит.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Взять письмо и собраться в путь' }
+    { title: 'За право идти дальше', text: 'На дороге человек с повязкой Белого Клыка отбирает плату у возчиков. Ты узнаёшь телегу, на которой приехал. На этот раз ты можешь вмешаться. После победы Мэй даёт адрес городского представительства сект: туда можно прийти на общий набор. Но на лесных тропах и в храме можно найти другой путь и своего наставника. Побеждённый обещает, что его старший брат тебя запомнит.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Узнать о наборе и собраться в путь' }
   ];
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const fresh = () => ({...baseFresh(), activity:'meditate', world:W.fresh(), employment:{completed:0,order:null}});
@@ -66,11 +66,11 @@
   const spend = (s, c) => Object.entries(c).forEach(([k, v]) => s.resources[k] -= v);
   const buildCost = (s, k) => Object.fromEntries(Object.entries(projects[k].cost).map(([r, v]) => [r, Math.ceil(v * 1.5 ** s.buildings[k])]));
   const breakthroughCost = s => ({ herbs: Math.ceil(10 * 1.45 ** s.realm), ...(s.realm >= 3 ? { relics: Math.ceil(s.realm / 2) } : {}), ...(s.realm >= 6 ? { pills: Math.ceil(s.realm * 2) } : {}) });
-  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && s.wins>=stages[s.stage].wins && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length);
+  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && s.wins>=stages[s.stage].wins && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
   const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found)) && (!['sweep','haul'].includes(k)||(s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
-    if (['travel','encounter','choice'].includes(type)) return W.action(s,type,value,api);
+    if (['travel','encounter','choice','apply-sect'].includes(type)) return W.action(s,type,value,api);
     if(type==='order'){
       if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value)};
       if(value==='ledger')s.activity='work';
@@ -99,6 +99,7 @@
       const next = stages[s.stage];
       if (!canAdvance(s)) return false;
       spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, stages[s.stage].intro);
+      if(s.stage===2){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
       const c = breakthroughCost(s);
       if (!s.found || s.xp < needed(s) || !affordable(s, c)) return false;
