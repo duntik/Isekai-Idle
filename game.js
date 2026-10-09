@@ -2,6 +2,7 @@
   'use strict';
   const E = Isekai, KEY = 'isekai-idle-v2', $ = id => document.getElementById(id);
   const L=typeof IsekaiLocale!=='undefined'?IsekaiLocale:null,t=value=>L?L.text(value):value,h=value=>L?L.html(value):value;
+  const quotes=typeof IsekaiQuotes!=='undefined'?IsekaiQuotes.createRotator():null;
   let s = E.fresh(), tab = 'hero', storageWarning = false;
   let saves;
   let view = 'visual';
@@ -67,6 +68,12 @@
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
     for(const id of ['resources','navigation'])$(id).innerHTML=h($(id).innerHTML);
+    if(quotes){
+      const quote=quotes.get(s,Date.now(),L?.language||'ru');
+      const text='«'+quote.text+'»',source='— '+quote.source;
+      if($('aside-quote').textContent!==text)$('aside-quote').textContent=text;
+      if($('aside-quote-source').textContent!==source)$('aside-quote-source').textContent=source;
+    }
     L?.translateDOM();
   }
   function projects(levels) { return `<div class="cards">${Object.entries(E.projects).filter(([, p])=>levels.includes(p.stage) && p.stage <= s.stage).map(([k,p])=>card(`${p.name} · ${s.buildings[k]}`,p.desc,button('build',k,'Построить',E.affordable(s,E.buildCost(s,k))),costs(E.buildCost(s,k)))).join('')}</div>`; }

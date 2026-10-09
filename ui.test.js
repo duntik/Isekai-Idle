@@ -4,6 +4,21 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const E = require('./engine.js');
 const D = require('./data-view.js');
+const Q = require('./quotes.js');
+assert.equal(Q.catalog.length,240);
+assert.equal(new Set(Q.catalog.map(q=>q.ru)).size,240);
+assert.equal(new Set(Q.catalog.map(q=>q.en)).size,240);
+const quoteState=E.fresh(),rotator=Q.createRotator(()=>0),seed=quoteState.world.seed;
+const firstQuote=rotator.get(quoteState,0);
+assert.equal(rotator.get(quoteState,29999).id,firstQuote.id);
+assert.equal(rotator.get(quoteState,29999,'en').text,Q.catalog.find(q=>q.id===firstQuote.id).en);
+const seenQuotes=new Set([firstQuote.id]);
+const pool=Q.catalog.filter(q=>q.min<=0&&q.max>=0);
+for(let i=1;i<pool.length;i++){const q=rotator.get(quoteState,i*30000);assert(!seenQuotes.has(q.id));seenQuotes.add(q.id);}
+quoteState.stage=7;
+const lateQuote=rotator.get(quoteState,pool.length*30000);
+assert(Q.catalog.some(q=>q.id===lateQuote.id&&q.min<=7&&q.max>=7));
+assert.equal(quoteState.world.seed,seed);
 assert.deepEqual(D.labels,E.names);
 const visualControls = new Map();
 for (const view of ['visual', 'data']) {
@@ -15,7 +30,7 @@ for (let stage = 0; stage < 8; stage++) {
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
   let stored = JSON.stringify(state);
   let preference = view;
-  const context = { Isekai:E, IsekaiDataView:D, document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
+  const context = { Isekai:E, IsekaiDataView:D, IsekaiQuotes:Q, document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
   vm.runInNewContext(fs.readFileSync('game.js','utf8'), context);
   assert(element('navigation').innerHTML.includes('data-tab="world"'));
   assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent));

@@ -6,7 +6,7 @@ function boot(state,view='visual',language='en'){
   const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(state)],['isekai-idle-interface',view],['isekai-idle-language',language]]);
   const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(){}});return elements.get(id);};
   const context=vm.createContext({Isekai:E,document:{documentElement:{dataset:{}},querySelectorAll:()=>[],getElementById:element,addEventListener:(t,f)=>handlers[t]=f,createElement:()=>({append(){},click(){}}),createTextNode:t=>t},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},confirm:()=>true});
-  for(const path of ['i18n.js','i18n-story.js','i18n-ui.js','data-view.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
+  for(const path of ['i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
   return {context,element,handlers,storage};
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
@@ -15,7 +15,7 @@ for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
   s.employment.order={kind:'ledger',progress:60,pay:20};s.routes=stage>=4?[{remaining:100}]:[];s.buildings.market=stage>=4?1:0;
   const {context,element,handlers,storage}=boot(s,view);
   assert.equal(context.document.documentElement.lang,'en');assert.equal(context.document.title,view==='data'?'Data overview':'Isekai Idle — a new life');check(element('hero-title').innerHTML);
-  for(const tab of ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])]){handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});check(element('content').innerHTML);check(element('navigation').innerHTML);check(element('resources').innerHTML);for(const id of ['chapter','hero-description','life','souls','day'])check(element(id).textContent);}
+  for(const tab of ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])]){handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});check(element('content').innerHTML);check(element('navigation').innerHTML);check(element('resources').innerHTML);for(const id of ['chapter','hero-description','life','souls','day','aside-quote','aside-quote-source'])check(element(id).textContent);}
   const before=JSON.parse(storage.get('isekai-idle-v2'));handlers.click({target:{closest:()=>({dataset:{language:'ru'},disabled:false})}});assert.equal(storage.get('isekai-idle-language'),'ru');assert.equal(context.document.documentElement.lang,'ru');const after=JSON.parse(storage.get('isekai-idle-v2'));assert.deepEqual(after.cultivation,before.cultivation);assert.deepEqual(after.resources,before.resources);
 }
 const sample=boot(E.fresh()).context,L=sample.IsekaiLocale;
