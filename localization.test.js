@@ -14,7 +14,7 @@ for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
   s.cultivation.learned=Object.fromEntries(Object.keys(E.techniques).map(k=>[k,{rank:1,progress:0}]));s.cultivation.active='sky';
   s.employment.order={kind:'ledger',progress:60,pay:20};s.routes=stage>=4?[{remaining:100}]:[];s.buildings.market=stage>=4?1:0;
   const {context,element,handlers,storage}=boot(s,view);
-  assert.equal(context.document.documentElement.lang,'en');assert.equal(context.document.title,view==='data'?'Data overview':'Isekai Idle — a new life');
+  assert.equal(context.document.documentElement.lang,'en');assert.equal(context.document.title,view==='data'?'Data overview':'Isekai Idle — a new life');check(element('hero-title').innerHTML);
   for(const tab of ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])]){handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});check(element('content').innerHTML);check(element('navigation').innerHTML);check(element('resources').innerHTML);for(const id of ['chapter','hero-description','life','souls','day'])check(element(id).textContent);}
   const before=JSON.parse(storage.get('isekai-idle-v2'));handlers.click({target:{closest:()=>({dataset:{language:'ru'},disabled:false})}});assert.equal(storage.get('isekai-idle-language'),'ru');assert.equal(context.document.documentElement.lang,'ru');const after=JSON.parse(storage.get('isekai-idle-v2'));assert.deepEqual(after.cultivation,before.cultivation);assert.deepEqual(after.resources,before.resources);
 }

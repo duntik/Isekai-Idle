@@ -219,6 +219,41 @@
     return base;
   }
   const realmName = n => `${['Смертный', 'Пробуждение', 'Сбор энергии', 'Основание', 'Духовное ядро', 'Пробуждение души', 'Небесный путь', 'Звёздный дух', 'Закон пространства'][Math.min(8, Math.floor((n + 2) / 3))]} · ступень ${n}`;
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName };
+  function heroHeading(s){
+    const headings=[
+      ['Под чужим небом','начать с первого шага.'],
+      ['Собственный путь','найти технику и наставника.'],
+      ['Среди учеников','заслужить своё имя.'],
+      ['Твоя первая секта','дать другим опору.'],
+      ['Город под твоей защитой','связать судьбы жителей.'],
+      ['За пределами одного неба','объединить источники мира.'],
+      ['От мира к миру','проложить дороги среди звёзд.'],
+      ['На границе мироздания','оставить наследие новой жизни.']
+    ];
+    let [title,accent]=headings[s.stage];
+    if(s.stage===0){
+      if(s.realm>=1&&s.wins>=1){title='Первый рубеж пройден';accent='пора выбрать дальнейший путь.';}
+      else if(s.found){title='Слова Пустого Неба';accent='превратить понимание в силу.';}
+      else if(s.world.location==='ruins'){title='Под пеплом старого храма';accent='найти первую страницу пути.';}
+      else if(s.world.location==='forest'){title='Среди шепчущих корней';accent='искать помощь на лесных тропах.';}
+      else if(s.world.location==='city'){title='Чужак у городских ворот';accent='найти работу, знания и связи.';}
+      else if(s.storyStep>=3){title='Тишина между вдохами';accent='услышать зов за деревней.';}
+      else if(s.storyStep>=2){title='Тело, которое не слушается';accent='стать крепче своими усилиями.';}
+      else if(s.storyStep>=1){title='Место у деревенского очага';accent='заработать на первый день.';}
+    }else if(s.stage===1){
+      if(s.world.admission){title='Поручительство принято';accent='подготовиться к жизни ученика.';}
+      else if(s.world.location==='mountains'){title='На перевале Облачного Меча';accent='испытать себя и найти учителя.';}
+      else if(s.world.location==='forest'){title='Лесные пути культивации';accent='найти того, кто поделится знанием.';}
+      else if(s.world.location==='city'){title='Перед дверями трёх сект';accent='выбрать своё ученичество.';}
+    }
+    if(s.stage===2&&s.wins>=5){title='Имя, которое запомнили';accent='готовиться к следующему испытанию.';}
+    if(s.stage>=2&&s.stage<7&&canAdvance(s)){title=stages[s.stage+1].name;accent='пора открыть новую главу.';}
+    const place=W.locations[s.world.location].name;
+    if(s.world.journey){title='В дороге к новой вехе';accent=W.locations[s.world.journey.destination].name;}
+    const objective=s.stage===0&&story[s.storyStep]?story[s.storyStep].goal:stages[s.stage].subtitle;
+    const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
+    return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
+  }
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

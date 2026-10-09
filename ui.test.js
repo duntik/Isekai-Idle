@@ -18,6 +18,7 @@ for (let stage = 0; stage < 8; stage++) {
   const context = { Isekai:E, IsekaiDataView:D, document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
   vm.runInNewContext(fs.readFileSync('game.js','utf8'), context);
   assert(element('navigation').innerHTML.includes('data-tab="world"'));
+  assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent));
   assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':E.stages[stage].name));
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');

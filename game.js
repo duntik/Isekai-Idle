@@ -24,7 +24,9 @@
   function render() {
     const stage = E.stages[s.stage], next = E.stages[s.stage];
     $('chapter').textContent = `ГЛАВА ${s.stage + 1} · ${stage.name.toUpperCase()}`;
-    $('hero-description').textContent = stage.subtitle;
+    const heading=E.heroHeading(s);
+    $('hero-title').innerHTML=h(`${heading.title}<br><em>${heading.accent}</em>`);
+    $('hero-description').textContent = heading.description;
     $('life').textContent = `✧ ${E.realmName(s.realm)}`; $('souls').textContent = `⚔ Сила ${fmt(E.power(s))}`; $('day').textContent = `◷ День ${Math.floor(s.age / 3600) + 1}`;
     const available = ['gold', 'herbs', ...(s.found ? ['qi', 'relics'] : []), ...(s.stage >= 2 ? ['reputation'] : []), ...(s.stage >= 3 ? ['wood', 'ore', 'pills', 'influence'] : []), ...(s.stage >= 4 ? ['supplies'] : []), ...(s.stage >= 5 ? ['cosmic', 'worlds'] : [])];
     const visible = [...new Set([...available,...Object.keys(E.names).filter(k=>s.resources[k]>0)])];
