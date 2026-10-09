@@ -2,17 +2,18 @@
   'use strict';
   const labels = {gold:'Монеты',herbs:'Травы',qi:'Духовная энергия',relics:'Осколки',reputation:'Репутация',wood:'Древесина',ore:'Руда',pills:'Пилюли',influence:'Влияние',supplies:'Припасы',cosmic:'Звёздная эссенция',worlds:'Миры'};
   const tabs = {hero:'Путь героя',combat:'Испытания',world:'Путешествия',sect:'Секта',city:'Город',planet:'Планета',galaxy:'Галактика',legacy:'Наследие',roadmap:'Горизонты'};
-  const activityLabels = {work:'Работать над заказом',explore:'Исследовать руины',train:'Тренировать тело',meditate:'Медитировать',technique:'Осваивать технику',mission:'Поручения секты',govern:'Управлять владениями',laws:'Постигать законы'};
+  const activityLabels = {work:'Работать над заказом',explore:'Исследовать местность',train:'Тренировать тело',meditate:'Медитировать',technique:'Осваивать технику',mission:'Поручения секты',govern:'Управлять владениями',laws:'Постигать законы'};
   const projectLabels = {dorm:'Обитель учеников',garden:'Духовный сад',market:'Торговый район',granary:'Склад снабжения',node:'Мировой узел',fleet:'Звёздный корабль',observatory:'Обсерватория законов'};
   const jobs = {herb:'Садовники',lumber:'Лесорубы',miner:'Рудокопы',alchemist:'Алхимики',disciple:'Ученики'};
   function render(s,tab,E) {
     const f = n=>n.toLocaleString(root.IsekaiLocale?.locale||'ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
-    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||value!=='work'||s.employment.order?.kind==='ledger')?'':'disabled'}>${label}</button>`;
+    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))?'':'disabled'}>${label}</button>`;
     const rows=[];
     const row=(name,value,note,operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
+      if(!E.activityRunning(s))row('Занятие','Приостановлено: смени место или занятие.');
       row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
       for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${t.source}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
@@ -29,7 +30,7 @@
         row('Спокойствие',`${f(s.calm)}/100`,'Растёт от медитации');
         for(const [k,c] of Object.entries(E.clicks).filter(([k])=>k!=='scout'||s.stage<2))row(c.name,s.clicks[k],`${c.desc}; выносливость −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
       }
-      for(const [k,a] of Object.entries(E.activities).filter(([,a])=>a.stage<=s.stage)) row(activityLabels[k],s.activity===k?'Активно':'Ожидание',Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие героя',btn('activity',k,'Назначить',s.activity!==k));
+      for(const [k,a] of Object.entries(E.activities).filter(([,a])=>a.stage<=s.stage)) row(activityLabels[k],s.activity===k?(E.activityRunning(s)?'Активно':'Приостановлено'):'Ожидание',a.desc+' '+Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие героя',btn('activity',k,'Назначить',s.activity!==k));
       if(s.stage>=1) {
         for(const [k,label] of Object.entries({balanced:'Равновесие',swift:'Быстрый шаг',piercing:'Пробивающий удар',ward:'Духовный заслон'})) row(label,s.style===k?'Выбран':'—','Боевой стиль',btn('style',k,'Применить'));
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
@@ -52,6 +53,7 @@
       const W=E.world,w=s.world,scene=W.current(s);
       row('Текущее место',W.locations[w.location].name,'Занятие продолжается в пути');
       row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
+      row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
       row('Переход',w.journey?`${W.locations[w.journey.destination].name}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна встреча');
       const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
       for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.name,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));

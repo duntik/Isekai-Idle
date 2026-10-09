@@ -36,7 +36,7 @@
       ['A basket for Lin','Lin recognizes her helper. Today she needs five ordinary herbs for the village clinic. She offers fair pay instead of repeating your first lesson.',['Trade 5 herbs for 12 coins','Discuss gathering spots']]
     ],
     city:[
-      ['Wei the librarian','Wei will not let you into the cultivation hall, but offers an old manuscript in exchange for help with the catalogue. You could keep your coins and take an unloading job instead.',['Pay 10 coins for access','Help at the warehouse']],
+      ['Wei the librarian','Wei, the city librarian, also keeps the Empty Sky archives. For 10 coins he grants access to an old manuscript. If you lack the money, help at the warehouse first and earn the reading fee.',['Pay 10 coins for access','Help at the warehouse']],
       ['An arrogant disciple','A youth in White Fang robes bumps your shoulder. “Commoner, watch your step!” His companions spread out around you. You can answer the insult, but you may lack the strength.',['Answer the insult and fight','Avoid the fight']],
       ['The alchemist’s shop','Ho the apothecary recognizes the forest herbs. He offers a rare pill for one shard, or a small job with leftover medicines as part of the pay.',['Trade a shard for a pill','Sort herbs in the shop']],
       ['Zhu the courier','Zhu is looking for help on the square: scrolls need delivering to the market stalls. This is a short city job, not a journey into dangerous lands.',['Deliver the scrolls','Ask about sect recruitment']],
@@ -51,12 +51,18 @@
       ['Tan the researcher','Tan copies inscriptions by the entrance. There is no need to touch the dangerous seal: help make an impression, or search the surface rubble.',['Help copy the symbols','Inspect the surface rubble']]
     ],
     mountains:[
-      ['A master at the cliff','Master Yun watches the clouds. He will show you a sword movement for some qi. Or help him gather ore and receive part of the haul without paying.',['Pay 10 qi for a lesson','Gather ore together']],
+      ['A mentor at the cliff','Mentor Yun of Cloud’s Edge watches the clouds. She will show you a sword movement for some qi. Or help her gather ore and receive part of the haul without paying.',['Pay 10 qi for a lesson','Gather ore together']],
       ['Guardian of the pass','The guardian demands proof that you deserve to pass. Spirit stone deposits lie behind him. The detour is longer but does not require a fight.',['Accept the guardian’s trial','Take the detour']],
       ['A quiet spring','A narrow cave hides a spring of pure energy. Calm your thoughts here, or fill a flask for future breakthroughs.',['Sit beside the spring','Collect spirit water']],
       ['Bo the miner','Bo rests by a marked, safe excavation. He offers ore in exchange for medicinal herbs. You do not need to fight the mountain guardian to make this trade.',['Trade 3 herbs for 8 ore','Rest beside the excavation']]
     ]
-  };for(const[location,list]of Object.entries(scenes))list.forEach((values,i)=>{const source=E.world.encounters[location][i];register(source,values,['title','text']);source.choices.forEach((c,j)=>pairs.push([c.label,values[2][j]]));});
+  };for(const[location,list]of Object.entries(scenes))list.forEach((values,i)=>{const source=E.world.encounters[location].find(e=>e.id===`${location}:${i}`);register(source,values,['title','text']);source.choices.forEach((c,j)=>pairs.push([c.label,values[2][j]]));});
+  const followups={
+    'village:road-return':['News from the city road','Mei heard that you refused to let the White Fang disciple drag you into a fight. “Sometimes saving your strength matters more than answering an insult.” The cart drivers offer a small delivery job, while Mei offers herbs for your journey.',['Help the cart drivers with a delivery','Accept herbs from Mei']],
+    'forest:sen-followup':['Sen keeps his word','Sen can walk on his own again. He recognizes the person who shared their herbs. “A debt is not forgotten. Here are supplies for your first breakthroughs.” Ask for medicine or a quiet breathing lesson. This continues your encounter rather than repeating the rescue.',['Accept medicinal herbs','Review the breathing method']],
+    'city:lin-delivery':['A note from Lin to Ho','Ho received a note from Lin: you supplied herbs to the village clinic. He will share medicine or pay for your help. Connections between people prove more useful than pure luck.',['Accept Ho’s pill','Collect payment for helping the clinic']],
+    'ruins:archive-clue':['Compare the temple symbols','Your acquaintance with Wei’s archives helps you recognize the symbol: the temple belonged to a network of spirit sources. This explains the shard’s warmth without granting instant power. Keep a sample or study the inscription calmly.',['Keep a sample of the seal','Study the inscription']]
+  };for(const[id,values]of Object.entries(followups)){const source=Object.values(E.world.encounters).flat().find(e=>e.id===id);register(source,values,['title','text']);source.choices.forEach((c,i)=>pairs.push([c.label,values[2][i]]));}
   const admissions={
     rescue:['Jade Grove · mentor Sen','Sen, whom you rescued in the forest, vouches for you. He will accept you as his personal disciple and give you 20 medicinal herbs when you join.'],
     remains:['Cloud’s Edge · mentor Yun','You will return the missing disciple’s remains. Yun is grateful for the chance to say goodbye and offers a place in her sword school. Her personal lesson grants +1 martial mastery when you join.'],

@@ -9,7 +9,7 @@ assert.equal(E.action(s, 'story'), true);
 E.action(s,'order','ledger');E.advance(s,180);E.action(s,'claim-order');assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'build', 'dorm'), false);
 assert.equal(E.action(s, 'advance'), false);
-E.action(s, 'activity', 'explore'); E.advance(s, 599); assert.equal(s.found, false);
+assert(E.action(s,'travel','ruins'));E.advance(s,60);assert(E.action(s, 'activity', 'explore')); E.advance(s, 599); assert.equal(s.found, false);
 E.advance(s, 1); assert.equal(s.found, true);
 while(s.body<5){E.advance(s,10);assert(E.action(s,'click','squat'));}
 assert.equal(E.action(s,'story'),true);
@@ -73,7 +73,7 @@ active.stamina=1;assert.equal(E.action(active,'click','run'),false);
 E.advance(active,20);assert(E.action(active,'click','run'));
 active.body=10;E.advance(active,1);assert.equal(E.action(active,'click','squat'),false);
 active.body=0;E.advance(active,250);assert.equal(active.stamina,100);
-active.explored=598;assert(E.action(active,'click','scout'));assert(active.found);
+active.world.location='ruins';active.explored=598;assert(E.action(active,'click','scout'));assert(active.found);
 E.advance(active,1);assert.equal(E.action(active,'click','scout'),false);
 assert.equal(E.action(active,'activity','train'),false);
 assert.equal(E.action(active,'click','breathe'),false);
