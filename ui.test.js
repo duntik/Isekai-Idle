@@ -30,7 +30,7 @@ for (let stage = 0; stage < 8; stage++) {
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
   let stored = JSON.stringify(state);
   let preference = view;
-  const context = { Isekai:E, IsekaiDataView:D, IsekaiQuotes:Q, document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
+  const context = { Isekai:E, IsekaiDataView:D, IsekaiQuotes:Q, IsekaiNames:require('./names.js'), document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
   vm.runInNewContext(fs.readFileSync('game.js','utf8'), context);
   assert(element('navigation').innerHTML.includes('data-tab="world"'));
   assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent));
@@ -53,6 +53,12 @@ for (let stage = 0; stage < 8; stage++) {
   assert.equal(context.document.documentElement.dataset.interface,preference);
   const after=JSON.parse(stored);assert.deepEqual(after.resources,before.resources);assert.equal(after.stage,before.stage);
   E.validate(JSON.parse(stored));
+  assert.equal(element('identity-panel').hidden,false);
+  const draft='Рэн Хосино';element('player-name-input').value=draft;
+  handlers.click({target:{closest:()=>({dataset:{nameStyle:'japanese'},disabled:false})}});assert.equal(element('player-name-input').value,draft);
+  handlers.click({target:{closest:()=>({dataset:{namePick:'0'},disabled:false})}});assert(require('./names.js').normalize(element('player-name-input').value));
+  element('player-name-input').value='<script>';element('identity-form').submit({preventDefault(){}});assert.equal(element('identity-panel').hidden,false);
+  element('player-name-input').value=draft;element('identity-form').submit({preventDefault(){}});assert.equal(element('identity-panel').hidden,true);assert.equal(element('player-name').textContent,draft);assert.equal(JSON.parse(stored).playerName,draft);
 }
 }
 console.log('PASS: both interfaces across all chapters, neutral labels, title, switching, preference persistence, unchanged progression');

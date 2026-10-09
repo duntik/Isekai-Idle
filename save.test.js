@@ -3,6 +3,7 @@ const assert=require('node:assert/strict');
 const E=require('./engine.js'), C=require('./save-code.js'), Cloud=require('./cloud.js');
 (async()=>{
   const s=E.fresh();s.events=[{text:'Первая находка: 空 ✧',day:1}];s.stage=3;s.population=3;s.found=true;s.activity='meditate';
+  assert(E.action(s,'name','Ли Юнь'));
   const code=await C.encode(s);assert(code.startsWith('II2.G.'));assert(code.length<Buffer.from(JSON.stringify(C.envelope(s))).toString('base64').length);
   assert.deepEqual(await C.decode(code,E),s);
   assert.deepEqual(await C.decode(JSON.stringify(s),E),s);

@@ -6,7 +6,7 @@
   function html(source){return language==='en'?source.split(/(<[^>]*>)/g).map(part=>part.startsWith('<')?part.replace(/(aria-label|title|placeholder)="([^"]*)"/g,(_,attr,value)=>`${attr}="${text(value)}"`):text(part)).join(''):source;}
   const originals=new WeakMap(),attributes=new WeakMap();
   function translateDOM(){if(!root.document?.createTreeWalker)return;const walker=document.createTreeWalker(document.body,4);let node;
-    while((node=walker.nextNode())){if(['SCRIPT','STYLE','TEXTAREA'].includes(node.parentElement?.tagName))continue;let entry=originals.get(node);if(!entry||node.nodeValue!==entry.last)entry={ru:node.nodeValue};entry.last=text(entry.ru);node.nodeValue=entry.last;originals.set(node,entry);}
+    while((node=walker.nextNode())){if(['SCRIPT','STYLE','TEXTAREA'].includes(node.parentElement?.tagName)||node.parentElement?.closest?.('[data-player-name]'))continue;let entry=originals.get(node);if(!entry||node.nodeValue!==entry.last)entry={ru:node.nodeValue};entry.last=text(entry.ru);node.nodeValue=entry.last;originals.set(node,entry);}
     document.querySelectorAll('[aria-label],[title],[placeholder]').forEach(el=>{let saved=attributes.get(el)||{};for(const attr of ['aria-label','title','placeholder'])if(el.hasAttribute(attr)){saved[attr]??=el.getAttribute(attr);el.setAttribute(attr,text(saved[attr]));}attributes.set(el,saved);});
   }
   function setLanguage(value){if(!['ru','en'].includes(value))return false;language=value;try{root.localStorage?.setItem('isekai-idle-language',value);}catch{}if(root.document){document.documentElement.lang=value;document.querySelectorAll('[data-language]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.language===value)));}return true;}

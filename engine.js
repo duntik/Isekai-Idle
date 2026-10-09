@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const W = typeof module !== 'undefined' && module.exports ? require('./world.js') : root.IsekaiWorld;
+  const N = typeof module !== 'undefined' && module.exports ? require('./names.js') : root.IsekaiNames;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -65,7 +66,7 @@
     cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='invitation'}
   };
-  const fresh = () => ({...baseFresh(), activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), playerName:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const techniqueCost=(s,k)=>({qi:20*2**(s.cultivation.learned[k]?.rank||0),herbs:5*2**(s.cultivation.learned[k]?.rank||0)});
   const techniqueNeeded=rank=>120*2**rank;
   const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return 1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0);};
@@ -93,6 +94,7 @@
   const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(!s.world.journey&&['village','city'].includes(s.world.location)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
+    if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
     if(type==='learn-technique'){if(!canLearn(s,value))return false;spend(s,techniqueCost(s,value));const t=s.cultivation.learned[value]||(s.cultivation.learned[value]={rank:0,progress:0});if(t.rank)t.progress-=techniqueNeeded(t.rank);t.rank++;if(!s.cultivation.active)s.cultivation.active=value;log(s,`Изучена техника: ${techniques[value].name}, ранг ${t.rank}.`);return true;}
     if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
     if (['travel','encounter','choice','apply-sect'].includes(type)) return W.action(s,type,value,api);
@@ -163,7 +165,7 @@
       spend(s, c); s.expedition = { kind: type, remaining: colonize ? 14400 : 7200 };
     } else if (type === 'rebirth') {
       if (s.stage < 7 || s.realm < 24) return false;
-      const next = fresh(); next.souls = s.souls + Math.max(1, Math.floor(s.realm / 6)); next.life = s.life + 1; Object.assign(s, next); log(s, 'Новая жизнь началась. Наследие души ускоряет развитие.');
+      const next = fresh(); next.playerName=s.playerName; next.souls = s.souls + Math.max(1, Math.floor(s.realm / 6)); next.life = s.life + 1; Object.assign(s, next); log(s, 'Новая жизнь началась. Наследие души ускоряет развитие.');
     } else return false;
     return true;
   }
@@ -211,12 +213,13 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName'].includes(k)) base[k] = input[k];
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay};}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
     base.world=W.validate(input.world,input.stage);
+    if(input.playerName!==undefined&&input.playerName!==null){const name=N.normalize(input.playerName);if(!name)throw Error('Неверное имя героя');base.playerName=name;}
     if(input.cultivation!==undefined){const c=input.cultivation;if(!c||!c.learned||typeof c.learned!=='object'||Array.isArray(c.learned))throw Error('Неверные техники');
       for(const[k,t]of Object.entries(c.learned)){if(!Object.hasOwn(techniques,k)||!t||!Number.isInteger(t.rank)||t.rank<1||t.rank>5||!Number.isFinite(t.progress)||t.progress<0||t.progress>techniqueNeeded(t.rank))throw Error('Неверное освоение');base.cultivation.learned[k]={rank:t.rank,progress:t.progress};}
       if(c.active!==null&&!base.cultivation.learned[c.active])throw Error('Неверная активная техника');base.cultivation.active=c.active;

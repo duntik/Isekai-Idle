@@ -3,6 +3,13 @@
   const E = Isekai, KEY = 'isekai-idle-v2', $ = id => document.getElementById(id);
   const L=typeof IsekaiLocale!=='undefined'?IsekaiLocale:null,t=value=>L?L.text(value):value,h=value=>L?L.html(value):value;
   const quotes=typeof IsekaiQuotes!=='undefined'?IsekaiQuotes.createRotator():null;
+  const N=IsekaiNames;
+  let nameStyle='cultivation',nameOptions=[];
+  function refreshNames(){
+    nameOptions=N.suggestions(nameStyle,L?.language||'ru');
+    $('name-suggestions').innerHTML=nameOptions.map((name,i)=>`<button type="button" data-name-pick="${i}" data-player-name>${name}</button>`).join('');
+    document.querySelectorAll('[data-name-style]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.nameStyle===nameStyle)));
+  }
   let s = E.fresh(), tab = 'hero', storageWarning = false;
   let saves;
   let view = 'visual';
@@ -21,8 +28,11 @@
   let toastTimer;
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
   function save(manual = false) { try { localStorage.setItem(KEY, JSON.stringify(s)); if (manual) toast('Прогресс сохранён'); } catch { if (manual) toast('Не удалось сохранить. Используй экспорт.'); } }
-  function tick() { const now = Date.now(); E.advance(s, Math.max(0, (now - s.last) / 1000)); s.last = now; }
+  function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0;E.advance(s,pending?0:elapsed);s.last=now;return pending?0:elapsed; }
   function render() {
+    $('identity-panel').hidden=!!s.playerName;
+    document.documentElement.dataset.naming=s.playerName?'complete':'required';
+    $('player-name').textContent=s.playerName||'';
     const stage = E.stages[s.stage], next = E.stages[s.stage];
     $('chapter').textContent = `ГЛАВА ${s.stage + 1} · ${stage.name.toUpperCase()}`;
     const heading=E.heroHeading(s);
@@ -96,7 +106,10 @@
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();
-    if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();}
+    if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();refreshNames();}
+    if(b.dataset.nameStyle&&N.styles[b.dataset.nameStyle]){nameStyle=b.dataset.nameStyle;refreshNames();}
+    if(b.id==='random-names')refreshNames();
+    if(b.dataset.namePick!==undefined&&nameOptions[Number(b.dataset.namePick)]){$('player-name-input').value=nameOptions[Number(b.dataset.namePick)];$('identity-error').textContent='';}
     if (['visual','data'].includes(b.dataset.view)) { view = b.dataset.view; try { localStorage.setItem('isekai-idle-interface',view); } catch {} applyView(); }
     if (b.dataset.tab) tab = b.dataset.tab;
     if (b.dataset.action) { if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); } if (E.action(s,b.dataset.action,b.dataset.value)) save(); else toast('Условия пока не выполнены'); }
@@ -105,8 +118,14 @@
     if (s.stage === 0 && !['hero','combat','world','roadmap'].includes(tab)) tab = 'hero'; render();
   });
   $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const text=await file.text();const loaded = typeof IsekaiSaveCode !== 'undefined' ? await IsekaiSaveCode.decode(text,E) : E.validate(JSON.parse(text)); if(saves) saves.replace(loaded,'Импорт файла'); else if (confirm(t('Заменить текущий прогресс?'))) { s = loaded; tick(); tab = 'hero'; save(); render(); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
+  $('identity-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    if(!E.action(s,'name',$('player-name-input').value)){$('identity-error').textContent=t('Введи имя от 2 до 40 символов без необычных знаков.');return;}
+    $('identity-error').textContent='';save();render();
+  });
   if (!s.events.length) E.log(s,E.stages[0].intro);
-  const elapsed = Math.max(0,(Date.now()-s.last)/1000); tick(); if (elapsed > 60) E.log(s,`Офлайн: занятие продолжалось ${duration(Math.min(elapsed,86400))}.`);
+  const elapsed = Math.max(0,(Date.now()-s.last)/1000); const progressed=tick(); if (elapsed > 60&&progressed>0) E.log(s,`Офлайн: занятие продолжалось ${duration(Math.min(elapsed,86400))}.`);
+  refreshNames();
   applyView(); render(); save(); if (storageWarning) toast(view === 'data' ? 'Предыдущая запись недоступна для текущей версии.' : 'Новая система использует сохранения v2. Старое сохранение v1 остаётся в браузере.');
   if(L)L.setLanguage(L.language);
   if(typeof IsekaiSaves !== 'undefined') saves=IsekaiSaves.init({get:()=>{tick();return E.validate(JSON.parse(JSON.stringify(s)));},set:state=>{s=E.validate(state);tick();tab='hero';save();render();}});

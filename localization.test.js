@@ -6,7 +6,7 @@ function boot(state,view='visual',language='en'){
   const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(state)],['isekai-idle-interface',view],['isekai-idle-language',language]]);
   const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(){}});return elements.get(id);};
   const context=vm.createContext({Isekai:E,document:{documentElement:{dataset:{}},querySelectorAll:()=>[],getElementById:element,addEventListener:(t,f)=>handlers[t]=f,createElement:()=>({append(){},click(){}}),createTextNode:t=>t},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},confirm:()=>true});
-  for(const path of ['event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
+  for(const path of ['names.js','event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
   return {context,element,handlers,storage};
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
@@ -46,7 +46,8 @@ const index=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/scri
 if(missing.size){console.log('Untranslated text:',JSON.stringify([...missing],null,2));throw Error(`${missing.size} untranslated text fragments`);}
 assert.equal(L.html('<button data-action="choice" data-value="heal">Выбрать</button>'),'<button data-action="choice" data-value="heal">Choose</button>');
 // Static DOM text reverses on a language switch; editable save codes are untouched.
-const nodes=[{nodeValue:'Монеты',parentElement:{tagName:'SPAN'}},{nodeValue:'код Монеты',parentElement:{tagName:'TEXTAREA'}}];
+const nodes=[{nodeValue:'Монеты',parentElement:{tagName:'SPAN'}},{nodeValue:'код Монеты',parentElement:{tagName:'TEXTAREA'}},{nodeValue:'Монеты',parentElement:{tagName:'SPAN',closest:()=>({})}}];
 sample.document.body={};sample.document.createTreeWalker=()=>{let i=0;return {nextNode:()=>nodes[i++]||null};};
 L.translateDOM();assert.equal(nodes[0].nodeValue,'Coins');assert.equal(nodes[1].nodeValue,'код Монеты');L.setLanguage('ru');L.translateDOM();assert.equal(nodes[0].nodeValue,'Монеты');
+assert.equal(nodes[2].nodeValue,'Монеты');
 console.log('PASS: English and Russian switching, both interfaces, every chapter and encounter, static UI, persistence and unchanged progression');
