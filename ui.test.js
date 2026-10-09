@@ -17,7 +17,7 @@ for (let stage = 0; stage < 8; stage++) {
   assert(element('content').innerHTML.includes(view==='data'?'Показатели и операции':E.stages[stage].name));
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');
-  const tabs = ['hero','combat','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
+  const tabs = ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
   for (const tab of tabs) {
     handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});
     const html=element('content').innerHTML;

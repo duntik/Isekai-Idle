@@ -1,7 +1,7 @@
 (function(root) {
   'use strict';
   const labels = { gold:'Бюджет', herbs:'Сырьё A', qi:'Резерв', relics:'Компоненты', reputation:'Рейтинг', wood:'Материал B', ore:'Материал C', pills:'Продукт', influence:'Охват', supplies:'Запасы', cosmic:'Потенциал', worlds:'Объекты' };
-  const tabs = {hero:'Обзор',combat:'Проверки',sect:'Персонал',city:'Логистика',planet:'Сеть',galaxy:'Развёртывание',legacy:'Архив',roadmap:'Этапы'};
+  const tabs = {hero:'Обзор',combat:'Проверки',world:'Маршруты',sect:'Персонал',city:'Логистика',planet:'Сеть',galaxy:'Развёртывание',legacy:'Архив',roadmap:'Этапы'};
   const activityLabels = {work:'Обработка заявок',explore:'Сбор исходных данных',train:'Подготовка',meditate:'Анализ',technique:'Оптимизация',mission:'Внутренние задачи',govern:'Координация',laws:'Моделирование'};
   const projectLabels = {dorm:'Расширение штата',garden:'Источник сырья',market:'Транспортный отдел',granary:'Склад',node:'Сетевой узел',fleet:'Транспортная единица',observatory:'Аналитический центр'};
   const jobs = {herb:'Сырьё A',lumber:'Материал B',miner:'Материал C',alchemist:'Производство',disciple:'Координация'};
@@ -43,6 +43,17 @@
       row('Рекомендуемый профиль',{swift:'A',armored:'B',mystic:'C'}[E.enemy(s).type],'Соответствие даёт +35%');
       row('Интервал',`${Math.ceil(s.cooldown)} сек`,'Пять минут после успешной проверки');
       row('Результат',s.wins,`Бюджет +${f(30*1.8**s.wins)}; сырьё A +${(s.wins+1)*10}; компоненты +1`);
+    }
+    if(tab==='world') {
+      const W=E.world,w=s.world,scene=W.current(s);
+      row('Текущий участок',W.locations[w.location].neutral,'Процесс продолжается на маршруте');
+      row('Переход',w.journey?`${W.locations[w.journey.destination].neutral}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна операция');
+      const bonuses={village:'Подготовка +10%',forest:'Сырьё A при сборе +50%',city:'Бюджет при обработке +50%',ruins:'Компоненты при сборе +50%',mountains:'Анализ +20%'};
+      for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.neutral,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
+      row('Локальная операция',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
+      if(scene)for(const c of scene.choices)row(c.neutral,c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${c.danger&&E.power(s)<c.danger?'Сбой: потеря 50% запасов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.mentor?'Постоянная оптимизация. ':''}${c.explore?`Данные +${c.explore} сек. `:''}${c.restore?'Восстановление лимита. ':''}${c.body?`Подготовка +${c.body}. `:''}${c.calm?`Концентрация +${c.calm}. `:''}${c.mastery?`Оптимизация +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',E.affordable(s,c.cost||{})));
+      row('Оптимизации',w.mentors.length,'A: подготовка +15%; B: сырьё +20%; C: анализ +10%; D: анализ +15%; E: оптимизация +15%');
+      row('Восстановления',w.deaths,'После сбоя теряется 50% переносимых запасов; показатели, контур, персонал, охват и объекты сохраняются');
     }
     if(tab==='sect') {
       const c={reputation:20*(s.study+1),gold:100*(s.study+1)};

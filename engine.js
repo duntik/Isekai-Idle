@@ -1,5 +1,6 @@
 (function (root) {
   'use strict';
+  const W = typeof module !== 'undefined' && module.exports ? require('./world.js') : root.IsekaiWorld;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -48,7 +49,8 @@
     { title: 'Первый прорыв', text: 'Травы горчат. Каждый вдох заставляет осколок отвечать слабым теплом. Ты снова и снова теряешь ощущение потока, пока однажды оно не остаётся. Жэнь впервые смотрит на тебя серьёзно: «Теперь это твоя сила. И твоя ответственность».', goal: 'Заполнить понимание, собрать травы и совершить первый прорыв.', ready: s => s.realm >= 1, reward: { herbs: 10 }, button: 'Принять наставление' },
     { title: 'За право идти дальше', text: 'На дороге человек с повязкой Белого Клыка отбирает плату у возчиков. Ты узнаёшь телегу, на которой приехал. На этот раз ты можешь вмешаться. После победы Мэй вручает письмо: через горный перевал набирают новых учеников. А побеждённый обещает, что его старший брат тебя запомнит.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Взять письмо и собраться в путь' }
   ];
-  const fresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const fresh = () => ({...baseFresh(), world:W.fresh()});
   const log = (s, text) => { s.events.unshift({ text, day: Math.floor(s.age / 3600) + 1 }); s.events = s.events.slice(0, 30); };
   const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2);
   const needed = s => Math.ceil(60 * 2 ** s.realm);
@@ -63,12 +65,14 @@
   const canClick = (s,k) => !!clicks[k] && s.stage < 2 && s.clickCooldown <= 0 && s.stamina >= clicks[k].stamina && (!(clicks[k].body && !clicks[k].gold) || s.body < 10*(s.realm+1)) && (k !== 'breathe' || s.calm < 100 || (s.found && s.xp < needed(s))) && (k !== 'scout' || !s.found);
   function discover(s) { if (!s.found && s.explored >= 600) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
+    if (['travel','encounter','choice'].includes(type)) return W.action(s,type,value,api);
     if (type === 'click') {
       if (!canClick(s,value)) return false;
       const c=clicks[value];s.stamina-=c.stamina;s.clickCooldown=.6;s.clicks[value]++;
-      s.body=Math.min(10*(s.realm+1),s.body+(c.body||0));s.calm=Math.min(100,s.calm+(c.calm||0));
-      s.resources.gold+=c.gold||0;s.resources.herbs+=c.herbs||0;
-      if(s.found){s.xp=Math.min(needed(s),s.xp+(c.xp||0));s.resources.qi+=c.qi||0;}
+      const mentors=s.world.mentors;
+      s.body=Math.min(10*(s.realm+1),s.body+(c.body||0)*(mentors.includes('trainer')?1.15:1));s.calm=Math.min(100,s.calm+(c.calm||0));
+      s.resources.gold+=c.gold||0;s.resources.herbs+=(c.herbs||0)*(mentors.includes('herbalist')?1.2:1);
+      if(s.found){s.xp=Math.min(needed(s),s.xp+(c.xp||0)*(mentors.includes('breathing')?1.1:1)*(mentors.includes('scholar')?1.15:1));s.resources.qi+=c.qi||0;}
       s.explored+=c.explore||0;discover(s);
     } else if (type === 'story') {
       const beat=story[s.storyStep];if(s.stage!==0||!beat||!beat.ready(s))return false;
@@ -125,13 +129,13 @@
   function advance(s, seconds) {
     let left = Math.max(0, Math.min(seconds, 86400));
     while (left > 0) {
-      const dt = Math.min(left, 10); left -= dt; const a = activities[s.activity], mult = speed(s);
+      const dt = Math.min(left, 10, s.world.journey?.remaining || Infinity); left -= dt; const a = activities[s.activity], mult = speed(s), wb = W.bonus(s);
       s.stamina=Math.min(100,s.stamina+.4*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
       s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
-      for (const [k, v] of Object.entries(a.rates || {})) if(k!=='qi'||s.found)s.resources[k] += v * mult * dt;
-      s.body = Math.min(10 * (s.realm + 1), s.body + (a.body || 0) * mult * dt);
-      s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt);
-      if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || (s.stage === 0 ? .015 : 0)) * mult * dt);
+      for (const [k, v] of Object.entries(a.rates || {})) if(k!=='qi'||s.found)s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1);
+      s.body = Math.min(10 * (s.realm + 1), s.body + (a.body || 0) * mult * dt * wb.body);
+      s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery);
+      if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || (s.stage === 0 ? .015 : 0)) * mult * dt * wb.xp);
       if (s.activity === 'explore') { s.explored += dt; discover(s); }
       if (s.stage >= 3) {
         s.resources.herbs += (s.workers.herb * .04 + s.buildings.garden * .06) * dt;
@@ -145,6 +149,7 @@
       }
       if (s.stage >= 5) s.resources.cosmic += (s.buildings.node * .015 + s.resources.worlds * .01) * dt;
       if (s.expedition) { s.expedition.remaining -= dt; if (s.expedition.remaining <= 0) { s.resources.worlds++; s.resources.cosmic += 80; log(s, s.expedition.kind === 'portal' ? 'Портал закреплён: новый мир присоединился к твоей сети.' : 'Колония основана. Флот вернулся из звёздного похода.'); s.expedition = null; } }
+      W.advance(s,dt,api);
       s.age += dt; s.cooldown = Math.max(0, s.cooldown - dt);
     }
   }
@@ -163,12 +168,13 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world'].includes(k)) base[k] = input[k];
+    base.world=W.validate(input.world,input.stage);
     base.routes = input.routes.map(r => ({ remaining: r.remaining })); base.expedition = input.expedition ? { kind: input.expedition.kind, remaining: input.expedition.remaining } : null;
     if (!Array.isArray(input.events)) throw Error('Неверная хроника'); base.events = input.events.filter(e => e && typeof e.text === 'string' && Number.isFinite(e.day)).slice(0, 30).map(e => ({ text: e.text.slice(0, 500), day: e.day }));
     return base;
   }
   const realmName = n => `${['Смертный', 'Пробуждение', 'Сбор энергии', 'Основание', 'Духовное ядро', 'Пробуждение души', 'Небесный путь', 'Звёздный дух', 'Закон пространства'][Math.min(8, Math.floor((n + 2) / 3))]} · ступень ${n}`;
-  const api = { stages, names, activities, projects, jobs, clicks, story, canClick, canAdvance, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName };
+  const api = { world:W, stages, names, activities, projects, jobs, clicks, story, canClick, canAdvance, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
