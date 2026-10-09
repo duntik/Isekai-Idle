@@ -2,6 +2,13 @@
   'use strict';
   const E = Isekai, KEY = 'isekai-idle-v2', $ = id => document.getElementById(id);
   let s = E.fresh(), tab = 'hero', storageWarning = false;
+  let view = 'visual';
+  try { if (localStorage.getItem('isekai-idle-interface') === 'data') view = 'data'; } catch {}
+  function applyView() {
+    document.documentElement.dataset.interface = view;
+    document.title = view === 'data' ? 'Сводные данные' : 'Isekai Idle — новая жизнь';
+    document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  }
   try { const raw = localStorage.getItem(KEY); if (raw) s = E.validate(JSON.parse(raw)); else if (localStorage.getItem('isekai-idle-v1')) storageWarning = true; } catch { storageWarning = true; }
   const fmt = n => n.toLocaleString('ru-RU', { maximumFractionDigits: n < 10 ? 2 : 0 });
   const duration = seconds => seconds >= 3600 ? `${fmt(seconds / 3600)} ч` : `${Math.ceil(seconds / 60)} мин`;
@@ -18,9 +25,9 @@
     $('hero-description').textContent = stage.subtitle;
     $('life').textContent = `✧ ${E.realmName(s.realm)}`; $('souls').textContent = `⚔ Сила ${fmt(E.power(s))}`; $('day').textContent = `◷ День ${Math.floor(s.age / 3600) + 1}`;
     const visible = ['gold', 'herbs', ...(s.found ? ['qi', 'relics'] : []), ...(s.stage >= 2 ? ['reputation'] : []), ...(s.stage >= 3 ? ['wood', 'ore', 'pills', 'influence'] : []), ...(s.stage >= 4 ? ['supplies'] : []), ...(s.stage >= 5 ? ['cosmic', 'worlds'] : [])];
-    $('resources').innerHTML = visible.map(k => `<div class="resource"><div class="label">${E.names[k]}</div><div class="value">${fmt(s.resources[k])}</div></div>`).join('');
+    $('resources').innerHTML = view === 'data' ? `<div class="table-scroll"><table class="data-table resource-table"><caption>Текущие показатели</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th></tr></thead><tbody>${visible.map(k => `<tr><th scope="row">${IsekaiDataView.labels[k]}</th><td>${fmt(s.resources[k])}</td></tr>`).join('')}</tbody></table></div>` : visible.map(k => `<div class="resource"><div class="label">${E.names[k]}</div><div class="value">${fmt(s.resources[k])}</div></div>`).join('');
     const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['sect', 'Секта', 2], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
-    $('navigation').innerHTML = tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''}" data-tab="${id}">${title}</button>`).join('');
+    $('navigation').innerHTML = tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''}" data-tab="${id}">${view === 'data' ? IsekaiDataView.tabs[id] : title}</button>`).join('');
     let html = '';
     if (tab === 'hero') {
       const need = E.needed(s), bc = E.breakthroughCost(s);
@@ -41,22 +48,23 @@
     if (tab === 'galaxy') html = `<h2>Звёздная экспансия</h2><p class="intro">Для освоения следующего мира нужен флот из ${s.resources.worlds + 1} кораблей. Расширяй снабжение города и строй корабли из руды и эссенции.</p>${projects([6,7])}<div class="rebirth"><h3>Колониальный поход</h3><p>Поход занимает 4 часа; основание колонии добавляет мир и 80 эссенции.</p>${expedition()}${button('colonize', '', 'Отправить флот · 60 эссенции, 100 припасов', !s.expedition && s.buildings.fleet >= s.resources.worlds+1 && E.affordable(s,{cosmic:60,supplies:100}))}</div>`;
     if (tab === 'legacy') html = `<h2>Наследие души</h2><p class="intro">Жизнь ${s.life} · Души ${s.souls} · Постоянный бонус ${s.souls * 10}%.</p><div class="rebirth"><h3>Новый круг</h3><p>После 24-й ступени можно переродиться. Все владения, ресурсы и навыки сбросятся. Останутся души: +${Math.max(1, Math.floor(s.realm/6))}, каждая ускоряет личное развитие на 10%.</p>${button('rebirth', '', 'Переродиться', s.realm >= 24)}</div>`;
     if (tab === 'roadmap') html = `<h2>За пределами горизонта</h2><p class="intro">Каждая глава открывает новый способ играть. Предыдущие системы остаются и снабжают следующие. Переходы требуют развития и испытаний, а не календарного ожидания.</p><div class="cards">${E.stages.map((st,i)=>card(`${i < s.stage ? '✓' : i === s.stage ? '●' : '◇'} ${st.name}`, st.subtitle, `<small>${i === s.stage ? 'Текущая глава' : i < s.stage ? 'Пройдена' : `Откроется после главы ${i}`}</small>`)).join('')}</div>`;
-    $('content').innerHTML = html;
+    $('content').innerHTML = view === 'data' ? IsekaiDataView.render(s, tab, E) : html;
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = `ДЕНЬ ${e.day}`; div.append(small, document.createTextNode(e.text)); return div; }));
   }
   function projects(levels) { return `<div class="cards">${Object.entries(E.projects).filter(([, p])=>levels.includes(p.stage) && p.stage <= s.stage).map(([k,p])=>card(`${p.name} · ${s.buildings[k]}`,p.desc,button('build',k,'Построить',E.affordable(s,E.buildCost(s,k))),costs(E.buildCost(s,k)))).join('')}</div>`; }
   function expedition() { return s.expedition ? `<p class="intro">Экспедиция в пути: осталось ${duration(s.expedition.remaining)}. Порталы и флот используют один слот экспедиции.</p>` : ''; }
   document.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();
+    if (['visual','data'].includes(b.dataset.view)) { view = b.dataset.view; try { localStorage.setItem('isekai-idle-interface',view); } catch {} applyView(); }
     if (b.dataset.tab) tab = b.dataset.tab;
-    if (b.dataset.action) { if (b.dataset.action === 'rebirth' && !confirm('Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.')) return; if (E.action(s,b.dataset.action,b.dataset.value)) save(); else toast('Условия пока не выполнены'); }
+    if (b.dataset.action) { if (b.dataset.action === 'rebirth' && !confirm(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.')) return; if (E.action(s,b.dataset.action,b.dataset.value)) save(); else toast('Условия пока не выполнены'); }
     if (b.id === 'save') save(true);
-    if (b.id === 'export') { const url = URL.createObjectURL(new Blob([JSON.stringify(s)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = 'isekai-idle-v2.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+    if (b.id === 'export') { const url = URL.createObjectURL(new Blob([JSON.stringify(s)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = view === 'data' ? 'data-snapshot.json' : 'isekai-idle-v2.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','roadmap'].includes(tab)) tab = 'hero'; render();
   });
   $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const loaded = E.validate(JSON.parse(await file.text())); if (confirm('Заменить текущий прогресс?')) { s = loaded; tick(); tab = 'hero'; save(); render(); toast('Сохранение импортировано'); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
   if (!s.events.length) E.log(s,E.stages[0].intro);
   const elapsed = Math.max(0,(Date.now()-s.last)/1000); tick(); if (elapsed > 60) E.log(s,`Офлайн: занятие продолжалось ${duration(Math.min(elapsed,86400))}.`);
-  render(); save(); if (storageWarning) toast('Новая система использует сохранения v2. Старое сохранение v1 остаётся в браузере.');
+  applyView(); render(); save(); if (storageWarning) toast(view === 'data' ? 'Предыдущая запись недоступна для текущей версии.' : 'Новая система использует сохранения v2. Старое сохранение v1 остаётся в браузере.');
   setInterval(()=>{tick();render();},1000); setInterval(()=>save(),10000); window.addEventListener('pagehide',()=>{tick();save();});
 })();

@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="ru">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101b21"><title>Isekai Idle — новая жизнь</title><link rel="stylesheet" href="style.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101b21"><title>Isekai Idle — новая жизнь</title><script>try{if(localStorage.getItem('isekai-idle-interface')==='data'){document.documentElement.dataset.interface='data';document.title='Сводные данные';}}catch{}</script><link rel="stylesheet" href="style.css"></head>
 <body>
-<header><a class="brand" href="./">✧ ISEKAI <span>IDLE</span></a><div class="header-meta">Хроники другого мира <button id="save">Сохранить</button></div></header>
+<header><a class="brand" href="./"><span class="world-brand">✧ ISEKAI IDLE</span><span class="data-brand">Сводные данные</span></a><div class="header-meta"><div class="view-switch" role="group" aria-label="Оформление"><button data-view="visual" aria-pressed="true">Визуальный</button><button data-view="data" aria-pressed="false">Табличный</button></div><button id="save">Сохранить</button></div></header>
 <main>
 <section class="hero"><div><div class="eyebrow" id="chapter">ГЛАВА I · БЕЗВЕСТНЫЙ ЧУЖАК</div><h1>От слабейшего<br><em>до границ мироздания.</em></h1><p id="hero-description">Выжить и найти свой путь</p><div class="hero-tags"><span id="life"></span><span id="souls"></span><span id="day"></span></div></div><div class="portal" aria-hidden="true"><div class="stars">✦</div><div class="portal-inner">⟡</div><div class="land">ПУТЬ ПУСТОГО НЕБА</div></div></section>
 <section class="resources" id="resources" aria-label="Ресурсы"></section>
 <div class="layout"><aside><div class="eyebrow">ТВОЙ ПУТЬ</div><nav id="navigation" aria-label="Разделы игры"></nav><div class="aside-note">«За каждой вершиной открывается новое небо.»<small>— Техника Пустого Неба</small></div><button id="export">Экспорт сохранения</button><label class="import">Импорт сохранения<input type="file" id="import" accept="application/json"></label></aside>
 <section id="content"></section><aside class="journal"><div class="eyebrow">ХРОНИКА</div><h3>История твоего мира</h3><div id="journal"></div><div class="tip">Выбранное занятие, производство и экспедиции продолжаются офлайн до 24 часов. Один игровой день — час развития.</div></aside></div>
 <footer>ISEKAI IDLE <span>Маленькие шаги. Большие миры.</span><span>Прототип · v0.2</span></footer>
-</main><div role="status" id="toast"></div><script src="engine.js"></script><script src="game.js"></script>
+</main><div role="status" id="toast"></div><script src="engine.js"></script><script src="data-view.js"></script><script src="game.js"></script>
 </body></html>
