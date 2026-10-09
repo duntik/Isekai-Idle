@@ -8,12 +8,13 @@
   function render(s,tab,E) {
     const f = n=>n.toLocaleString('ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
-    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='activity'||value!=='work'||s.employment.order?.kind==='ledger')?'':'disabled'}>${label}</button>`;
+    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||value!=='work'||s.employment.order?.kind==='ledger')?'':'disabled'}>${label}</button>`;
     const rows=[];
     const row=(name,value,note,operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
       row('Контур',`${s.stage+1} / 8`,'Текущий этап обработки');
+      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(`Метод ${Object.keys(E.techniques).indexOf(k)+1}`,`${learned?.rank||0}/5`,`${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}; коэффициент растёт с уровнем`,btn('learn-technique',k,learned?'Повысить':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активен':'Применить',s.cultivation.active!==k):''));}
       row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
       row('Подготовка',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
       row('Оптимизация',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Коэффициент обработки: ${f(E.speed(s))}`);

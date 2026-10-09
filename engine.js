@@ -55,11 +55,25 @@
     { title: 'За право идти дальше', text: 'На дороге человек с повязкой Белого Клыка отбирает плату у возчиков. Ты узнаёшь телегу, на которой приехал. На этот раз ты можешь вмешаться. После победы Мэй даёт адрес городского представительства сект: туда можно прийти на общий набор. Но на лесных тропах и в храме можно найти другой путь и своего наставника. Побеждённый обещает, что его старший брат тебя запомнит.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Узнать о наборе и собраться в путь' }
   ];
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
-  const fresh = () => ({...baseFresh(), activity:'meditate', world:W.fresh(), employment:{completed:0,order:null}});
+  const techniques={
+    sky:{name:'Сутра Пустого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
+    stance:{name:'Корни камня',source:'Урок Жэня в деревне',desc:'Тело от кликов +8% за ранг.',effect:'body',available:s=>s.world.mentors.includes('trainer')},
+    herb:{name:'Слух зелёных жил',source:'Помощь Линь в лесу',desc:'Травы при исследовании +8% за ранг.',effect:'herbs',available:s=>s.world.mentors.includes('herbalist')},
+    breath:{name:'Дыхание тихой реки',source:'Спасение Сэня в лесу',desc:'Энергия от медитации +8% за ранг.',effect:'qi',available:s=>s.world.mentors.includes('breathing')},
+    sword:{name:'Меч облачного перевала',source:'Урок Юня в горах',desc:'Боевая сила +8% за ранг.',effect:'power',available:s=>s.world.mentors.includes('swordsman')},
+    grove:{name:'Нефритовый круг',source:'Ученичество в Нефритовой Роще',desc:'Травы при исследовании +8% и энергия медитации +4% за ранг.',effect:'herbs',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='rescue'},
+    cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
+    seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='invitation'}
+  };
+  const fresh = () => ({...baseFresh(), activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const techniqueCost=(s,k)=>({qi:20*2**(s.cultivation.learned[k]?.rank||0),herbs:5*2**(s.cultivation.learned[k]?.rank||0)});
+  const techniqueNeeded=rank=>120*2**rank;
+  const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return 1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0);};
+  const canLearn=(s,k)=>Object.hasOwn(techniques,k)&&(techniques[k].available(s)||!!s.cultivation.learned[k])&&affordable(s,techniqueCost(s,k))&&(!s.cultivation.learned[k]||(s.cultivation.learned[k].rank<5&&s.cultivation.learned[k].progress>=techniqueNeeded(s.cultivation.learned[k].rank)));
   const log = (s, text) => { s.events.unshift({ text, day: Math.floor(s.age / 3600) + 1 }); s.events = s.events.slice(0, 30); };
   const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2);
   const needed = s => Math.ceil(60 * 2 ** s.realm);
-  const power = s => Math.floor((8 + s.body * 2 + s.mastery * 3 + s.weapon * 12) * 1.55 ** s.realm);
+  const power = s => Math.floor((8 + s.body * 2 + s.mastery * 3 + s.weapon * 12) * 1.55 ** s.realm * techniqueBonus(s,'power'));
   const enemy = s => ({ name: ['Дорожный разбойник', 'Страж руин', 'Ученик Белого Клыка', 'Первый соперник', 'Внутренний ученик', 'Наследник клана', 'Старейшина соперников', 'Чемпион долины', 'Лорд приграничья', 'Владыка города', 'Хранитель континента', 'Небесный посланник', 'Владыка океанов', 'Страж мирового ядра', 'Звёздный захватчик', 'Лорд спутника', 'Пожиратель миров', 'Страж портала', 'Чемпион звёзд', 'Владыка системы', 'Адмирал пустоты', 'Галактический претендент', 'Хранитель законов', 'Древний бессмертный', 'Судья пространства', 'Страж вечности'][s.wins] || 'Эхо бесконечности', power: Math.floor(18 * 1.75 ** s.wins), type: ['swift', 'armored', 'mystic'][s.wins % 3] });
   const battlePower = s => power(s) * (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[enemy(s).type] === s.style ? 1.35 : 1);
   const affordable = (s, c) => Object.entries(c).every(([k, v]) => s.resources[k] >= v);
@@ -70,6 +84,8 @@
   const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found)) && (!['sweep','haul'].includes(k)||(s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
+    if(type==='learn-technique'){if(!canLearn(s,value))return false;spend(s,techniqueCost(s,value));const t=s.cultivation.learned[value]||(s.cultivation.learned[value]={rank:0,progress:0});if(t.rank)t.progress-=techniqueNeeded(t.rank);t.rank++;if(!s.cultivation.active)s.cultivation.active=value;log(s,`Изучена техника: ${techniques[value].name}, ранг ${t.rank}.`);return true;}
+    if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
     if (['travel','encounter','choice','apply-sect'].includes(type)) return W.action(s,type,value,api);
     if(type==='order'){
       if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value)};
@@ -84,7 +100,7 @@
       if (!canClick(s,value)) return false;
       const c=clicks[value];s.stamina-=c.stamina;s.clickCooldown=.6;s.clicks[value]++;
       const mentors=s.world.mentors;
-      s.body=Math.min(10*(s.realm+1),s.body+(c.body||0)*W.bonus(s).body);s.calm=Math.min(100,s.calm+(c.calm||0));
+      s.body=Math.min(10*(s.realm+1),s.body+(c.body||0)*W.bonus(s).body*techniqueBonus(s,'body'));s.calm=Math.min(100,s.calm+(c.calm||0));
       s.resources.gold+=c.gold||0;s.resources.herbs+=(c.herbs||0)*(mentors.includes('herbalist')?1.2:1);
       if(s.found){s.xp=Math.min(needed(s),s.xp+(c.xp||0)*(mentors.includes('breathing')?1.1:1)*(mentors.includes('scholar')?1.15:1));s.resources.qi+=c.qi||0;}
       s.explored+=c.explore||0;discover(s);
@@ -148,10 +164,11 @@
       const dt = Math.min(left, 10, s.world.journey?.remaining || Infinity); left -= dt; const a = activities[s.activity], mult = speed(s), wb = W.bonus(s);
       s.stamina=Math.min(100,s.stamina+.4*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
       s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
-      for (const [k, v] of Object.entries(a.rates || {})) if(k!=='qi'||s.found)s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1);
+      for (const [k, v] of Object.entries(a.rates || {})) if(k!=='qi'||s.found)s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?techniqueBonus(s,'qi'):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
       if(s.activity==='work'&&s.employment.order?.kind==='ledger')s.employment.order.progress=Math.min(orders.ledger.target,s.employment.order.progress+dt);
-      s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery);
-      if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp);
+      s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery * techniqueBonus(s,'mastery'));
+      const practicing=s.cultivation.learned[s.cultivation.active];if(s.activity==='technique'&&practicing&&practicing.rank<5)practicing.progress=Math.min(techniqueNeeded(practicing.rank),practicing.progress+dt*mult);
+      if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp * (s.activity==='meditate'?techniqueBonus(s,'xp'):1));
       if (s.activity === 'explore') { s.explored += dt; discover(s); }
       if (s.stage >= 3) {
         s.resources.herbs += (s.workers.herb * .04 + s.buildings.garden * .06) * dt;
@@ -185,17 +202,21 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','activity'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity'].includes(k)) base[k] = input[k];
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay};}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
     base.world=W.validate(input.world,input.stage);
+    if(input.cultivation!==undefined){const c=input.cultivation;if(!c||!c.learned||typeof c.learned!=='object'||Array.isArray(c.learned))throw Error('Неверные техники');
+      for(const[k,t]of Object.entries(c.learned)){if(!Object.hasOwn(techniques,k)||!t||!Number.isInteger(t.rank)||t.rank<1||t.rank>5||!Number.isFinite(t.progress)||t.progress<0||t.progress>techniqueNeeded(t.rank))throw Error('Неверное освоение');base.cultivation.learned[k]={rank:t.rank,progress:t.progress};}
+      if(c.active!==null&&!base.cultivation.learned[c.active])throw Error('Неверная активная техника');base.cultivation.active=c.active;
+    }
     base.routes = input.routes.map(r => ({ remaining: r.remaining })); base.expedition = input.expedition ? { kind: input.expedition.kind, remaining: input.expedition.remaining } : null;
     if (!Array.isArray(input.events)) throw Error('Неверная хроника'); base.events = input.events.filter(e => e && typeof e.text === 'string' && Number.isFinite(e.day)).slice(0, 30).map(e => ({ text: e.text.slice(0, 500), day: e.day }));
     return base;
   }
   const realmName = n => `${['Смертный', 'Пробуждение', 'Сбор энергии', 'Основание', 'Духовное ядро', 'Пробуждение души', 'Небесный путь', 'Звёздный дух', 'Закон пространства'][Math.min(8, Math.floor((n + 2) / 3))]} · ступень ${n}`;
-  const api = { world:W, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
