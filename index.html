@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101b21"><title>Isekai Idle — новая жизнь</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><a class="brand" href="./">✧ ISEKAI <span>IDLE</span></a><div class="header-meta">Хроники другого мира <button id="save">Сохранить</button></div></header>
+<main>
+<section class="hero"><div><div class="eyebrow">ГЛАВА I · ПО ТУ СТОРОНУ ПОРТАЛА</div><h1>Каждая жизнь —<br><em>новое начало.</em></h1><p>Ты просыпаешься в незнакомом мире. Начни с малого,<br>построй свой дом и оставь след, который переживёт тебя.</p><div class="hero-tags"><span id="life"></span><span id="souls"></span><span id="day"></span></div></div><div class="portal" aria-hidden="true"><div class="stars">✦</div><div class="portal-inner">⟡</div><div class="land">ДОЛИНА ПЕРВОГО СВЕТА</div></div></section>
+<section class="resources" id="resources" aria-label="Ресурсы"></section>
+<div class="layout"><aside><div class="eyebrow">ТВОЙ ПУТЬ</div><button class="tab active" data-tab="village">⌂ <span>Поселение</span></button><button class="tab" data-tab="adventure">⚔ <span>Приключения</span></button><button class="tab" data-tab="rebirth">✧ <span>Перерождение</span></button><div class="aside-note">«Даже самый великий герой когда-то собирал ветки.»<small>— Хроники призванных</small></div><button id="export">Экспорт сохранения</button><label class="import">Импорт сохранения<input type="file" id="import" accept="application/json"></label></aside>
+<section id="content"></section><aside class="journal"><div class="eyebrow">ХРОНИКА</div><h3>История твоего мира</h3><div id="journal"></div><div class="tip">Пока вкладка закрыта, жители продолжают работать — до 8 часов.</div></aside></div>
+<footer>ISEKAI IDLE <span>Маленькие шаги. Большие миры.</span><span>Прототип · v0.1</span></footer>
+</main><div role="status" id="toast"></div><script src="game.js"></script>
+</body></html>
