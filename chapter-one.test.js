@@ -32,4 +32,27 @@ const letter=E.fresh();const gold=letter.resources.gold;encounter(letter,'villag
 const tip=E.fresh();encounter(tip,'village:3','carpenter-map');assert.equal(tip.explored,0);
 const city=E.fresh();city.world.location='city';assert(E.action(city,'order','sweep'));assert.equal(E.orderName(city,'sweep',city.employment.order.place),'Уборка торгового двора');assert.equal(E.validate(city).employment.order.place,'city');
 const old=E.fresh();delete old.chapterOneRoute;assert.equal(E.validate(old).chapterOneRoute,null);
-console.log('PASS: three first-chapter routes, physical context, early practice, knowledge path, real letter delivery, local advice, city contracts and migration');
+const guided=E.fresh();guided.storyStep=1;
+assert.match(E.guidance(guided,'story','','en'),/Accept a cleaning contract/);
+guided.employment.order={kind:'haul',progress:3,pay:12};
+assert.match(E.guidance(guided,'story','','en'),/Actions remaining: 5/);
+guided.employment.order.progress=8;
+assert.match(E.guidance(guided,'claim-order','','en'),/payment is not automatic/);
+guided.storyStep=4;
+assert.match(E.guidance(guided,'story','','en'),/Open Travel/);
+guided.world.location='ruins';
+assert.match(E.guidance(guided,'story','','en'),/600 sec/);
+guided.found=true;guided.xp=20;guided.resources.herbs=4;
+assert.match(E.guidance(guided,'breakthrough','','en'),/Understanding 20\/60/);
+assert.match(E.guidance(guided,'breakthrough','','en'),/Missing: 6 herbs/);
+guided.xp=60;guided.resources.herbs=10;
+assert.match(E.guidance(guided,'breakthrough','','en'),/Ready/);
+guided.cultivation.learned.sky={rank:1,progress:100};
+assert.match(E.guidance(guided,'learn-technique','sky','en'),/Practice 100\/240/);
+const snapshot=JSON.stringify(guided);
+for(const action of ['story','breakthrough','learn-technique','claim-order','advance','fight','click','activity','order']){
+  const hint=E.guidance(guided,action,action==='learn-technique'?'sky':action==='click'?'squat':action==='activity'?'meditate':'haul','en');
+  assert(!/[А-Яа-яЁё]/.test(hint));assert(!hint.includes('undefined'));assert(!hint.includes('NaN'));
+}
+assert.equal(JSON.stringify(guided),snapshot);
+console.log('PASS: first-chapter routes and contextual guidance for incomplete and completed objectives');

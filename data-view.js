@@ -10,9 +10,14 @@
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
     const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))&&(action!=='fight'||E.canFight(s))?'':'disabled'}>${label}</button>`;
     const rows=[];
-    const row=(name,value,note='',operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
+    const row=(name,value,note='',operation='—')=>{
+      const hints=[...operation.matchAll(/data-action="([^"]+)" data-value="([^"]*)"/g)].map(m=>E.guidance(s,m[1],m[2],root.IsekaiLocale?.language||'ru')).filter(Boolean);
+      rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}${[...new Set(hints)].map(hint=>`<div class="action-hint">${hint}</div>`).join('')}</td><td>${operation}</td></tr>`);
+    };
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
+      const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',root.IsekaiLocale?.language||'ru');
+      if(hint)row(root.IsekaiLocale?.language==='en'?'Next step':'Следующий шаг','→',hint);
       if(s.stage===0) {
         const beat=E.storyBeat(s);
         if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):btn('story','',beat.button,beat.ready(s)));

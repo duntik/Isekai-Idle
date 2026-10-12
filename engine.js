@@ -115,6 +115,98 @@
   }
   const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||s.employment.order?.kind==='ledger')&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
   const activityRunning=s=>canActivity(s,s.activity);
+  function guidance(s,action,key='',language='ru') {
+    const en=language==='en',say=(ru,english)=>en?english:ru;
+    const n=value=>Number(value.toFixed(2)).toLocaleString(en?'en-US':'ru-RU');
+    const remaining=(target,current)=>n(Math.max(0,target-current));
+    const resourceNames={gold:'coins',herbs:'herbs',qi:'qi',relics:'shards',pills:'pills',reputation:'reputation',influence:'influence',supplies:'supplies',cosmic:'stellar essence',worlds:'worlds'};
+    const missing=cost=>Object.entries(cost).filter(([k,v])=>s.resources[k]<v).map(([k,v])=>`${remaining(v,s.resources[k])} ${en?resourceNames[k]:names[k]}`).join(', ');
+    const resourcesHint=cost=>{
+      const deficit=missing(cost);if(!deficit)return '';
+      const sources=[];
+      if(cost.herbs>s.resources.herbs)sources.push(say('травы — исследуй лес или руины, выбирай сбор во встречах','herbs — explore the forest or ruins and choose gathering encounters'));
+      if(cost.qi>s.resources.qi)sources.push(say('энергия — медитируй после находки древней техники','qi — meditate after discovering the ancient technique'));
+      if(cost.gold>s.resources.gold)sources.push(say('монеты — выполни заказ и получи оплату','coins — complete a contract and collect payment'));
+      if(cost.relics>s.resources.relics)sources.push(say('осколки — ищи встречи в руинах или побеждай в испытаниях','shards — seek encounters in the ruins or win trials'));
+      return say(`Не хватает: ${deficit}.${sources.length?' '+sources.join('; ')+'.':''}`,`Missing: ${deficit}.${sources.length?' '+sources.join('; ')+'.':''}`);
+    };
+    if(action==='story'){
+      const beat=storyBeat(s);if(!beat)return guidance(s,'advance','',language);
+      if(s.world.journey)return say('Дождись прибытия. Затем вернись к сюжетной цели.','Wait until you arrive, then return to the story objective.');
+      if(s.world.location!==beat.location)return say(`Открой «Путешествия» и отправься: ${W.locations[beat.location].name}. Прогресс цели сохранится.`,`Open Travel and go to ${beat.location==='ruins'?'the ruins':'the village'}. Your objective progress is kept.`);
+      if(beat.ready(s)&&(s.storyStep!==6||!key||firstRouteReady(s,key)))return say('Условия выполнены. Нажми сюжетную кнопку, чтобы получить награду и продолжить.','Requirements met. Press the story button to collect your reward and continue.');
+      if(s.storyStep===1){
+        if(s.employment.order)return guidance(s,'claim-order','',language)+' '+say(`Цель: 10 подметаний (${s.clicks.sweep}/10) ИЛИ 15 монет (${n(s.resources.gold)}/15).`,`Objective: 10 sweeps (${s.clicks.sweep}/10) OR 15 coins (${n(s.resources.gold)}/15).`);
+        return say(`На доске подработок возьми уборку → нажми «Подмести двор» ещё ${remaining(10,s.clicks.sweep)} раз → получи оплату. Альтернатива: накопи ещё ${remaining(15,s.resources.gold)} монет.`,`Accept a cleaning contract → use Sweep ${remaining(10,s.clicks.sweep)} more times → collect payment. Alternative: earn ${remaining(15,s.resources.gold)} more coins.`);
+      }
+      if(s.storyStep===2)return say(`Тело ${n(s.body)}/2. Нажимай «Присесть» или «Пробежать отрезок»; выносливость восстанавливается сама. Можно вместо этого изучить любую доступную технику.`,`Body ${n(s.body)}/2. Click Squat or Run; stamina recovers automatically. Alternatively, learn any available technique.`);
+      if(s.storyStep===3)return say(`Спокойствие ${n(s.calm)}/5. Выбери «Медитировать» и подожди; клики не нужны.`,`Calm ${n(s.calm)}/5. Select Meditate and wait; no clicks are needed.`);
+      if(s.storyStep===4)return say(`Исследование ${n(s.explored)}/600 сек. В руинах выбери «Исследовать местность»; «Осмотреть развалины» ускоряет поиск. После находки нажми сюжетную кнопку.`,`Research ${n(s.explored)}/600 sec. In the ruins, select Explore; Inspect ruins speeds up the search. After the discovery, press the story button.`);
+      if(s.storyStep===5)return guidance(s,'breakthrough','',language);
+      if(s.storyStep===6){
+        if(key==='combat')return guidance(s,'fight','',language);
+        if(key==='service')return say(`Признание ${W.recognition(s,0)}/3. В путешествиях помогай людям и завершай продолжения поручений. Затем вернись в деревню.`,`Recognition ${W.recognition(s,0)}/3. Help people during travels and complete follow-up tasks, then return to the village.`);
+        if(key==='diplomacy')return say('Найди встречу с письмом в деревне, возьми письмо и доставь Вэю в городе. Затем вернись с рекомендацией в деревню.','Find the village letter encounter, take the letter and deliver it to Wei in the city. Then return to the village with his recommendation.');
+        return say(`Выбери любой путь: победа в «Испытаниях» (${s.wins}/1), помощь людям (${W.recognition(s,0)}/3 признания) или доставка письма Вэю в городе.`,`Choose any route: win a Trial (${s.wins}/1), help people (${W.recognition(s,0)}/3 recognition), or deliver Wei’s letter in the city.`);
+      }
+    }
+    if(action==='breakthrough'){
+      if(!s.found)return say('Сначала найди древнюю технику: отправься в руины и исследуй их 600 секунд. Осмотр развалин ускоряет поиск.','First discover the ancient technique: travel to the ruins and research for 600 seconds. Inspecting ruins speeds up the search.');
+      const parts=[];
+      if(s.xp<needed(s))parts.push(say(`Понимание ${n(s.xp)}/${needed(s)}. Выбери «Медитировать» и подожди.`,`Understanding ${n(s.xp)}/${needed(s)}. Select Meditate and wait.`));
+      const deficit=resourcesHint(breakthroughCost(s));if(deficit)parts.push(deficit);
+      return parts.join(' ')||say('Всё готово. Нажми «Совершить прорыв»: ресурсы спишутся, ступень и пределы развития вырастут.','Ready. Press Break through: resources are spent, your realm and development limits increase.');
+    }
+    if(action==='learn-technique'&&techniques[key]){
+      const learned=s.cultivation.learned[key];
+      if(learned?.rank>=5)return say('Достигнут максимальный ранг: 5/5.','Maximum rank reached: 5/5.');
+      const parts=[];
+      if(learned&&learned.progress<techniqueNeeded(learned.rank))parts.push(say(`Освоение ${n(learned.progress)}/${techniqueNeeded(learned.rank)} сек. Примени эту технику, выбери «Осваивать технику» и подожди.`,`Practice ${n(learned.progress)}/${techniqueNeeded(learned.rank)} sec. Equip this technique, select Practise technique and wait.`));
+      const deficit=resourcesHint(techniqueCost(s,key));if(deficit)parts.push(deficit);
+      return parts.join(' ')||say('Условия выполнены. Нажми кнопку изучения; указанные ресурсы будут потрачены.','Requirements met. Press the learn button; the listed resources will be spent.');
+    }
+    if(action==='order'&&orders[key]){
+      if(s.world.journey||!['village','city'].includes(s.world.location))return say('Заказы принимают в деревне и городе. Открой «Путешествия» и отправься в поселение.','Contracts are accepted in the village and city. Open Travel and go to a settlement.');
+      if(s.body<orders[key].body)return say(`Нужно тело ${orders[key].body}; сейчас ${n(s.body)}. Нажимай «Присесть» или «Пробежать отрезок».`,`Requires body ${orders[key].body}; you have ${n(s.body)}. Click Squat or Run.`);
+      return key==='ledger'?say('Прими заказ: начнётся фоновая сверка накладных. Через 180 секунд работы нажми «Получить оплату».','Accept the contract to start background invoice checking. After 180 seconds of work, press Collect payment.'):say(`Прими заказ → выполни ${orders[key].target} кликов «${clicks[key].name}» → нажми «Получить оплату».`,`Accept the contract → perform ${orders[key].target} ${key==='sweep'?'Sweep':'Carry crates'} clicks → press Collect payment.`);
+    }
+    if(action==='activity'){
+      if(key==='work')return guidance(s,'claim-order','',language);
+      if(key==='meditate')return s.found?say('Идёт автоматически: растут спокойствие, понимание и энергия. На пределе понимания соверши прорыв.','Runs automatically: calm, understanding and qi grow. At the understanding limit, break through.'):say('Пока растёт только спокойствие. Для понимания и энергии сначала найди древнюю технику в руинах.','Only calm grows for now. To gain understanding and qi, first discover the ancient technique in the ruins.');
+      if(key==='technique')return say('Практика идёт автоматически для активной техники. Когда освоение заполнится, оплати повышение её ранга в блоке техник.','Practice runs automatically for the active technique. When practice is full, pay to increase its rank in the techniques section.');
+      if(key==='explore')return say('Сбор идёт автоматически в лесу и руинах. Для древней находки нужны руины и 600 секунд исследования. Переход останавливает сбор.','Gathering runs automatically in the forest and ruins. The ancient discovery requires the ruins and 600 seconds of research. Travel pauses gathering.');
+    }
+    if(action==='claim-order'){
+      const order=s.employment.order;if(!order)return '';
+      if(order.progress>=orders[order.kind].target)return say('Заказ завершён. Нажми «Получить оплату» — деньги не выдаются автоматически.','Contract complete. Press Collect payment — payment is not automatic.');
+      if(order.kind!=='ledger'&&(s.world.journey||!['village','city'].includes(s.world.location)))return say('Работа приостановлена. Вернись в деревню или город через «Путешествия», затем продолжи клики заказа.','Work is paused. Return to the village or city through Travel, then continue the contract clicks.');
+      if(order.kind==='ledger')return say(`Осталось ${remaining(orders.ledger.target,order.progress)} сек работы. Выбери «Работать над заказом» и подожди, затем получи оплату.`,`Work remaining: ${remaining(orders.ledger.target,order.progress)} sec. Select Work on contract and wait, then collect payment.`);
+      return say(`Осталось ${remaining(orders[order.kind].target,order.progress)} действий. В деревне или городе нажимай «${clicks[order.kind].name}», затем получи оплату.`,`Actions remaining: ${remaining(orders[order.kind].target,order.progress)}. In the village or city, click ${order.kind==='sweep'?'Sweep':'Carry crates'}, then collect payment.`);
+    }
+    if(action==='click'&&clicks[key]){
+      if(s.stamina<clicks[key].stamina)return say(`Нужно ${clicks[key].stamina} выносливости; сейчас ${n(s.stamina)}. Подожди восстановления (+0,4/сек).`,`Requires ${clicks[key].stamina} stamina; you have ${n(s.stamina)}. Wait for recovery (+0.4/sec).`);
+      if(clicks[key].body&&s.body>=10*(s.realm+1))return say('Достигнут предел тела. Соверши прорыв, чтобы продолжить тренировку.','Body limit reached. Break through to continue training.');
+      if(['sweep','haul'].includes(key))return guidance(s,'claim-order','',language);
+    }
+    if(action==='fight'){
+      if(s.stage===0&&(s.storyStep!==6||s.realm<1||s.world.location!=='village'))return say('Первый бой откроется в деревне на последнем шаге сюжета, после первого прорыва.','The first fight opens in the village at the last story step, after your first breakthrough.');
+      if(s.world.journey)return say('Дождись окончания перехода.','Wait until your journey ends.');
+      if(s.cooldown>0)return say(`Отдых после боя: ещё ${Math.ceil(s.cooldown)} сек.`,`Rest after battle: ${Math.ceil(s.cooldown)} sec remaining.`);
+      if(battlePower(s)<enemy(s).power)return say(`Сила ${n(battlePower(s))}/${n(enemy(s).power)}. Тренируй тело кликами, изучай техники и совершай прорывы.`,`Power ${n(battlePower(s))}/${n(enemy(s).power)}. Train your body through clicks, learn techniques and break through.`);
+      return say('Силы достаточно. Нажми «Принять вызов», чтобы победить и получить награду.','You have enough power. Press Accept challenge to win and collect the reward.');
+    }
+    if(action==='advance'&&s.stage<7){
+      if(canAdvance(s))return say('Все условия выполнены. Нажми кнопку перехода в следующую главу.','All requirements met. Press the button to begin the next chapter.');
+      const parts=[];
+      if(s.stage===0&&s.storyStep<story.length)parts.push(say(`Заверши текущий сюжет: ${s.storyStep}/${story.length} шагов.`,`Complete the current story: ${s.storyStep}/${story.length} steps.`));
+      if(s.realm<stages[s.stage].realm)parts.push(say(`Ступень ${s.realm}/${stages[s.stage].realm}: медитируй и совершай прорывы.`,`Realm ${s.realm}/${stages[s.stage].realm}: meditate and break through.`));
+      if(s.stage>0&&s.wins<stages[s.stage].wins&&W.recognition(s)<W.recognitionNeeded(s))parts.push(say(`Победы ${s.wins}/${stages[s.stage].wins} ИЛИ признание ${W.recognition(s)}/${W.recognitionNeeded(s)}: испытания или завершённые поручения.`,`Wins ${s.wins}/${stages[s.stage].wins} OR recognition ${W.recognition(s)}/${W.recognitionNeeded(s)}: trials or completed tasks.`));
+      if(s.stage===1&&!s.world.admission)parts.push(say('Подай заявку в секту в городе, во вкладке «Путешествия».','Apply to a sect in the city through Travel.'));
+      const deficit=resourcesHint(stages[s.stage].cost);if(deficit)parts.push(deficit);
+      return parts.join(' ');
+    }
+    return '';
+  }
   // Visibility follows context, independently of stamina, cooldowns and progress.
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
   const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order?.kind==='ledger':canActivity(s,k)||s.activity===k);
@@ -295,6 +387,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

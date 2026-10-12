@@ -23,7 +23,11 @@
   const fmt = n => n.toLocaleString(L?.locale||'ru-RU', { maximumFractionDigits: n < 10 ? 2 : 0 });
   const duration = seconds => seconds >= 3600 ? `${fmt(seconds / 3600)} ч` : `${Math.ceil(seconds / 60)} мин`;
   const costs = c => Object.entries(c).map(([k, v]) => `${fmt(v)} ${E.names[k]}`).join(' · ');
-  const button = (type, value, text, enabled = true) => `<button data-action="${type}" data-value="${value}" ${enabled && (type !== 'advance' || E.canAdvance(s)) && (type !== 'activity' || E.canActivity(s,value)) && (type !== 'fight' || E.canFight(s)) ? '' : 'disabled'}>${text}</button>`;
+  const button = (type, value, text, enabled = true) => {
+    const control=`<button data-action="${type}" data-value="${value}" ${enabled && (type !== 'advance' || E.canAdvance(s)) && (type !== 'activity' || E.canActivity(s,value)) && (type !== 'fight' || E.canFight(s)) ? '' : 'disabled'}>${text}</button>`;
+    const hint=E.guidance(s,type,value,L?.language||'ru');
+    return hint?`<div class="action-control">${control}<small class="action-hint">${hint}</small></div>`:control;
+  };
   const card = (title, desc, controls, cost = '') => `<article class="card"><h3>${title}</h3><p>${desc}</p>${cost ? `<div class="cost">${cost}</div>` : ''}${controls}</article>`;
   let toastTimer;
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
@@ -65,7 +69,11 @@
     if (tab === 'world') html = worldView();
     if(tab==='hero')html+=`<p class="intro">${!E.activityRunning(s)?'Приостановлено: смени место или занятие. ':''}Местные занятия приостанавливаются в пути и вне подходящей локации. Медитация, техника и принятые накладные продолжаются.</p>`;
     if(tab==='hero')html+=`<section class="workers"><h3>Техники и наставники</h3><p class="intro">Знакомства открывают разные знания. Изученные техники остаются с тобой; можно свободно менять активную. Эффект даёт одна выбранная техника. Для следующего ранга занимайся «Осваивать технику», затем оплати изучение. Тело растёт только от кликов.</p><div class="cards">${Object.entries(E.techniques).filter(([k,t])=>t.available(s)||!!s.cultivation.learned[k]).map(([k,t])=>{const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;return card(t.name,`${E.techniqueSource(s,k)}. ${t.desc}`,known?button('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?button('equip-technique',k,s.cultivation.active===k?'● Активна':'Применить',s.cultivation.active!==k):''):'<small>Найди источник знаний</small>',known?`Ранг ${learned?.rank||0}/5 · ${costs(E.techniqueCost(s,k))}${learned&&learned.rank<5?` · освоение ${fmt(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:''}`:'Не изучена');}).join('')}</div></section>`;
-    if (tab === 'hero') html += employmentView() + nextChapterHtml;
+    if (tab === 'hero') {
+      html += employmentView() + nextChapterHtml;
+      const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',L?.language||'ru');
+      if(hint)html=`<section class="next-step"><h3>${L?.language==='en'?'Next step':'Следующий шаг'}</h3><p>${hint}</p></section>`+html;
+    }
     if (tab === 'combat') {
       const foe = E.enemy(s), counter = { swift: 'Быстрый шаг', armored: 'Пробивающий удар', mystic: 'Духовный заслон' };
       html = `<h2>${s.stage === 2 ? 'Турнир и соперники' : 'Испытания пути'}</h2>${s.stage===0?'<p class="intro">Первый бой: в деревне, после прорыва и перед финалом первой арки. Можно завершить арку без боя.</p>':''}<p class="intro">Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.</p><div class="rebirth"><div class="eyebrow">СЛЕДУЮЩИЙ СОПЕРНИК</div><h2>${foe.name}</h2><p>Сила соперника: <strong>${fmt(foe.power)}</strong></p><p>Твоя сила в этом бою: ${fmt(E.battlePower(s))}. Подходящий стиль: ${counter[foe.type]}.</p><p>Награда: ${fmt(30 * 1.8 ** s.wins)} монет · ${(s.wins + 1) * 10} трав · 1 осколок.</p>${button('fight', '', s.cooldown > 0 ? `Отдых: ${duration(s.cooldown)}` : 'Принять вызов', s.cooldown === 0 && E.battlePower(s) >= foe.power)}<p class="intro">Побед: ${s.wins}. После боя — 5 минут отдыха.</p></div>`;
