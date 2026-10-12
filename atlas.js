@@ -12,13 +12,14 @@
   }
   const trail=(s,place)=>(s.atlas.surveys[place]||0)>=2;
   function hint(s,lang='ru'){const en=lang==='en';if(s.world.journey)return en?'Finish the journey before surveying.':'Закончи переход перед осмотром.';
+    if(!places.includes(s.world.location))return en?'This small place is explored through its local encounters. Return to the nearby area for a survey.':'Это небольшое место исследуется через местные встречи. Для осмотра окрестностей вернись в ближайшую область.';
     if(s.world.encounter)return en?'Resolve the current encounter first.':'Сначала заверши текущую встречу.';
     if(s.storyStep===0&&s.stage===0)return en?'Reach the village in the story first.':'Сначала доберись до деревни по сюжету.';
     if(s.atlas.cooldown>0)return en?`Survey available in ${Math.ceil(s.atlas.cooldown)} s.`:`Новый осмотр через ${Math.ceil(s.atlas.cooldown)} сек.`;
     if(s.stamina<15)return en?'Requires 15 stamina.':'Нужно 15 выносливости.';
     return en?'Survey safe surroundings: costs 15 stamina, recovery 5 minutes. Two surveys reveal a trail that shortens travel by 20%. Later surveys provide local supplies.':'Осмотр безопасных окрестностей: 15 выносливости, восстановление 5 минут. Два осмотра открывают тропу, сокращающую переход на 20%. Дальнейшие осмотры дают местные припасы.';
   }
-  const canSurvey=s=>!s.world.journey&&!s.world.encounter&&(s.storyStep>0||s.stage>0)&&s.stamina>=15&&s.atlas.cooldown<=0;
+  const canSurvey=s=>places.includes(s.world.location)&&!s.world.journey&&!s.world.encounter&&(s.storyStep>0||s.stage>0)&&s.stamina>=15&&s.atlas.cooldown<=0;
   function survey(s,E){if(!canSurvey(s))return false;const place=s.world.location;s.stamina-=15;s.atlas.cooldown=300;s.atlas.surveys[place]=Math.min(1000000,(s.atlas.surveys[place]||0)+1);E.interruptActivity(s);
     if(place==='village'||place==='city')s.resources.gold+=3;
     else if(place==='forest')s.resources.herbs+=2;

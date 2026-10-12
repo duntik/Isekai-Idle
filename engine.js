@@ -263,6 +263,7 @@
     if(c.contact&&!s.world.contacts.includes(c.contact))benefits.push(say('Контакт и возможность доставить письмо; это ещё не завершённое поручение.','A contact and a letter-delivery opportunity; the errand is not completed yet.'));
     if(c.admission&&!s.world.admissionRoutes.includes(c.admission))benefits.push(say('Открывает путь подачи заявки в секту; членство не выдаётся автоматически.','Opens a sect application route; membership is not granted automatically.'));
     if(c.explore)benefits.push(say(`Исследование +${n(c.explore)} сек; находка открывается при 600 сек в храме.`,`Research +${n(c.explore)} sec; the discovery opens at 600 sec in the temple.`));
+    if(c.opensPlace){const place=W.locations[c.opensPlace],english=W.questPlaces.pairs.find(p=>p[0]===place.name)?.[1];benefits.push(say('Откроет дорогу на карте: '+place.name+'. Для встречи нужно добраться туда отдельно.','Reveals a route on the map: '+english+'. Travel there separately to meet its inhabitants.'));}
     if(c.route)benefits.push(say('Начинает местное поручение. Награда и признание — при следующей встрече здесь.','Starts a local task. Reward and recognition come at a follow-up meeting here.'));
     if(c.recognition)benefits.push(say('Признание +1 в главе, где была выполнена помощь.','Recognition +1 in the chapter where you provided the help.'));
     const requirements=[];
@@ -491,7 +492,7 @@
       if(!W.map(s).nodes.some(n=>n.id===value))return false;const index=s.atlas.pins.indexOf(value);if(index>=0)s.atlas.pins.splice(index,1);else if(s.atlas.pins.length<80)s.atlas.pins.push(value);else return false;return true;
     }
     const scene=W.current(s),selected=type==='choice'?scene?.choices.find(c=>c.id===value):null,school=S.schools[s.world.admission];
-    const detail={orderKind:s.employment.order?.kind,stage:s.stage,storyStep:s.storyStep,scene:scene?.id,choice:value,danger:!!selected?.danger,schoolRank:scene?.school&&school?s.cultivation.learned[school.technique]?.rank||0:0};
+    const detail={orderKind:s.employment.order?.kind,stage:s.stage,storyStep:s.storyStep,scene:scene?.id,choice:value,danger:!!selected?.danger,schoolRank:scene?.school&&school?s.cultivation.learned[school.technique]?.rank||0:0,places:W.knownLocations(s)};
     if(type==='achievement-action'){
       const choice=achievementActions(s).find(a=>a.id===value);if(!choice?.enabled)return false;
       interruptActivity(s);s.stamina-=value==='carry'?3:5;s.achievements.cooldowns[value]=60;
@@ -499,7 +500,7 @@
       else{const remaining=s.stamina;s.stamina+=5;techniquePractice(s,s.cultivation.active,5);s.stamina=remaining;}
       A.sync(s);return true;
     }
-    const result=performAction(s,type,value);if(result)A.record(s,type,detail);return result;
+    const result=performAction(s,type,value);if(result){A.record(s,type,detail);for(const k of W.knownLocations(s))if(W.questPlaces.locations[k]&&!detail.places.includes(k))log(s,'Открыта дорога: '+W.locations[k].name+'. '+W.locations[k].desc);}return result;
   }
   function advance(s, seconds) {
     let left = Math.max(0, Math.min(seconds, 86400));

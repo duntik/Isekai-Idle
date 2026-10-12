@@ -1,7 +1,9 @@
 (function(root){
   if(root.IsekaiCausalEvents)root.IsekaiLocale.add(root.IsekaiCausalEvents.pairs);
   if(root.Isekai?.sects)root.IsekaiLocale.add(root.Isekai.sects.pairs);
+  if(root.Isekai?.world.questPlaces)root.IsekaiLocale.add(root.Isekai.world.questPlaces.pairs);
   root.IsekaiLocale.add([
+    ['Открыта дорога:','Route discovered:'],
     ['Железные сухожилия','Iron Sinews'],['Закрытая библиотека Каменного Оплота','Stone Bastion restricted library'],['Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.','Body growth +8% and combat power +4% per rank. Movement practice.'],
     ['Выполняет принятый заказ на месте: накладные сразу, физическую работу после освоения. На время работы медитация останавливается.','Performs the accepted contract locally: ledgers immediately, physical work after mastery. Meditation stops during work.'],
     ['Распорядок Жэня: упражнения без постоянных кликов. Только в деревне или городе; занимает всё внимание и не даёт духовную энергию.','Ren’s routine: exercises without repeated clicks. Village or city only; occupies your attention and generates no qi.'],
