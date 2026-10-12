@@ -23,6 +23,7 @@
         const beat=E.storyBeat(s);
         if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):btn('story','',beat.button,beat.ready(s)));
         else row('Сюжет','Завершён','Доступна следующая глава');
+        if(s.storyStep>0)for(const p of E.world.developmentPaths?.(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,`${p.progress}/${p.total}`,`${p.description} ${p.next}`,`<button data-tab="world">${uiText('Искать встречи','Look for encounters')}</button>`);
       }
       row('Текущее место',E.world.locations[s.world.location].name,activityLabels[s.activity]);
       row('Занятие',activityLabels[s.activity],(E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.')+' '+uiText('Ручные действия, бой и путешествие прерывают занятие. Выбери его снова, когда закончишь.','Manual actions, combat and travel interrupt your activity. Select it again when finished.'));
@@ -51,6 +52,7 @@
       for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc}${t.practiceBody?uiText(" Практика этой двигательной техники также укрепляет тело и расходует выносливость."," Practicing this movement technique also strengthens the body and uses stamina."):""} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
     }
+    if(['hero','world'].includes(tab))for(const a of E.techniqueActions?.(s,root.IsekaiLocale?.language||'ru')||[])row(a.name,a.hint,`${E.techniques[a.technique].name}. ${a.description}`,btn('technique-action',a.id,uiText('Выполнить приём','Use method'),a.enabled)+(s.cultivation.active!==a.technique?btn('equip-technique',a.technique,uiText('Выбрать эту технику','Equip this technique')):''));
     if(tab==='combat') {
       if(s.stage===0)row('Первый бой','Деревня','После прорыва и перед финалом первой арки. Можно завершить арку без боя.');
       row('Соперник',E.enemy(s).name,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('fight','','Выполнить',!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));

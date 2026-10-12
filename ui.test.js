@@ -25,6 +25,7 @@ for (const view of ['visual', 'data']) {
 for (let stage = 0; stage < 8; stage++) {
   const state = E.fresh(); state.stage = stage; state.found = stage > 0;
   if(stage===1)state.employment.order={kind:'ledger',progress:180,pay:20};
+  if(stage===1){state.cultivation.learned.stance={rank:1,progress:0};state.cultivation.active='stance';}
   if(stage===2)state.employment.order={kind:'sweep',progress:3,pay:8};
   const elements = new Map(), handlers = {};
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
@@ -76,6 +77,7 @@ for (let stage = 0; stage < 8; stage++) {
   for (const tab of tabs) {
     handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});
     const html=element('content').innerHTML;
+    if(stage===1&&['hero','world'].includes(tab))assert(html.includes('data-action="technique-action" data-value="stone-load"'));
     if(tab==='roadmap'){for(const future of E.stages.slice(stage+2))assert(!html.includes(future.name));assert(html.includes(E.stages[Math.min(7,stage+1)].name));}
     assert(html.length > 100); assert(!html.includes('NaN'));
     const controls=[...html.matchAll(/data-action="([^"]+)" data-value="([^"]*)"([^>]*)/g)].map(m=>`${m[1]}:${m[2]}:${m[3].includes('disabled')}`).sort();
