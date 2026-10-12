@@ -2,6 +2,8 @@
   'use strict';const L=root.IsekaiLocale;if(!L)return;
   L.add([
     ['Карта','Map'],['Карта известного мира','Map of the known world'],
+    ['выносливости/сек.','stamina/sec.'],
+    ['Знакомства открывают разные знания. Изученные техники остаются с тобой; можно свободно менять активную. Эффект даёт одна выбранная техника. Для следующего ранга занимайся «Осваивать технику», затем оплати изучение. Физическая работа и помощь также укрепляют тело.','Acquaintances unlock different knowledge. Learned techniques stay with you; freely change the active one. One selected technique provides its effects. Practise it, then pay to increase its rank. Physical work and helping others also strengthen your body.'],
     ['Неверная карта','Invalid map'],
     ['Об этой дороге','Route details'],['Известное место встречи. Вернись сюда, чтобы искать продолжение.','A recorded meeting. Return to this area to look for its continuation.'],
     ['Поручения','Tasks'],['Неизведанные земли','Unknown lands'],['Ты здесь','You are here'],['Путь закрыт','Route blocked'],['Исследовано','Discovered'],['Известная дорога','Known route'],['Подойти к проходу','Approach the gate'],['Исследовать путь','Explore route'],

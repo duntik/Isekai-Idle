@@ -167,9 +167,10 @@
       const decision=`${scene.id}/${c.id}`;w.director.decisions[decision]=Math.min(1000000000,(w.director.decisions[decision]||0)+1);
       if(uniqueIds.includes(scene.id)&&(c.admission||scene.once)&&!c.skip&&!w.completed.includes(scene.id))w.completed.push(scene.id);
       for(const [k,v]of Object.entries(c.reward||{}))s.resources[k]+=v;
+      E.taskPractice(s,E.choicePractice(c));
       if(c.practice){const learned=s.cultivation.learned[c.practice.technique];learned.progress=Math.min(E.techniqueNeeded(learned.rank),learned.progress+c.practice.amount);}
       s.mastery=Math.min(10*(s.realm+1),s.mastery+(c.mastery||0));s.calm=Math.min(100,s.calm+(c.calm||0));
-      if(c.restore)s.stamina=100;
+      if(c.restore)s.stamina=E.staminaMax(s);
       if(c.mentor&&!w.mentors.includes(c.mentor))w.mentors.push(c.mentor);
       if(c.contact&&!w.contacts.includes(c.contact))w.contacts.push(c.contact);
       if(c.admission&&!w.admissionRoutes.includes(c.admission)){w.admissionRoutes.push(c.admission);E.log(s,`Открыт путь: ${admissions[c.admission].name}. Обратись в представительство в городе, когда станешь начинающим практиком. Поручительство и сюжетные предметы сохраняются после смерти.`);}

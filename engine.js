@@ -124,6 +124,29 @@
   }
   const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||(s.employment.order?.kind==='ledger'&&canWorkOrder(s)))&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
   const activityRunning=s=>canActivity(s,s.activity);
+  const staminaMax=s=>100+Math.min(100,Math.floor(s.body*2));
+  const staminaRecovery=s=>.4+Math.min(.2,s.body*.002);
+  const taskGains={sweep:{body:.012,calm:.01},haul:{body:.035},scout:{calm:.005},ledger:{calm:.005,xp:.005},explore:{calm:.001,xp:.001},physical:{body:.15},focus:{calm:.3,xp:.3},combat:{body:.1,mastery:.1}};
+  function taskPractice(s,kind,amount=1){
+    const gains=taskGains[kind];if(!gains||amount<=0)return;
+    s.body=Math.min(10*(s.realm+1),s.body+(gains.body||0)*amount*W.bonus(s).body*techniqueBonus(s,'body'));
+    s.calm=Math.min(100,s.calm+(gains.calm||0)*amount);
+    if(s.found)s.xp=Math.min(needed(s),s.xp+(gains.xp||0)*amount);
+    s.mastery=Math.min(10*(s.realm+1),s.mastery+(gains.mastery||0)*amount);
+  }
+  function choicePractice(c){
+    if(c.skip||c.recognition||c.practice||c.restore)return null;
+    if(c.route)return {help:'physical',study:'focus',trade:'focus',combat:'combat'}[c.route];
+    if(c.danger)return 'combat';
+    if(['help','work','job','assist','carpenter-help','courier-help','mine','learn','guide','return-remains','rescue'].includes(c.id))return 'physical';
+    if(c.mentor||c.explore||['study','heal','trade','buy','understand','gather','collect','search'].includes(c.id))return 'focus';
+    return null;
+  }
+  function taskPracticeText(kind,language='ru'){
+    const en=language==='en',g=taskGains[kind];if(!g)return '';
+    const gains=[g.body?`${en?'Body':'Тело'} +${g.body}`:'',g.calm?`${en?'Calm':'Спокойствие'} +${g.calm}`:'',g.xp?`${en?'Understanding (after discovery)':'Понимание (после находки)'} +${g.xp}`:'',g.mastery?`${en?'Mastery':'Освоение'} +${g.mastery}`:''].filter(Boolean).join(' · ');
+    return gains+(kind==='ledger'||kind==='explore'?(en?' per second of actual work.':' за секунду фактической работы.'):(en?' per completed action.':' за выполненное действие.'))+(g.body?(en?' A stronger body raises stamina capacity and recovery.':' Рост тела увеличивает запас и восстановление выносливости.'):'');
+  }
   function guidance(s,action,key='',language='ru') {
     const en=language==='en',say=(ru,english)=>en?english:ru;
     const n=value=>Number(value.toFixed(2)).toLocaleString(en?'en-US':'ru-RU');
@@ -194,7 +217,7 @@
       return say(`Осталось ${remaining(orders[order.kind].target,order.progress)} действий. Оставайся у заказчика и нажимай «${clicks[order.kind].name}», затем получи оплату.`,`Actions remaining: ${remaining(orders[order.kind].target,order.progress)}. Stay at the employer's location, click ${order.kind==='sweep'?'Sweep':'Carry crates'}, then collect payment.`);
     }
     if(action==='click'&&clicks[key]){
-      if(s.stamina<clicks[key].stamina)return say(`Нужно ${clicks[key].stamina} выносливости; сейчас ${n(s.stamina)}. Подожди восстановления (+0,4/сек).`,`Requires ${clicks[key].stamina} stamina; you have ${n(s.stamina)}. Wait for recovery (+0.4/sec).`);
+      if(s.stamina<clicks[key].stamina)return say(`Нужно ${clicks[key].stamina} выносливости; сейчас ${n(s.stamina)}. Подожди восстановления (+${n(staminaRecovery(s))}/сек).`,`Requires ${clicks[key].stamina} stamina; you have ${n(s.stamina)}. Wait for recovery (+${n(staminaRecovery(s))}/sec).`);
       if(clicks[key].body&&s.body>=10*(s.realm+1))return say('Достигнут предел тела. Соверши прорыв, чтобы продолжить тренировку.','Body limit reached. Break through to continue training.');
       if(['sweep','haul'].includes(key))return guidance(s,'claim-order','',language);
     }
@@ -244,7 +267,8 @@
       s.resources.gold+=c.gold||0;s.resources.herbs+=(c.herbs||0)*(mentors.includes('herbalist')?1.2:1);
       if(s.found){s.xp=Math.min(needed(s),s.xp+(c.xp||0)*(mentors.includes('breathing')?1.1:1)*(mentors.includes('scholar')?1.15:1));s.resources.qi+=c.qi||0;}
       s.explored+=c.explore||0;discover(s);
-      if(['sweep','haul'].includes(value))s.employment.order.progress++;
+      if(['sweep','haul'].includes(value)){s.employment.order.progress++;taskPractice(s,value);}
+      if(value==='scout')taskPractice(s,'scout');
     } else if (type === 'story') {
       const beat=storyBeat(s);if(!beat||!beat.ready(s))return false;
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
@@ -266,6 +290,7 @@
       if (!canFight(s)) return false;
       log(s, `Победа: ${enemy(s).name}. Твои успехи привлекли внимание более сильных противников.`);
       s.resources.gold += 30 * 1.8 ** s.wins; s.resources.herbs += 10 * (s.wins + 1); s.resources.relics += 1; s.wins++; s.cooldown = 300;
+      taskPractice(s,'combat');
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;
@@ -304,10 +329,14 @@
     let left = Math.max(0, Math.min(seconds, 86400));
     while (left > 0) {
       const dt = Math.min(left, 10, s.world.journey?.remaining || Infinity); left -= dt; const a = activityRunning(s)?activities[s.activity]:{}, mult = speed(s), wb = W.bonus(s);
-      s.stamina=Math.min(100,s.stamina+.4*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
+      s.stamina=Math.min(staminaMax(s),s.stamina+staminaRecovery(s)*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
       s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
       for (const [k, v] of Object.entries(a.rates || {})) if((k!=='qi'||s.found)&&(s.activity!=='explore'||k!=='relics'||s.world.location==='ruins'))s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?techniqueBonus(s,'qi'):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
-      if(s.activity==='work'&&s.employment.order?.kind==='ledger'&&activityRunning(s))s.employment.order.progress=Math.min(orders.ledger.target,s.employment.order.progress+dt);
+      if(s.activity==='work'&&s.employment.order?.kind==='ledger'&&activityRunning(s)){
+        const work=Math.min(dt,orders.ledger.target-s.employment.order.progress);
+        s.employment.order.progress+=work;taskPractice(s,'ledger',work);
+      }
+      if(s.activity==='explore'&&activityRunning(s))taskPractice(s,'explore',dt);
       s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery * techniqueBonus(s,'mastery'));
       const practicing=s.cultivation.learned[s.cultivation.active];if(s.activity==='technique'&&practicing&&practicing.rank<5)practicing.progress=Math.min(techniqueNeeded(practicing.rank),practicing.progress+dt*mult);
       if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp * (s.activity==='meditate'?techniqueBonus(s,'xp'):1));
@@ -341,7 +370,7 @@
     // Existing v2 saves acquire the new systems without resetting progression.
     for(const k of ['stamina','clickCooldown','calm','storyStep']) {
       const v=input[k]??(k==='storyStep'&&input.stage>0?story.length:base[k]);
-      if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
+      if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
     for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
@@ -397,6 +426,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
