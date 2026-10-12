@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict'),E=require('./engine.js');
+const s=E.fresh();E.action(s,'story');assert(!E.canActivity(s,'train'));s.world.mentors.push('trainer');s.body=2;s.clicks.squat=20;assert(E.routineReady(s));assert(E.action(s,'activity','train'));
+const qi=s.resources.qi,xp=s.xp,calm=s.calm;E.advance(s,120);assert(s.body>2);assert.equal(s.resources.qi,qi);assert.equal(s.xp,xp);assert.equal(s.calm,calm);assert(s.stamina>=0);
+assert.equal(E.validate(JSON.parse(JSON.stringify(s))).activity,'train');
+assert(E.action(s,'activity','meditate'));const body=s.body;E.advance(s,60);assert.equal(s.body,body);assert(s.calm>calm);
+assert(E.action(s,'activity','train'));assert(E.action(s,'travel','forest'));assert.equal(s.activity,'rest');E.advance(s,60);assert(!E.canActivity(s,'train'));
+const technical=E.fresh();technical.world.mentors.push('trainer');technical.body=2;technical.cultivation.learned.stance={rank:2,progress:0};assert(E.routineReady(technical));
+const w=E.fresh();w.employment.order={kind:'haul',place:'village',progress:0,pay:12};assert(!E.canActivity(w,'work'));w.employment.completed=3;w.clicks.haul=16;assert(E.canActivity(w,'work'));assert(E.action(w,'activity','work'));
+const startBody=w.body;E.advance(w,300);assert.equal(w.employment.order.progress,8);assert(w.body>startBody);assert.equal(w.calm,0);assert.equal(w.resources.qi,0);assert.equal(w.resources.gold,0);assert.equal(w.clicks.haul,16);assert(!E.activityRunning(w));assert(E.action(w,'claim-order'));assert.equal(w.resources.gold,12);assert.equal(w.employment.order,null);assert(!E.action(w,'claim-order'));
+const local=E.fresh();local.employment.completed=3;local.clicks.sweep=20;local.employment.order={kind:'sweep',place:'city',progress:0,pay:8};assert(!E.canActivity(local,'work'));assert(!E.workMastered(local,'haul'));
+const offline=E.fresh();offline.world.mentors.push('trainer');offline.body=2;offline.clicks.run=20;E.action(offline,'activity','train');const online=E.validate(JSON.parse(JSON.stringify(offline)));E.advance(offline,600);for(let i=0;i<60;i++)E.advance(online,10);assert(Math.abs(offline.body-online.body)<1e-10);assert.equal(offline.stamina,online.stamina);
+console.log('PASS: earned routine, technique alternative, exclusive activities, local mastered work, manual payment, save and offline parity');

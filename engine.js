@@ -16,8 +16,9 @@
   ];
   const names = { gold: 'Монеты', herbs: 'Травы', qi: 'Духовная энергия', relics: 'Осколки', reputation: 'Репутация', wood: 'Древесина', ore: 'Руда', pills: 'Пилюли', influence: 'Влияние', supplies: 'Припасы', cosmic: 'Звёздная эссенция', worlds: 'Миры' };
   const activities = {
+    train: { name: 'Тренировать тело', stage: 0, desc: 'Распорядок Жэня: упражнения без постоянных кликов. Только в деревне или городе; занимает всё внимание и не даёт духовную энергию.' },
     rest: { name: 'Отдыхать', stage: 0, desc: 'Восстанавливает выносливость. Для медитации или освоения техники выбери занятие отдельно.', rates: {} },
-    work: { name: 'Работать над заказом', stage: 0, desc: 'Сверяет накладные для принятого заказа. На время работы медитация останавливается.', rates: {} },
+    work: { name: 'Работать над заказом', stage: 0, desc: 'Выполняет принятый заказ на месте: накладные сразу, физическую работу после освоения. На время работы медитация останавливается.', rates: {} },
     explore: { name: 'Исследовать местность', stage: 0, desc: 'В лесу — травы; в храме — травы, осколки и находка после 10 минут исследования. В пути занятие приостановлено.', rates: { herbs: .025, relics: 1 / 600 } },
     meditate: { name: 'Медитировать', stage: 0, desc: 'Успокаивает разум. После находки накапливает понимание и духовную энергию.', xp: .05, calm: .02, rates: { qi: .1 } },
     technique: { name: 'Осваивать технику', stage: 0, desc: 'После изучения приёма: практика выбранной техники и рост освоения. Можно заниматься до открытия наследия. Медитация на это время останавливается.', mastery: .01 },
@@ -126,7 +127,15 @@
     if(peaceful&&s.stage===4)return 'Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.';
     return stages[s.stage].intro;
   }
-  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(!s.world.journey||k==='rest')&&(k!=='work'||(s.employment.order?.kind==='ledger'&&canWorkOrder(s)))&&(k!=='technique'||!!s.cultivation.active)&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  const routineReady=s=>s.world.mentors.includes('trainer')&&s.body>=2&&(s.clicks.squat+s.clicks.run>=20||(s.cultivation.learned.stance?.rank||0)>=2);
+  const workMastered=(s,k)=>k==='ledger'||(s.employment.completed>=3&&s.clicks[k]>=orders[k].target*2);
+  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(!s.world.journey||k==='rest')&&(k!=='train'||(routineReady(s)&&['village','city'].includes(s.world.location)))&&(k!=='work'||(s.employment.order&&workMastered(s,s.employment.order.kind)&&canWorkOrder(s)&&!canClaimOrder(s)))&&(k!=='technique'||!!s.cultivation.active)&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  function automationHint(s,language='ru'){
+    const en=language==='en',moves=s.clicks.squat+s.clicks.run;
+    const training=routineReady(s)?(en?'Ren’s routine is available: select Body training. Exercises continue offline, separately from meditation.':'Распорядок Жэня доступен: выбери «Тренировать тело». Упражнения продолжаются офлайн, отдельно от медитации.'):(en?`Ren can prepare a routine after his lesson, body 2 and 20 manual exercises (${moves}/20), or Stone Roots rank 2.`:`Жэнь составит распорядок после знакомства, тела 2 и 20 ручных упражнений (${moves}/20) либо второго ранга «Корней камня».`);
+    const work=en?`Familiar physical work becomes a background activity after 3 paid contracts (${s.employment.completed}/3) and two contracts’ worth of manual actions of that kind. Accept a contract, select Work on contract, then collect payment locally. No new contract is accepted automatically.`:`Знакомая физическая работа становится фоновой после 3 оплаченных заказов (${s.employment.completed}/3) и ручного выполнения двух заказов этого вида. Прими заказ, выбери «Работать над заказом», затем получи оплату на месте. Новые заказы автоматически не принимаются.`;
+    return training+' '+work;
+  }
   const interruptActivity=s=>{s.activity='rest';};
   const techniqueActionDefs={
     'stone-load':{technique:'stance',places:['village','city'],stamina:12,cooldown:60,name:['Перенести тяжёлую связку','Carry a heavy bundle'],desc:['+0,16 тела; при разгрузке выполняет 2 переноса.','+0.16 body; completes 2 lifts during a hauling contract.']},
@@ -331,6 +340,7 @@
     if(action==='activity'){
       if(key==='rest')return say('Фоновое развитие остановлено. Выносливость восстанавливается; для продолжения выбери медитацию, технику или работу.','Background progress is stopped. Stamina recovers; select meditation, technique practice or work to continue.');
       if(key==='work')return guidance(s,'claim-order','',language);
+      if(key==='train')return say('Распорядок: тело +0,003/сек × помощь наставника и техники; прорывы постепенно ускоряют упражнения. Выносливость −0,18/сек. Только деревня и город; медитация остановлена.','Routine: body +0.003/sec × mentor and technique bonuses; breakthroughs gradually accelerate exercises. Stamina −0.18/sec. Village and city only; meditation is stopped.');
       if(key==='meditate')return s.found?say('Идёт автоматически: растут спокойствие, понимание и энергия. На пределе понимания соверши прорыв.','Runs automatically: calm, understanding and qi grow. At the understanding limit, break through.'):say('Пока растёт только спокойствие. Для понимания и энергии сначала найди древнюю технику в руинах.','Only calm grows for now. To gain understanding and qi, first discover the ancient technique in the ruins.');
       if(key==='technique')return say('Практика идёт автоматически для активной техники. Когда освоение заполнится, оплати повышение её ранга в блоке техник.','Practice runs automatically for the active technique. When practice is full, pay to increase its rank in the techniques section.');
       if(key==='explore')return say('Сбор идёт автоматически в лесу и руинах. Для древней находки нужны руины и 600 секунд исследования. Переход останавливает сбор.','Gathering runs automatically in the forest and ruins. The ancient discovery requires the ruins and 600 seconds of research. Travel pauses gathering.');
@@ -340,6 +350,7 @@
       if(!canWorkOrder(s)){const place=order.place||'village';return say(`Работа и оплата доступны только у заказчика: ${W.locations[place].name}. Вернись туда через «Путешествия». Прогресс сохранён.`,`Work and payment are available only at the employer's location: ${place==='city'?'Silver Bridge City':'Wellside Village'}. Return through Travel. Progress is saved.`);}
       if(order.progress>=orders[order.kind].target)return say('Заказ завершён. Нажми «Получить оплату» — деньги не выдаются автоматически.','Contract complete. Press Collect payment — payment is not automatic.');
       if(order.kind==='ledger')return say(`Осталось ${remaining(orders.ledger.target,order.progress)} сек работы. Выбери «Работать над заказом» и подожди, затем получи оплату.`,`Work remaining: ${remaining(orders.ledger.target,order.progress)} sec. Select Work on contract and wait, then collect payment.`);
+      if(workMastered(s,order.kind))return say('Работа освоена: выбери «Работать над заказом», чтобы выполнять её без кликов. Выносливость расходуется; затем получи оплату у заказчика.','Work is familiar: select Work on contract to perform it without clicks. It uses stamina; then collect payment from the employer.');
       return say(`Осталось ${remaining(orders[order.kind].target,order.progress)} действий. Оставайся у заказчика и нажимай «${clicks[order.kind].name}», затем получи оплату.`,`Actions remaining: ${remaining(orders[order.kind].target,order.progress)}. Stay at the employer's location, click ${order.kind==='sweep'?'Sweep':'Carry crates'}, then collect payment.`);
     }
     if(action==='click'&&clicks[key]){
@@ -368,7 +379,7 @@
   }
   // Visibility follows context, independently of stamina, cooldowns and progress.
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
-  const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order?.kind==='ledger':canActivity(s,k)||s.activity===k);
+  const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order&&workMastered(s,s.employment.order.kind):canActivity(s,k)||s.activity===k);
   const canClick = (s,k) => !!clicks[k] && !s.world.journey && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function performAction(s, type, value) {
@@ -490,6 +501,14 @@
       for(const id of Object.keys(s.cultivation.actionCooldowns||{}))s.cultivation.actionCooldowns[id]=Math.max(0,s.cultivation.actionCooldowns[id]-dt);
       for(const id of Object.keys(s.achievements.cooldowns))s.achievements.cooldowns[id]=Math.max(0,s.achievements.cooldowns[id]-dt);
       s.atlas.cooldown=Math.max(0,s.atlas.cooldown-dt);
+      if(s.activity==='train'&&activityRunning(s)){
+        const work=Math.min(dt,s.stamina/.18);s.stamina-=work*.18;
+        s.body=Math.min(10*(s.realm+1),s.body+.003*work*Math.min(3,1+s.realm*.15)*wb.body*techniqueBonus(s,'body'));
+      }
+      if(s.activity==='work'&&s.employment.order?.kind!=='ledger'&&activityRunning(s)){
+        const o=s.employment.order,k=o.kind,rate=Math.min(.15,.08+s.employment.completed*.005),work=Math.min(dt*rate,orders[k].target-o.progress,s.stamina/clicks[k].stamina);
+        s.stamina-=work*clicks[k].stamina;o.progress+=work;taskPractice(s,k,work);s.activity='work';
+      }
       s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
       for (const [k, v] of Object.entries(a.rates || {})) if((k!=='qi'||s.found)&&(s.activity!=='explore'||k!=='relics'||s.world.location==='ruins'))s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?techniqueBonus(s,'qi'):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
       if(s.activity==='work'&&s.employment.order?.kind==='ledger'&&activityRunning(s)){
@@ -522,7 +541,7 @@
     const base = fresh(); if (!input || input.version !== 2) throw Error('Неверная версия сохранения');
     for (const k of ['stage', 'realm', 'xp', 'body', 'mastery', 'weapon', 'study', 'explored', 'wins', 'age', 'cooldown', 'souls', 'life', 'population', 'last']) if (!Number.isFinite(input[k]) || input[k] < 0 || input[k] > 1e100) throw Error('Неверные значения');
     for (const k of ['stage', 'realm', 'weapon', 'study', 'wins', 'souls', 'life', 'population']) if (!Number.isInteger(input[k])) throw Error('Неверный уровень');
-    const activity=input.activity==='train'?'meditate':input.activity;
+    const activity=input.activity==='train'&&!(input.world?.mentors?.includes('trainer')&&input.body>=2&&((input.clicks?.squat||0)+(input.clicks?.run||0)>=20||(input.cultivation?.learned?.stance?.rank||0)>=2))?'meditate':input.activity;
     if (input.stage > 7 || input.realm > 100 || input.weapon > 202 || input.study > 10 || input.wins > 100 || typeof input.found !== 'boolean' || !activities[activity] || activities[activity].stage > input.stage || !['balanced', 'swift', 'piercing', 'ward'].includes(input.style)) throw Error('Неверное состояние');
     for (const group of ['resources', 'buildings', 'workers']) for (const k of Object.keys(base[group])) { const v = input[group]?.[k]; if (!Number.isFinite(v) || v < 0 || v > 1e100 || (group !== 'resources' && !Number.isInteger(v))) throw Error('Неверный ресурс'); base[group][k] = v; }
     if (Object.values(base.workers).reduce((a, b) => a + b, 0) > input.population || input.population > 3 + base.buildings.dorm * 3) throw Error('Неверные назначения');
@@ -591,6 +610,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

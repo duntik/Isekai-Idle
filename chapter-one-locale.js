@@ -1,6 +1,8 @@
 (function(root){
   if(root.IsekaiCausalEvents)root.IsekaiLocale.add(root.IsekaiCausalEvents.pairs);
   root.IsekaiLocale.add([
+    ['Выполняет принятый заказ на месте: накладные сразу, физическую работу после освоения. На время работы медитация останавливается.','Performs the accepted contract locally: ledgers immediately, physical work after mastery. Meditation stops during work.'],
+    ['Распорядок Жэня: упражнения без постоянных кликов. Только в деревне или городе; занимает всё внимание и не даёт духовную энергию.','Ren’s routine: exercises without repeated clicks. Village or city only; occupies your attention and generates no qi.'],
     ['После изучения приёма: практика выбранной техники и рост освоения. Можно заниматься до открытия наследия. Медитация на это время останавливается.','After learning a method, practise your active technique and improve mastery. Practice is available before discovering the legacy. Meditation pauses during practice.'],
     ['Неверное восстановление техники','Invalid technique recovery'],
     ['След туши','Trail of Ink'],['Урок библиотекаря Вэя','Librarian Wei’s lesson'],['Понимание +8% за ранг. Позволяет читать повреждённые надписи в храме.','Understanding +8% per rank. Allows reading damaged temple inscriptions.'],
