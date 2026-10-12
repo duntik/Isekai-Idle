@@ -5,6 +5,7 @@
   const A = typeof module !== 'undefined' && module.exports ? require('./achievements.js') : root.IsekaiAchievements;
   const Atlas = typeof module !== 'undefined' && module.exports ? require('./atlas.js') : root.IsekaiAtlas;
   const S = typeof module !== 'undefined' && module.exports ? require('./sects.js') : root.IsekaiSects;
+  const R = typeof module !== 'undefined' && module.exports ? require('./return-report.js') : root.IsekaiReturnReport;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -615,6 +616,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

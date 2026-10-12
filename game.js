@@ -13,6 +13,7 @@
   }
   let s = E.fresh(), tab = 'hero', storageWarning = false;
   let saves;
+  let returnSummary=null,awaySnapshot=null,awayAt=0;
   let view = 'visual';
   try { if (localStorage.getItem('isekai-idle-interface') === 'data') view = 'data'; } catch {}
   function applyView() {
@@ -34,7 +35,11 @@
   let toastTimer;
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
   function save(manual = false) { try { localStorage.setItem(KEY, JSON.stringify(s)); if (manual) toast('Прогресс сохранён'); } catch { if (manual) toast('Не удалось сохранить. Используй экспорт.'); } }
-  function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0;E.advance(s,pending?0:elapsed);s.last=now;return pending?0:elapsed; }
+  function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0,before=elapsed>=60&&!pending&&!awaySnapshot?E.returnReport.snapshot(s):null;E.advance(s,pending?0:elapsed);s.last=now;if(before)returnSummary={before,after:E.returnReport.snapshot(s),elapsed};return pending?0:elapsed; }
+  function returnSummaryView(){
+    if(!returnSummary)return '';const r=E.returnReport.describe(E,returnSummary.before,returnSummary.after,returnSummary.elapsed,L?.language||'ru'),escape=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),num=v=>v.toLocaleString(L?.locale||'ru-RU',{maximumFractionDigits:3}),time=v=>`${Math.ceil(v/60)} ${uiText('мин','min')}`;
+    return `<section class="return-report" aria-label="${uiText('Отчёт после возвращения','Return report')}"><div class="section-head"><h2>${uiText('Пока тебя не было','While you were away')}</h2><button id="dismiss-return-report">${uiText('Понятно','Dismiss')}</button></div><p>${escape(r.activity)} · ${time(r.elapsed)}${r.elapsed-r.simulated>1?` · ${uiText('Учтено','Simulated')}: ${time(r.simulated)} (${uiText('до 24 ч за один офлайн-период','up to 24 h per offline period')})`:''}</p><details open><summary>${uiText('Изменения запасов и развития','Resource and progression changes')}</summary>${r.changes.length?`<table class="data-table"><tbody>${r.changes.map(c=>`<tr><th scope="row">${escape(c.label)}</th><td>${c.delta>0?'+':''}${num(c.delta)}</td></tr>`).join('')}</tbody></table>`:`<p>${uiText('Запасы и развитие не изменились.','Resources and progression did not change.')}</p>`}</details><p>${r.reasons.map(escape).join(' ')}</p>${r.opportunities.length?`<details open><summary>${uiText('Возможности к возвращению','Opportunities on return')}</summary><ul>${r.opportunities.map(v=>`<li>${escape(v)}</li>`).join('')}</ul></details>`:''}<small>${r.safety}</small></section>`;
+  }
   function developmentView(){
     if(s.stage!==0||s.storyStep===0)return '';
     const paths=E.world.developmentPaths?.(s,L?.language||'ru')||[];
@@ -167,7 +172,7 @@
     if (tab === 'galaxy') html = `<h2>Звёздная экспансия</h2><p class="intro">Для освоения следующего мира нужен флот из ${s.resources.worlds + 1} кораблей. Расширяй снабжение города и строй корабли из руды и эссенции.</p>${projects([6,7])}<div class="rebirth"><h3>Колониальный поход</h3><p>Поход занимает 4 часа; основание колонии добавляет мир и 80 эссенции.</p>${expedition()}${button('colonize', '', 'Отправить флот · 60 эссенции, 100 припасов', !s.expedition && s.buildings.fleet >= s.resources.worlds+1 && E.affordable(s,{cosmic:60,supplies:100}))}</div>`;
     if (tab === 'legacy') html = `<h2>Наследие души</h2><p class="intro">Жизнь ${s.life} · Души ${s.souls} · Постоянный бонус ${s.souls * 10}%.</p><div class="rebirth"><h3>Новый круг</h3><p>После 24-й ступени можно переродиться. Все владения, ресурсы и навыки сбросятся. Останутся души: +${Math.max(1, Math.floor(s.realm/6))}, каждая ускоряет личное развитие на 10%.</p>${button('rebirth', '', 'Переродиться', s.realm >= 24)}</div>`;
     if (tab === 'roadmap') html = `<h2>Ближайший горизонт</h2><p class="intro">Тебе известна только ближайшая цель. Дальнейший путь откроется, когда ты до неё доберёшься. Поручения, знания, помощь людям и испытания позволяют заслужить признание разными способами. Личная культивация и запас ресурсов по-прежнему необходимы.</p><div class="cards">${E.stages.slice(0,s.stage+2).map((st,i)=>card(`${i < s.stage ? '✓' : i === s.stage ? '●' : '◇'} ${st.name}`, st.subtitle, `<small>${i === s.stage ? 'Текущая глава' : i < s.stage ? 'Пройдена' : 'Ближайшая цель'}</small>`)).join('')}</div>${s.stage>0&&s.stage<7?card('Признание',`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`,Object.entries(s.world.director.paths[s.stage]||{}).map(([k,n])=>`${t(E.world.pathNames[k])}: ${n}`).join(' · '),button('advance','','Перейти',E.canAdvance(s))) : ''}`;
-    $('content').innerHTML = h(view === 'data' ? IsekaiDataView.render(s, tab, E) : html);
+    $('content').innerHTML = h(returnSummaryView()+(view === 'data' ? IsekaiDataView.render(s, tab, E) : html));
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
     for(const id of ['resources','navigation'])$(id).innerHTML=h($(id).innerHTML);
@@ -222,6 +227,7 @@
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();
     if(b.dataset.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
     if(b.id==='map-show-encounter')$('world-map-dialog').close?.();
+    if(b.id==='dismiss-return-report'){returnSummary=null;render();return;}
     if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();refreshNames();}
     if(b.dataset.nameStyle&&N.styles[b.dataset.nameStyle]){nameStyle=b.dataset.nameStyle;refreshNames();}
     if(b.id==='random-names')refreshNames();
@@ -258,10 +264,11 @@
     $('identity-error').textContent='';save();render();
   });
   if (!s.events.length) E.log(s,E.stages[0].intro);
-  const elapsed = Math.max(0,(Date.now()-s.last)/1000); const progressed=tick(); if (elapsed > 60&&progressed>0) E.log(s,`Офлайн: занятие продолжалось ${duration(Math.min(elapsed,86400))}.`);
+  tick();
   refreshNames();
   applyView(); render(); save(); if (storageWarning) toast(view === 'data' ? 'Предыдущая запись недоступна для текущей версии.' : 'Новая система использует сохранения v2. Старое сохранение v1 остаётся в браузере.');
   if(L)L.setLanguage(L.language);
-  if(typeof IsekaiSaves !== 'undefined') saves=IsekaiSaves.init({get:()=>{tick();return E.validate(JSON.parse(JSON.stringify(s)));},set:state=>{s=E.validate(state);tick();tab='hero';save();render();}});
+  if(typeof IsekaiSaves !== 'undefined') saves=IsekaiSaves.init({get:()=>{tick();return E.validate(JSON.parse(JSON.stringify(s)));},set:state=>{returnSummary=null;awaySnapshot=null;s=E.validate(state);tick();tab='hero';save();render();}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){tick();awaySnapshot=E.returnReport.snapshot(s);awayAt=Date.now();save();}else if(awaySnapshot){tick();const elapsed=Math.max(0,(Date.now()-awayAt)/1000);if(elapsed>=60)returnSummary={before:awaySnapshot,after:E.returnReport.snapshot(s),elapsed};awaySnapshot=null;render();save();}});
   setInterval(()=>{tick();render();},1000); setInterval(()=>save(),10000); window.addEventListener('pagehide',()=>{tick();save();});
 })();

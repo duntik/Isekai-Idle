@@ -1,0 +1,18 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),E=require('./engine.js'),R=E.returnReport;
+const run=(s,seconds)=>{const before=R.snapshot(s);E.advance(s,seconds);const state=JSON.stringify(s),report=R.describe(E,before,s,seconds,'en');assert.equal(JSON.stringify(s),state);assert(!/[А-Яа-яЁё]/.test(JSON.stringify(report)));return report;};
+const meditate=E.fresh();meditate.found=true;const r=run(meditate,3600);assert(r.changes.some(c=>c.label==='Qi'&&c.delta===360));assert(!r.changes.some(c=>c.label==='Body'));assert(r.reasons.some(x=>x.includes('limit')));assert.equal(r.simulated,3600);
+const resting=E.fresh();resting.activity='rest';assert(run(resting,300).reasons.some(x=>x.includes('rested')));
+const work=E.fresh();work.activity='work';work.employment.order={kind:'ledger',place:'village',progress:0,pay:20};const finished=run(work,600);assert(finished.reasons.some(x=>x.includes('contract is complete')));assert(finished.opportunities.some(x=>x.includes('Payment')));assert.equal(work.resources.gold,0);assert(finished.changes.some(x=>x.label==='Contract progress'&&x.delta===180));
+const misplaced=E.fresh();misplaced.activity='work';misplaced.world.location='forest';misplaced.employment.order={kind:'ledger',place:'village',progress:0,pay:20};assert(run(misplaced,600).reasons.some(x=>x.includes('away from the employer')));
+const journey=E.fresh();E.action(journey,'story');E.action(journey,'travel','forest');const arrival=run(journey,3600);assert(arrival.reasons.some(x=>x.includes('journey is complete')));assert(arrival.opportunities.some(x=>x.includes('encounter')));assert.equal(journey.world.deaths,0);assert(journey.world.encounter);
+const technique=E.fresh();technique.found=true;technique.resources.qi=100;technique.resources.herbs=100;E.action(technique,'learn-technique','sky');E.action(technique,'activity','technique');const practiced=run(technique,300);assert(practiced.reasons.some(x=>x.includes('rank limit')));assert(practiced.opportunities.some(x=>x.includes('rank advancement')));
+const capped=E.fresh();assert.equal(run(capped,172800).simulated,86400);
+const locked=E.fresh();assert(run(locked,120).reasons.some(x=>x.includes('still locked')));
+for(const view of ['visual','data']){
+  const s=E.fresh();s.storyStep=1;s.last=Date.now()-600000;const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(s)],['isekai-idle-interface',view]]),element=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',style:{},addEventListener(){},replaceChildren(){},append(){}});return elements.get(id);};
+  const context=vm.createContext({Isekai:E,IsekaiNames:require('./names.js'),IsekaiDataView:require('./data-view.js'),document:{documentElement:{dataset:{}},getElementById:element,querySelectorAll:()=>[],createElement:()=>({append(){}}),createTextNode:t=>t,addEventListener:(k,f)=>handlers[k]=f},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setInterval(){},setTimeout(){},clearTimeout(){},confirm:()=>true});
+  vm.runInContext(fs.readFileSync('game.js','utf8'),context);assert(element('content').innerHTML.includes('return-report'));assert(element('content').innerHTML.includes('Спокойствие'));handlers.click({target:{closest:()=>({id:'dismiss-return-report',dataset:{}})}});assert(!element('content').innerHTML.includes('class="return-report"'));
+  const stamp=JSON.parse(storage.get('isekai-idle-v2')).last;assert(Date.now()-stamp<1000);
+}
+console.log('PASS: honest offline deltas, limits, local work, pending encounters, safe travel, cap, pure bilingual report and dismissal in both interfaces');
