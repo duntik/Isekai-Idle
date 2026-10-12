@@ -492,7 +492,8 @@
       if(!W.map(s).nodes.some(n=>n.id===value))return false;const index=s.atlas.pins.indexOf(value);if(index>=0)s.atlas.pins.splice(index,1);else if(s.atlas.pins.length<80)s.atlas.pins.push(value);else return false;return true;
     }
     const scene=W.current(s),selected=type==='choice'?scene?.choices.find(c=>c.id===value):null,school=S.schools[s.world.admission];
-    const detail={orderKind:s.employment.order?.kind,stage:s.stage,storyStep:s.storyStep,scene:scene?.id,choice:value,danger:!!selected?.danger,schoolRank:scene?.school&&school?s.cultivation.learned[school.technique]?.rank||0:0,places:W.knownLocations(s)};
+    const detail={orderKind:s.employment.order?.kind,stage:s.stage,storyStep:s.storyStep,scene:scene?.id,choice:value,danger:!!selected?.danger,schoolRank:scene?.school&&school?s.cultivation.learned[school.technique]?.rank||0:0,places:W.knownLocations(s),location:s.world.location,deaths:s.world.deaths,reward:selected?.reward};
+    const priorResources=['technique-action','click'].includes(type)?{...s.resources}:null;
     if(type==='achievement-action'){
       const choice=achievementActions(s).find(a=>a.id===value);if(!choice?.enabled)return false;
       interruptActivity(s);s.stamina-=value==='carry'?3:5;s.achievements.cooldowns[value]=60;
@@ -500,7 +501,7 @@
       else{const remaining=s.stamina;s.stamina+=5;techniquePractice(s,s.cultivation.active,5);s.stamina=remaining;}
       A.sync(s);return true;
     }
-    const result=performAction(s,type,value);if(result){A.record(s,type,detail);for(const k of W.knownLocations(s))if(W.questPlaces.locations[k]&&!detail.places.includes(k))log(s,'Открыта дорога: '+W.locations[k].name+'. '+W.locations[k].desc);}return result;
+    const result=performAction(s,type,value);if(result){A.record(s,type,detail);if(s.world.deaths===detail.deaths&&type==='choice')Atlas.observe(s,detail.location,detail.reward);if(priorResources)Atlas.observe(s,detail.location,Object.fromEntries(Object.keys(s.resources).map(k=>[k,s.resources[k]-priorResources[k]])));if(type==='claim-order')Atlas.observe(s,detail.location,{gold:1});for(const k of W.knownLocations(s))if(W.questPlaces.locations[k]&&!detail.places.includes(k))log(s,'Открыта дорога: '+W.locations[k].name+'. '+W.locations[k].desc);}return result;
   }
   function advance(s, seconds) {
     let left = Math.max(0, Math.min(seconds, 86400));
@@ -524,7 +525,7 @@
         const work=Math.min(dt,orders.ledger.target-s.employment.order.progress);
         s.employment.order.progress+=work;taskPractice(s,'ledger',work);
       }
-      if(s.activity==='explore'&&activityRunning(s))taskPractice(s,'explore',dt);
+      if(s.activity==='explore'&&activityRunning(s)){taskPractice(s,'explore',dt);Atlas.observe(s,s.world.location,s.world.location==='ruins'?{herbs:1,relics:1}:{herbs:1});}
       s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery * techniqueBonus(s,'mastery'));
       if(s.activity==='technique'&&activityRunning(s))techniquePractice(s,s.cultivation.active,dt*mult);
       if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp * (s.activity==='meditate'?techniqueBonus(s,'xp'):1));
@@ -581,6 +582,7 @@
     if (!Array.isArray(input.events)) throw Error('Неверная хроника'); base.events = input.events.filter(e => e && typeof e.text === 'string' && Number.isFinite(e.day)).slice(0, 30).map(e => ({ text: e.text.slice(0, 500), day: e.day }));
     base.achievements=A.validate(input.achievements,base);
     base.atlas=Atlas.validate(input.atlas);
+    if(input.atlas?.discoveries===undefined)Atlas.migrate(base,api);
     return base;
   }
   const realmName = n => `${['Смертный', 'Пробуждение', 'Сбор энергии', 'Основание', 'Духовное ядро', 'Пробуждение души', 'Небесный путь', 'Звёздный дух', 'Закон пространства'][Math.min(8, Math.floor((n + 2) / 3))]} · ступень ${n}`;
