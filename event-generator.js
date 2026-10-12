@@ -32,7 +32,19 @@
       const eligible=s=>s.stage>=phase.min&&s.stage<=phase.max&&(phase.min!==2||!!s.world.admission);
       const solved=s=>!!s.world.director.pending[id]&&['labor','study','supply','fight'].some(k=>s.world.director.decisions[`${id}/${k}`]);
       const choice=(key,options={})=>({id:key,label:labels[key][0],en:{label:labels[key][1]},...options});
-      const resource=phase.min===0&&p.resource==='wood'?'gold':p.resource;
+      // Early crews need affordable supplies, but their thanks reflect the actual task.
+      // Keep the material paid to the crew separate from the resource it awards.
+      const resource=phase.min===0&&['wood','ore'].includes(p.resource)?'gold':p.resource;
+      let rewardResource=phase.min===0&&p.resource==='wood'?'gold':p.resource;
+      if(phase.min===0){
+        if(location==='village'&&taskIndex===1)rewardResource='herbs';
+        if(location==='forest')rewardResource=taskIndex===2?'gold':'herbs';
+        if(location==='city')rewardResource=['herbs','gold','gold','qi'][taskIndex];
+        if(location==='ruins')rewardResource=['herbs','qi','relics','qi'][taskIndex];
+        if(location==='mountains')rewardResource=['gold','qi','herbs','relics'][taskIndex];
+      }
+      const rewardAmount=phase.min===0&&rewardResource==='relics'?1:phase.reward;
+      const exploration=location==='ruins'&&taskIndex===1&&phase.min===0?30:0;
       const stamina=obstacle.id==='weather'?40:30,cost=phase.cost*(obstacle.id==='weather'?2:1);
       const choices=[
         choice('labor',{requires:s=>s.body>=phase.body&&s.stamina>=stamina,requirement:`Тело ≥ ${phase.body}; выносливость ≥ ${stamina}`,en:{label:labels.labor[1],requirement:`Body ≥ ${phase.body}; stamina ≥ ${stamina}`},stamina,route:'help'}),
@@ -42,7 +54,7 @@
       if(obstacle.id==='raiders')choices.push(choice('fight',{danger:phase.danger,route:'combat'}));
       choices.push(choice('skip',{skip:true}));
       result[location].push({id,generated:true,once:true,title,en:{title:titleEn,text:`${personEn} asks you to ${task[1]}. ${phase.en} ${obstacle.en} You may help with labour, knowledge or supplies${obstacle.id==='raiders'?', or challenge the extortionists':''}. After a successful choice, find this person here again to learn the outcome.`},text:`${person} просит ${task[0]}. ${phase.ru} ${obstacle.ru} Можно помочь трудом, знаниями или припасами${obstacle.id==='raiders'?', а можно бросить вызов вымогателям':''}. После успешного выбора найди этого человека здесь снова, чтобы узнать результат.`,requires:eligible,choices});
-      result[location].push({id:`${id}:return`,generated:true,payoff:true,once:true,title:`${person}: работа завершена`,text:s=>`${person} узнаёт тебя. ${outcomes[s?.world.director.pending[id]?.route||'help'][0]} Удалось ${task[0]}. За этот поступок ты получаешь награду и признание в той главе, где помог бригаде. Вместо припасов можно попросить время для совместной практики уже известного приёма. Он не заменяет личную культивацию.`,en:{title:`${personEn}: work completed`,text:s=>`${personEn} recognises you. ${outcomes[s?.world.director.pending[id]?.route||'help'][1]} Your help made it possible to ${task[1]}. You receive a reward and recognition in the chapter where you helped the crew. Instead of supplies, you may ask for time to practise a method you already know together. This does not replace personal cultivation.`},requires:s=>s.stage>=phase.min&&solved(s),choices:[choice('claim',{reward:{[resource]:phase.reward,...(phase.min>=2?{reputation:phase.reward/2}:{})},recognition:id}),choice('lesson',{requires:s=>!!s.cultivation.learned[p.technique],requirement:`Техника: ${techniqueNames[p.technique][0]}`,en:{label:labels.lesson[1],requirement:`Technique: ${techniqueNames[p.technique][1]}`},practice:{technique:p.technique,amount:60*(phaseIndex+1)},calm:2,recognition:id})]});
+      result[location].push({id:`${id}:return`,generated:true,payoff:true,once:true,title:`${person}: работа завершена`,text:s=>`${person} узнаёт тебя. ${outcomes[s?.world.director.pending[id]?.route||'help'][0]} Удалось ${task[0]}. За этот поступок ты получаешь награду и признание в той главе, где помог бригаде. Вместо припасов можно попросить время для совместной практики уже известного приёма. Он не заменяет личную культивацию.`,en:{title:`${personEn}: work completed`,text:s=>`${personEn} recognises you. ${outcomes[s?.world.director.pending[id]?.route||'help'][1]} Your help made it possible to ${task[1]}. You receive a reward and recognition in the chapter where you helped the crew. Instead of supplies, you may ask for time to practise a method you already know together. This does not replace personal cultivation.`},requires:s=>s.stage>=phase.min&&solved(s),choices:[choice('claim',{reward:{[rewardResource]:rewardAmount,...(phase.min>=2?{reputation:phase.reward/2}:{})},...(exploration?{explore:exploration}:{}),recognition:id}),choice('lesson',{requires:s=>!!s.cultivation.learned[p.technique],requirement:`Техника: ${techniqueNames[p.technique][0]}`,en:{label:labels.lesson[1],requirement:`Technique: ${techniqueNames[p.technique][1]}`},practice:{technique:p.technique,amount:60*(phaseIndex+1)},calm:2,recognition:id})]});
     }
     return result;
   }

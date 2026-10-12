@@ -12,15 +12,17 @@ assert.equal(E.action(s, 'advance'), false);
 assert(E.action(s,'travel','ruins'));E.advance(s,60);assert(E.action(s, 'activity', 'explore')); E.advance(s, 599); assert.equal(s.found, false);
 E.advance(s, 1); assert.equal(s.found, true);
 while(s.body<5){E.advance(s,10);assert(E.action(s,'click','squat'));}
+assert(E.action(s,'travel','village'));E.advance(s,30);
 assert.equal(E.action(s,'story'),true);
 E.action(s,'activity','meditate');E.advance(s,250);assert.equal(E.action(s,'story'),true);
+assert(E.action(s,'travel','ruins'));E.advance(s,60);
 assert.equal(E.action(s,'story'),true);
-assert.equal(E.action(s, 'fight'), true);
 assert.equal(E.action(s, 'fight'), false);
 E.action(s, 'activity', 'meditate'); E.advance(s, 4000);
 assert.equal(s.xp, E.needed(s));
 assert.equal(E.action(s, 'breakthrough'), true);
-assert.equal(E.action(s,'story'),true);assert.equal(E.action(s,'story'),true);
+assert(E.action(s,'travel','village'));E.advance(s,30);assert.equal(E.action(s,'story'),true);
+assert.equal(E.action(s,'fight'),true);assert.equal(E.action(s,'fight'),false);assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'advance'), true);
 assert.equal(s.stage, 1);
 

@@ -8,21 +8,21 @@
   function render(s,tab,E) {
     const f = n=>n.toLocaleString(root.IsekaiLocale?.locale||'ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
-    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))?'':'disabled'}>${label}</button>`;
+    const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))&&(action!=='fight'||E.canFight(s))?'':'disabled'}>${label}</button>`;
     const rows=[];
     const row=(name,value,note,operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
       if(!E.activityRunning(s))row('Занятие','Приостановлено: смени место или занятие.');
       row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
-      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${t.source}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
+      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
       row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
       row('Освоение техники',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Скорость развития: ${f(E.speed(s))}`);
       row('Древнее наследие',s.found?'Найдено':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 сек исследования до находки');
       if(s.stage===0) {
-        const beat=E.story[s.storyStep];
-        if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,btn('story','',beat.button,beat.ready(s)));
+        const beat=E.storyBeat(s);
+        if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):btn('story','',beat.button,beat.ready(s)));
         else row('Сюжет','Завершён','Доступна следующая глава');
       }
       {
@@ -36,14 +36,15 @@
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
         row('Оружие',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
-      if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; победы ${s.wins}/${gate.wins}${s.stage>0?` или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`:''}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
+      if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; город +25%');
       row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','В деревне и городе; уборка и разгрузка приостанавливаются в пути');
       const order=s.employment.order;
-      if(order){row('Активный заказ',`${E.orders[order.kind].name}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
-      for(const[k,o]of Object.entries(E.orders))row(o.name,`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
+      if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
+      for(const[k,o]of Object.entries(E.orders))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
     }
     if(tab==='combat') {
+      if(s.stage===0)row('Первый бой','Деревня','После прорыва и перед финалом первой арки. Можно завершить арку без боя.');
       row('Соперник',E.enemy(s).name,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('fight','','Выполнить',!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
       row('Подходящий стиль',{swift:'Быстрый шаг',armored:'Пробивающий удар',mystic:'Духовный заслон'}[E.enemy(s).type],'Соответствие даёт +35%');
       row('Интервал',`${Math.ceil(s.cooldown)} сек`,'Пять минут после победы');

@@ -6,7 +6,7 @@ function boot(state,view='visual',language='en'){
   const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(state)],['isekai-idle-interface',view],['isekai-idle-language',language]]);
   const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(){}});return elements.get(id);};
   const context=vm.createContext({Isekai:E,document:{documentElement:{dataset:{}},querySelectorAll:()=>[],getElementById:element,addEventListener:(t,f)=>handlers[t]=f,createElement:()=>({append(){},click(){}}),createTextNode:t=>t},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},confirm:()=>true});
-  for(const path of ['names.js','event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
+  for(const path of ['names.js','event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','chapter-one-locale.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
   return {context,element,handlers,storage};
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
@@ -19,6 +19,11 @@ for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
   const before=JSON.parse(storage.get('isekai-idle-v2'));handlers.click({target:{closest:()=>({dataset:{language:'ru'},disabled:false})}});assert.equal(storage.get('isekai-idle-language'),'ru');assert.equal(context.document.documentElement.lang,'ru');const after=JSON.parse(storage.get('isekai-idle-v2'));assert.deepEqual(after.cultivation,before.cultivation);assert.deepEqual(after.resources,before.resources);
 }
 const sample=boot(E.fresh()).context,L=sample.IsekaiLocale;
+for(const view of ['visual','data'])for(const route of Object.keys(E.firstRoutes)){
+  const s=E.fresh();s.found=true;s.realm=1;s.storyStep=6;s.wins=1;s.world.director.paths[0]={help:3};s.world.completed.push('city:wei-letter');
+  const before=boot(s,view);for(const tab of ['hero','combat']){before.handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});check(before.element('content').innerHTML);}
+  assert(E.action(s,'story',route));const app=boot(s,view);check(app.element('content').innerHTML);for(const event of s.events)check(app.context.IsekaiLocale.text(event.text));
+}
 // Generated continuations retain causal text and pending-task labels in either view.
 for(const view of ['visual','data'])for(const method of ['labor','study','supply','fight']){
   const s=E.fresh();s.stage=1;s.realm=3;s.body=30;s.resources.herbs=100;s.cultivation.learned.herb={rank:1,progress:0};

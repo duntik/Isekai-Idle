@@ -17,7 +17,7 @@
     work: { name: 'Работать над заказом', stage: 0, desc: 'Сверяет накладные для принятого заказа. На время работы медитация останавливается.', rates: {} },
     explore: { name: 'Исследовать местность', stage: 0, desc: 'В лесу — травы; в храме — травы, осколки и находка после 10 минут исследования. В пути занятие приостановлено.', rates: { herbs: .025, relics: 1 / 600 } },
     meditate: { name: 'Медитировать', stage: 0, desc: 'Успокаивает разум. После находки накапливает понимание и духовную энергию.', xp: .05, calm: .02, rates: { qi: .1 } },
-    technique: { name: 'Осваивать технику', stage: 1, desc: 'Постепенно усиливает выбранный боевой стиль.', mastery: .01 },
+    technique: { name: 'Осваивать технику', stage: 0, desc: 'После находки и изучения приёма: практика выбранной техники и рост освоения. Медитация на это время останавливается.', mastery: .01 },
     mission: { name: 'Поручения секты', stage: 2, desc: 'В городе и на перевале: репутация, монеты и травы. В других местах и в пути поручение приостановлено.', rates: { reputation: .025, gold: .15, herbs: .02 } },
     govern: { name: 'Управлять владениями', stage: 3, desc: 'Лично укреплять влияние организации.', rates: { influence: .035 } },
     laws: { name: 'Постигать законы', stage: 5, desc: 'Ускоренная культивация и сбор звёздной эссенции.', xp: .08, rates: { cosmic: .012 } }
@@ -49,7 +49,7 @@
   const story = [
     { title: 'Чужое небо', text: 'Последнее, что ты помнишь, — свет фар. Теперь над тобой два бледных солнца. На дороге скрипит телега. Женщина протягивает флягу: «Живой? Тогда помоги поднять колесо. До деревни довезу». Никто не называет тебя избранным.', goal: 'Принять помощь и добраться до деревни.', ready: () => true, reward: { gold: 5, herbs: 5 }, button: 'Подняться и пойти за телегой' },
     { title: 'Работа за место у очага', text: 'Хозяйка постоялого двора Мэй даёт тебе метлу. «За красивые истории не кормят. Подметёшь двор — получишь ужин». У ворот ученики секты смеются над твоей потрёпанной одеждой. Их лёгкие шаги почему-то оставляют трещины в камне.', goal: 'Подмести двор 10 раз или накопить 15 монет любой работой.', ready: s => s.clicks.sweep >= 10 || s.resources.gold >= 15, reward: { gold: 10 }, button: 'Получить первую плату' },
-    { title: 'Тело, которое не слушается', text: 'Одного ящика хватает, чтобы руки задрожали. Мэй замечает твой взгляд на учеников: «Начни с ног. Старик у колодца каждое утро приседает и бегает до мостика. Не сила небес, но лучше, чем ничего». Ты решаешь завтра не быть таким же слабым.', goal: 'Развить тело до 2 активными приседаниями или бегом.', ready: s => s.body >= 2, reward: { herbs: 5 }, button: 'Показать, что стал крепче' },
+    { title: 'Тело, которое не слушается', text: 'Одного ящика хватает, чтобы руки задрожали. Мэй замечает твой взгляд на учеников: «Начни с ног. Старик у колодца каждое утро приседает и бегает до мостика. Не сила небес, но лучше, чем ничего». Ты решаешь завтра не быть таким же слабым.', goal: 'Развить тело до 2 приседаниями или бегом либо изучить первый ранг любой техники.', ready: s => s.body >= 2 || Object.keys(s.cultivation.learned).length>0, reward: { herbs: 5 }, button: 'Показать, что стал крепче' },
     { title: 'Тишина между вдохами', text: 'Старик у колодца представляется: Жэнь. «В твоём мире всё спешили? Здесь сначала слушай». Он учит считать вдохи. Когда мысли затихают, из заброшенного храма за деревней доносится тонкий звон. Остальные его не слышат.', goal: 'Накопить 5 спокойствия фоновой медитацией.', ready: s => s.calm >= 5, reward: { herbs: 3 }, button: 'Рассказать Жэню о звоне' },
     { title: 'Осколок под пеплом', text: 'Жэнь показывает тропу к храму. Под обвалившимся алтарём лежит чёрный осколок. Он теплеет в твоей ладони, и в сознании проступают слова: «Пустое Небо». Это лишь повреждённая первая страница. Но на ней есть путь, которого вчера у тебя не было.', goal: 'Найти технику: 10 минут исследования, ускоряемого осмотром развалин.', ready: s => s.found, reward: { relics: 1 }, button: 'Прочитать первую страницу' },
     { title: 'Первый прорыв', text: 'Травы горчат. Каждый вдох заставляет осколок отвечать слабым теплом. Ты снова и снова теряешь ощущение потока, пока однажды оно не остаётся. Жэнь впервые смотрит на тебя серьёзно: «Теперь это твоя сила. И твоя ответственность».', goal: 'Заполнить понимание, собрать травы и совершить первый прорыв.', ready: s => s.realm >= 1, reward: { herbs: 10 }, button: 'Принять наставление' },
@@ -66,7 +66,30 @@
     cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='invitation'}
   };
-  const fresh = () => ({...baseFresh(), playerName:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), playerName:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
+  const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
+  const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
+  function storyBeat(s,index=s.storyStep){
+    const original=story[index];if(!original)return null;
+    const location=index===4?'ruins':'village',beat={...original,location};
+    if(index===2&&(s.chapterOneTraining==='technique'||(!s.chapterOneTraining&&s.body<2&&Object.keys(s.cultivation.learned).length))){beat.title='Сила начинается со знания';beat.text='Мэй замечает, как ты повторяешь изученный приём. Ты выбрал начать с понимания техники, а не с тяжёлых ящиков. Тело можно укреплять позже; сейчас у тебя уже есть собственный способ стать сильнее.';beat.button='Показать изученный приём';}
+    if(index===3&&s.world.mentors.includes('trainer'))beat.text='Жэнь узнаёт тебя у колодца. Стойку ты уже учил у него; сегодня речь о другом. «Между движениями тоже есть работа. Считай вдохи и слушай». Когда мысли затихают, из заброшенного храма доносится тонкий звон.';
+    if(index===6){
+      beat.goal='Помочь обозу: победить разбойника, заслужить 3 признания местными поручениями или доставить письмо Вэю и получить рекомендацию.';
+      beat.text='Возчики у деревенской дороги жалуются на человека с повязкой Белого Клыка: он требует плату за проход. После первого прорыва ты можешь защитить обоз силой. Другие пути — заручиться помощью жителей, которым ты помог, или предъявить рекомендацию библиотекаря Вэя. Выбирай, как заслужить право идти дальше.';
+      beat.button='Завершить первую арку';
+      if(s.chapterOneRoute==='combat')beat.text=original.text;
+      if(s.chapterOneRoute==='service'){beat.title='Дорога без потерь';beat.text='Жители помнят твою помощь. Вместе с возчиками они подготовили обходную тропу и провели обоз без драки. Мэй даёт тебе адрес представительства сект: доверие людей открыло дорогу дальше.';}
+      if(s.chapterOneRoute==='diplomacy'){beat.title='Слово из городского архива';beat.text='Ты показываешь рекомендацию Вэя, полученную за доставленное письмо. Возчики обращаются к дорожному смотрителю, и вымогатель отступает перед официальным разрешением на проход. Мэй даёт адрес представительства сект. Ты решил конфликт через знакомство и выполненное обещание.';}
+    }
+    const ready=index===6?state=>!!firstResolution(state):original.ready;
+    beat.goal+=` Место: ${W.locations[location].name}.`;
+    beat.ready=state=>state.stage===0&&!state.world.journey&&state.world.location===location&&ready(state);
+    return beat;
+  }
+  const techniqueSource=(s,k)=>k==='breath'?(s.world.admissionRoutes.includes('rescue')?'Спасение Сэня в лесу':'Дыхательный ритм храмовых письмен'):techniques[k].source;
+  const orderName=(s,k,place=s.world.location)=>place==='city'?({sweep:'Уборка торгового двора',haul:'Разгрузка городского склада',ledger:orders.ledger.name})[k]:orders[k].name;
   const techniqueCost=(s,k)=>({qi:20*2**(s.cultivation.learned[k]?.rank||0),herbs:5*2**(s.cultivation.learned[k]?.rank||0)});
   const techniqueNeeded=rank=>120*2**rank;
   const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return 1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0);};
@@ -81,7 +104,8 @@
   const spend = (s, c) => Object.entries(c).forEach(([k, v]) => s.resources[k] -= v);
   const buildCost = (s, k) => Object.fromEntries(Object.entries(projects[k].cost).map(([r, v]) => [r, Math.ceil(v * 1.5 ** s.buildings[k])]));
   const breakthroughCost = s => ({ herbs: Math.ceil(10 * 1.45 ** s.realm), ...(s.realm >= 3 ? { relics: Math.ceil(s.realm / 2) } : {}), ...(s.realm >= 6 ? { pills: Math.ceil(s.realm * 2) } : {}) });
-  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && (s.wins>=stages[s.stage].wins || (s.stage>0&&W.recognition(s)>=W.recognitionNeeded(s))) && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
+  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && (s.stage===0?!!firstResolution(s):(s.wins>=stages[s.stage].wins||W.recognition(s)>=W.recognitionNeeded(s))) && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
+  const canFight=s=>!s.world.journey&&s.cooldown<=0&&battlePower(s)>=enemy(s).power&&(s.stage>0||(s.realm>=1&&s.storyStep===6&&s.wins===0&&s.world.location==='village'));
   function chapterIntro(s){
     const peaceful=s.stage>1&&W.recognition(s,s.stage-1)>=W.recognitionNeeded({stage:s.stage-1});
     if(peaceful&&s.stage===2)return 'Ты принят во внешние ученики. За тебя говорят выполненные поручения и люди, которым ты помог. Доступ к библиотеке и доверие старших ещё предстоит заслужить.';
@@ -89,7 +113,7 @@
     if(peaceful&&s.stage===4)return 'Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.';
     return stages[s.stage].intro;
   }
-  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||s.employment.order?.kind==='ledger')&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||s.employment.order?.kind==='ledger')&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
   const activityRunning=s=>canActivity(s,s.activity);
   const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(!s.world.journey&&['village','city'].includes(s.world.location)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
@@ -99,11 +123,11 @@
     if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
     if (['travel','encounter','choice','apply-sect'].includes(type)) return W.action(s,type,value,api);
     if(type==='order'){
-      if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value)};
+      if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value),place:s.world.location};
       if(value==='ledger')s.activity='work';
     }else if(type==='claim-order'){
       const order=s.employment.order;if(!order||order.progress<orders[order.kind].target)return false;
-      s.resources.gold+=order.pay;s.employment.completed++;log(s,`Заказ выполнен: ${orders[order.kind].name}. Получено ${order.pay} монет.`);s.employment.order=null;
+      s.resources.gold+=order.pay;s.employment.completed++;log(s,`Заказ выполнен: ${orderName(s,order.kind,order.place||'village')}. Получено ${order.pay} монет.`);s.employment.order=null;
       if(s.activity==='work')s.activity='meditate';
     }else if(type==='cancel-order'){
       if(!s.employment.order)return false;s.employment.order=null;if(s.activity==='work')s.activity='meditate';
@@ -117,7 +141,9 @@
       s.explored+=c.explore||0;discover(s);
       if(['sweep','haul'].includes(value))s.employment.order.progress++;
     } else if (type === 'story') {
-      const beat=story[s.storyStep];if(s.stage!==0||!beat||!beat.ready(s))return false;
+      const beat=storyBeat(s);if(!beat||!beat.ready(s))return false;
+      if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
+      if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
       for(const [k,v] of Object.entries(beat.reward))s.resources[k]+=v;
       log(s,`История: ${beat.title}.`);s.storyStep++;
     } else if (type === 'activity' && canActivity(s,value)) s.activity = value;
@@ -132,7 +158,7 @@
       if (!s.found || s.xp < needed(s) || !affordable(s, c)) return false;
       spend(s, c); s.xp -= needed(s); s.realm++; log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития.`);
     } else if (type === 'fight') {
-      if (s.cooldown > 0 || battlePower(s) < enemy(s).power) return false;
+      if (!canFight(s)) return false;
       log(s, `Победа: ${enemy(s).name}. Твои успехи привлекли внимание более сильных противников.`);
       s.resources.gold += 30 * 1.8 ** s.wins; s.resources.herbs += 10 * (s.wins + 1); s.resources.relics += 1; s.wins++; s.cooldown = 300;
     } else if (type === 'weapon') {
@@ -213,13 +239,15 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
-      if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay};}}
+      if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
     base.world=W.validate(input.world,input.stage);
     if(input.playerName!==undefined&&input.playerName!==null){const name=N.normalize(input.playerName);if(!name)throw Error('Неверное имя героя');base.playerName=name;}
+    if(input.chapterOneRoute!==undefined&&input.chapterOneRoute!==null){if(!Object.hasOwn(firstRoutes,input.chapterOneRoute))throw Error('Неверный путь первой главы');base.chapterOneRoute=input.chapterOneRoute;}
+    if(input.chapterOneTraining!==undefined&&input.chapterOneTraining!==null){if(!['body','technique'].includes(input.chapterOneTraining))throw Error('Неверная подготовка героя');base.chapterOneTraining=input.chapterOneTraining;}
     if(input.cultivation!==undefined){const c=input.cultivation;if(!c||!c.learned||typeof c.learned!=='object'||Array.isArray(c.learned))throw Error('Неверные техники');
       for(const[k,t]of Object.entries(c.learned)){if(!Object.hasOwn(techniques,k)||!t||!Number.isInteger(t.rank)||t.rank<1||t.rank>5||!Number.isFinite(t.progress)||t.progress<0||t.progress>techniqueNeeded(t.rank))throw Error('Неверное освоение');base.cultivation.learned[k]={rank:t.rank,progress:t.progress};}
       if(c.active!==null&&!base.cultivation.learned[c.active])throw Error('Неверная активная техника');base.cultivation.active=c.active;
@@ -242,7 +270,7 @@
     ];
     let [title,accent]=headings[s.stage];
     if(s.stage===0){
-      if(s.realm>=1&&s.wins>=1){title='Первый рубеж пройден';accent='пора выбрать дальнейший путь.';}
+      if(s.realm>=1&&firstResolution(s)){title='Первый рубеж пройден';accent='пора выбрать дальнейший путь.';}
       else if(s.found){title='Слова Пустого Неба';accent='превратить понимание в силу.';}
       else if(s.world.location==='ruins'){title='Под пеплом старого храма';accent='найти первую страницу пути.';}
       else if(s.world.location==='forest'){title='Среди шепчущих корней';accent='искать помощь на лесных тропах.';}
@@ -260,10 +288,10 @@
     if(s.stage>=2&&s.stage<7&&canAdvance(s)){title=stages[s.stage+1].name;accent='пора открыть новую главу.';}
     const place=W.locations[s.world.location].name;
     if(s.world.journey){title='В дороге к новой вехе';accent=W.locations[s.world.journey.destination].name;}
-    const objective=s.stage===0&&story[s.storyStep]?story[s.storyStep].goal:stages[s.stage].subtitle;
+    const objective=s.stage===0&&storyBeat(s)?storyBeat(s).goal:stages[s.stage].subtitle;
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
