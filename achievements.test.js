@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),E=require('./engine.js'),A=E.achievements;
-const s=E.fresh();assert.equal(A.list(s).length,25);assert(!A.list(s).some(a=>a.id==='followers'));assert.equal(Object.keys(s.achievements.earned).length,0);
+const s=E.fresh();assert.equal(A.list(s).length,32);assert(!A.list(s).some(a=>a.id==='followers'));assert.equal(Object.keys(s.achievements.earned).length,0);
 assert(E.action(s,'story'));assert(A.unlocked(s,'arrival'));assert(!A.unlocked(s,'wage'));
 assert(E.action(s,'order','sweep'));for(let i=0;i<10;i++){E.advance(s,1);assert(E.action(s,'click','sweep'));}assert(!A.unlocked(s,'wage'));assert(E.action(s,'claim-order'));assert(A.unlocked(s,'wage'));assert(!E.action(s,'claim-order'));
 s.body=2;s.world.director.decisions['village:1/work']=1;assert(E.action(s,'order','haul'));assert(E.action(s,'cancel-order'));assert(!A.unlocked(s,'heavy'));
@@ -17,4 +17,4 @@ const legacy=E.fresh();legacy.body=2;legacy.employment.completed=4;delete legacy
 const rng=s.world.seed;A.list(s,'en');A.upcoming(s,'ru');assert.equal(s.world.seed,rng);
 for(const a of A.list(s,'en'))assert(!/[А-Яа-яЁё]/.test(a.name+a.description));
 const reborn=E.fresh();reborn.stage=7;reborn.realm=24;A.sync(reborn);const kept=JSON.stringify(reborn.achievements.earned);assert(E.action(reborn,'rebirth'));assert.equal(JSON.stringify(reborn.achievements.earned),kept);assert.deepEqual(reborn.achievements.counts,{});
-console.log('PASS: 29 milestone definitions, real completion, bounded unlocks, failed actions, death/rebirth, offline parity, migration and bilingual display');
+console.log('PASS: 41 milestone definitions, real completion, bounded unlocks, failed actions, death/rebirth, offline parity, migration and bilingual display');

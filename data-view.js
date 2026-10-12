@@ -19,6 +19,7 @@
     if(tab==='hero') {
       const milestones=E.achievements.list(s,root.IsekaiLocale?.language||'ru');
       for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
+      for(const a of milestones.filter(a=>a.special&&!a.earned))row(a.name,'◇',a.description);
       for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
       const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',root.IsekaiLocale?.language||'ru');
       if(hint)row(root.IsekaiLocale?.language==='en'?'Next step':'Следующий шаг','→',hint);
@@ -49,6 +50,8 @@
         row('Оружие',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; город +25%');
+      row(uiText('Необязательные обеты','Optional vows'),'—',E.achievements.challengeHint(s,root.IsekaiLocale?.language||'ru'));
+      for(const a of E.achievements.challenges(s,root.IsekaiLocale?.language||'ru')){const statuses={available:uiText('Не выбран','Not selected'),active:uiText('Соблюдается','Active'),failed:uiText('Нарушен','Failed'),complete:uiText('Завершён','Complete')};row(a.name,statuses[a.status],a.description,btn('choose-vow',a.id,uiText('Принять обет','Take the vow'),a.enabled));}
       row('Приём заявок',Object.keys(E.orders).some(k=>E.orderAvailable(s,k))?'Доступен':'Недоступен','У знакомого заказчика; работа и оплата только в месте принятого заказа');
       const order=s.employment.order;
       if(!order&&!Object.keys(E.orders).some(k=>E.orderAvailable(s,k)))row('Поручения','—','Сначала познакомься с заказчиком. Поручения появляются после встреч; принятый заказ нужно выполнять и сдавать в указанном месте.');

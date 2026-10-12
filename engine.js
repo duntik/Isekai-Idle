@@ -481,6 +481,7 @@
     ...(A.unlocked(s,'practice')&&s.cultivation.active?[{id:'practice',name:['Короткая отработка приёма','Short technique practice'],description:['До 5 освоения выбранной техники. Расход: 5 выносливости; восстановление 60 сек.','Up to 5 practice for the active technique. Costs 5 stamina; recovery 60 sec.'],enabled:!s.world.journey&&s.stamina>=5&&!(s.achievements.cooldowns.practice>0)&&s.cultivation.learned[s.cultivation.active].rank<5&&s.cultivation.learned[s.cultivation.active].progress<techniqueNeeded(s.cultivation.learned[s.cultivation.active].rank)}]:[])
   ];
   function action(s,type,value){
+    if(type==='choose-vow')return A.chooseVow(s,value);
     if(type==='atlas-survey'){const result=Atlas.survey(s,api);if(result)A.sync(s);return result;}
     if(type==='atlas-note'){
       if(!value||typeof value.id!=='string'||typeof value.text!=='string'||!W.map(s).nodes.some(n=>n.id===value.id))return false;
@@ -489,7 +490,8 @@
     if(type==='atlas-pin'){
       if(!W.map(s).nodes.some(n=>n.id===value))return false;const index=s.atlas.pins.indexOf(value);if(index>=0)s.atlas.pins.splice(index,1);else if(s.atlas.pins.length<80)s.atlas.pins.push(value);else return false;return true;
     }
-    const detail={orderKind:s.employment.order?.kind};
+    const scene=W.current(s),selected=type==='choice'?scene?.choices.find(c=>c.id===value):null,school=S.schools[s.world.admission];
+    const detail={orderKind:s.employment.order?.kind,stage:s.stage,storyStep:s.storyStep,scene:scene?.id,choice:value,danger:!!selected?.danger,schoolRank:scene?.school&&school?s.cultivation.learned[school.technique]?.rank||0:0};
     if(type==='achievement-action'){
       const choice=achievementActions(s).find(a=>a.id===value);if(!choice?.enabled)return false;
       interruptActivity(s);s.stamina-=value==='carry'?3:5;s.achievements.cooldowns[value]=60;
