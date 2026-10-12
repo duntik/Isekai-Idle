@@ -156,16 +156,21 @@
     return '';
   }
   const canTravel=(s,k)=>!!locations[k]&&!travelReason(s,k);
+  const travelTime=(s,k)=>Math.ceil(locations[k].time*((s.atlas?.surveys[k]||0)>=2?.8:1));
   function map(s,language='ru'){
     const coords={village:[1,1],forest:[2,1],city:[0,1],ruins:[1,0],mountains:[2,0]};
     const known=knownLocations(s),nodes=known.map(id=>({id,kind:'location',name:locations[id].name,x:coords[id][0],y:coords[id][1],visited:s.world.visits[id]>0||s.world.location===id,locked:!!travelReason(s,id,language),reason:travelReason(s,id,language),detail:locations[id].desc}));
     for(const[id,f]of Object.entries(frontiers))if(s.world.location===f.base||s.world.visits[f.base]>0)nodes.push({id,kind:'frontier',name:language==='en'?f.en:f.name,x:f.x,y:f.y,visited:s.world.map.explored.includes(id),locked:!f.ready(s),reason:f.ready(s)?'':language==='en'?f.reasonEn:f.reason,detail:language==='en'?'A deeper route. Approach here from the nearby location.':'Путь вглубь. Подойти можно из ближайшей локации.',base:f.base});
     for(const[id,index]of s.world.map.sites.entries()){const base=index.split(':')[0],scene=encounters[base]?.find(e=>e.id===(s.world.director.pending[index]?index+':return':index));if(!scene||!known.includes(base))continue;nodes.push({id:`site:${index}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:coords[base][0]+(id%3-1)*.6,y:coords[base][1]+1+Math.floor(id/3)*.55,visited:true,locked:!eligible(s,scene),reason:eligible(s,scene)?'':language==='en'?'This meeting has been resolved.':'Эта встреча уже завершена.',detail:sceneText(scene,'text',language,s)});}
+    for(const lead of causalLeads(s,language))if(known.includes(lead.location))nodes.push({id:`lead:${lead.id}`,kind:'site',base:lead.location,name:lead.title,x:0,y:0,visited:true,locked:false,pending:true,detail:language==='en'?'Your previous deed has a continuation here. Return to this area to seek the encounter.':'У прежнего поступка есть продолжение. Вернись в эту область и ищи встречу.'});
+    for(const[base,list]of Object.entries(encounters))if(known.includes(base))for(const scene of list)if(scene.causal&&(s.atlas?.notes[`lead:${scene.id}`]||s.atlas?.pins.includes(`lead:${scene.id}`))&&!nodes.some(n=>n.id===`lead:${scene.id}`))nodes.push({id:`lead:${scene.id}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:0,y:0,visited:true,locked:true,detail:language==='en'?'A resolved encounter kept with your note or bookmark.':'Завершённая встреча, сохранённая вместе с заметкой или отметкой.'});
+    for(const node of nodes)if(node.kind==='site')node.pending||=!!s.world.director.pending[node.id.slice(5)];
+    for(const node of nodes)if(node.kind==='location')node.pending=nodes.filter(n=>n.base===node.id&&n.pending).length;
     const ordinary=nodes.filter(n=>n.kind!=='site');
     const frontierCoords={'dark-forest':[3,1],'sealed-crypt':[0,0],'upper-pass':[3,0]};
-    for(const node of ordinary){if(frontierCoords[node.id])[node.x,node.y]=frontierCoords[node.id];node.x=40+node.x*245;node.y=40+node.y*195;}
+    for(const node of ordinary){if(frontierCoords[node.id])[node.x,node.y]=frontierCoords[node.id];node.x=40+node.x*245;node.y=40+node.y*245;}
     const bottom=Math.max(70,...ordinary.map(n=>n.y))+240;
-    for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=40+index%4*245;node.y=bottom+Math.floor(index/4)*195;}
+    for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=40+index%4*245;node.y=bottom+Math.floor(index/4)*245;}
     return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(540,...nodes.map(n=>n.x+250)),height:Math.max(400,...nodes.map(n=>n.y+240))};
   }
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
@@ -190,7 +195,7 @@
     const w=s.world;
     if(type==='apply-sect'){if(!canApply(s,value))return false;w.admission=value;E.log(s,`${admissions[value].name}: ${admissions[value].text} Поручительство принято. Для вступления заверши подготовку и оплати общий запас снаряжения, указанный в следующей главе.`);}
     else if(type==='map-inspect'){
-      const f=frontiers[value],id=value.startsWith('site:')?value.slice(5):null,base=f?.base||id?.split(':')[0];
+      const f=frontiers[value],id=value.startsWith('site:')?value.slice(5):value.startsWith('lead:')?value.slice(5):null,base=f?.base||id?.split(':')[0];
       if(w.journey||w.encounter)return false;
       if(!base||!map(s).nodes.some(n=>n.id===value))return false;
       if(w.location!==base){E.log(s,`Сначала вернись: ${locations[base].name}.`);return true;}
@@ -200,7 +205,7 @@
       if(f&&!w.map.explored.includes(value))w.map.explored.push(value);
       if(!scene.remote)M?.recordMeeting(s,scene);w.encounter={location:base,index:encounters[base].indexOf(scene),id:scene.id};E.log(s,`Ты осмотрел местность: ${f?.name||scene.title}.`);
     }
-    else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:locations[value].time};E.log(s,`Ты отправился: ${locations[value].name}.`);}
+    else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:travelTime(s,value)};E.log(s,`Ты отправился: ${locations[value].name}.`);}
     else if(type==='encounter'){if(!canEncounter(s))return false;offer(s,E);}
     else if(type==='choice'){
       const c=current(s)?.choices.find(c=>c.id===value);if(!canChoice(s,c,E))return false;
@@ -255,5 +260,5 @@
     w.people=M?.validate(input.people,{stage,world:w})||{};return w;
   }
   const causalLeads=(s,language='ru')=>Object.entries(encounters).flatMap(([location,list])=>list.filter(scene=>scene.causal&&eligible(s,scene)).map(scene=>({id:scene.id,location,title:sceneText(scene,'title',language,s)})));
-  const api={causalLeads,memory:M,eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,developmentPaths,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={travelTime,causalLeads,memory:M,eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,developmentPaths,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

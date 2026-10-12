@@ -61,6 +61,15 @@ for (let stage = 0; stage < 8; stage++) {
   if(stage===0)assert(!mapHTML.includes('data-map-node="city"'));
   assert(!mapHTML.includes('NaN'));assert(!mapHTML.includes('undefined'));
   assert(mapHTML.includes('class="map-icon"'));
+  assert(element('map-intelligence').innerHTML.includes('Дневник исследователя'));
+  if(stage===0){
+    element('map-note-text').value='Мой план <img src=x onerror=alert(1)>';
+    element('map-note-form').submit({preventDefault(){}});
+    assert.equal(JSON.parse(stored).atlas.notes.village,'Мой план <img src=x onerror=alert(1)>');
+    assert(!element('map-canvas').innerHTML.includes('<img src=x'));
+    element('map-note-text').value='Несохранённый черновик';element('map-filter').click();
+    assert.equal(element('map-note-text').value,'Несохранённый черновик');element('map-filter').click();
+  }
   element('map-zoom-in').click();
   assert.equal(element('map-zoom-level').textContent,'115%');
   assert.equal(element('map-canvas').style.transform,'scale(1.15)');

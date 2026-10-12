@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict'),E=require('./engine.js'),W=E.world;
+const s=E.fresh();assert.deepEqual(E.atlas.rumors(s),[]);assert(!E.action(s,'atlas-survey'));assert(E.action(s,'story'));assert.equal(E.atlas.rumors(s).length,2);
+assert(!E.action(s,'atlas-note',{id:'galaxy',text:'unknown'}));assert(E.action(s,'atlas-note',{id:'village',text:'Личный план <script>alert(1)</script>'}));assert.equal(s.atlas.notes.village,'Личный план <script>alert(1)</script>');assert(E.action(s,'atlas-pin','village'));assert(s.atlas.pins.includes('village'));
+const seed=s.world.seed;W.map(s);E.atlas.rumors(s,'en');E.atlas.details(s,'village');assert.equal(s.world.seed,seed);
+assert(E.action(s,'atlas-survey'));assert.equal(s.activity,'rest');assert.equal(s.atlas.surveys.village,1);assert.equal(s.stamina,85);assert(!E.atlas.trail(s,'village'));
+const before=JSON.stringify(s);assert(!E.action(s,'atlas-survey'));assert.equal(JSON.stringify(s),before);E.advance(s,300);assert(E.action(s,'atlas-survey'));assert(E.atlas.trail(s,'village'));assert.equal(W.travelTime(s,'village'),24);
+const gold=s.resources.gold;E.advance(s,300);assert(E.action(s,'atlas-survey'));assert.equal(s.resources.gold,gold+3);assert.equal(s.atlas.surveys.village,3);
+const saved=E.validate(JSON.parse(JSON.stringify(s)));assert.deepEqual(saved,s);assert.equal(saved.atlas.notes.village,s.atlas.notes.village);
+assert(E.action(s,'travel','forest'));assert(!E.action(s,'atlas-survey'));E.advance(s,60);assert(s.world.encounter);assert(!E.action(s,'atlas-survey'));s.world.encounter=null;E.advance(s,300);assert(E.action(s,'travel','village'));assert.equal(s.world.journey.remaining,24);
+const lead=E.fresh();lead.storyStep=1;lead.world.director.decisions['forest:2/guide']=1;const id='lead:forest:sen-second-chance';assert(W.map(lead).nodes.some(n=>n.id===id&&n.pending));assert(E.action(lead,'atlas-note',{id,text:'Вернуться к Сэню'}));assert(E.action(lead,'atlas-pin',id));lead.world.location='forest';assert(E.action(lead,'map-inspect',id));assert.equal(W.current(lead).id,'forest:sen-second-chance');assert(E.action(lead,'choice','lin'));assert(W.map(lead).nodes.some(n=>n.id===id&&n.locked));assert(!W.map(lead).nodes.find(n=>n.id===id).pending);
+const legacy=E.fresh();delete legacy.atlas;assert.deepEqual(E.validate(legacy).atlas,E.atlas.fresh());
+for(const r of E.atlas.rumors(s,'en'))assert(!/[А-Яа-яЁё]/.test(r.text+r.source));
+const unsafe=E.atlas.validate({notes:{village:'x'.repeat(700)},surveys:{forest:-1},cooldown:999,pins:['village','village']});assert.equal(unsafe.notes.village.length,600);assert.equal(unsafe.cooldown,300);assert.deepEqual(unsafe.pins,['village']);
+console.log('PASS: earned rumours, safe surveys, bounded repeat rewards, useful trails, contextual continuations, notes/pins, save migration and read-only map');

@@ -19,6 +19,7 @@ for(const view of ['visual','data']){
   state.world.map.sites=[E.world.encounters.forest.find(scene=>scene.generated&&!scene.payoff).id];
   const app=boot(state,view);app.element('open-map').click();
   check(app.element('map-canvas').innerHTML);check(app.element('map-status').textContent);
+  check(app.element('map-intelligence').innerHTML);check(app.element('map-note-place').innerHTML);check(app.element('map-note-label').textContent);
   assert(app.element('map-canvas').innerHTML.includes('Dark thicket'));
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){

@@ -69,6 +69,7 @@
       for(const q of E.world.causalLeads(s,root.IsekaiLocale?.language||'ru'))row(uiText('Нить истории','Story thread'),q.title,`${E.world.locations[q.location].name}. ${uiText('Возможное продолжение после прошлых поступков; ищи встречи на месте.','A possible continuation of your past deeds; seek encounters here.')}`);
       for(const p of E.world.memory?.people(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,p.status,`${p.role}; ${E.world.locations[p.location]?.name||p.location}; ${(p.memories||[]).join(' ')}`);
       const W=E.world,w=s.world,scene=W.current(s);
+      row(uiText('Осмотр окрестностей','Survey surroundings'),s.atlas.surveys[w.location]||0,E.atlas.hint(s,root.IsekaiLocale?.language||'ru'),btn('atlas-survey','',uiText('Осмотреть','Survey'),E.atlas.canSurvey(s)));
       row('Текущее место',W.locations[w.location].name,E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
       row('Переход',w.journey?`${W.locations[w.journey.destination].name}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна встреча');
       if(scene)row('Встреча',W.sceneText(scene,'title',root.IsekaiLocale?.language),W.sceneText(scene,'text',root.IsekaiLocale?.language,s));
@@ -76,7 +77,7 @@
       row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
       for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
       const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
-      for(const[k,p]of Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)))row(p.name,`${p.time} сек`,`${bonuses[k]||p.bonus} ${W.travelReason(s,k,root.IsekaiLocale?.language||'ru')}`,btn('travel',k,'Перейти',W.canTravel(s,k)));
+      for(const[k,p]of Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)))row(p.name,`${W.travelTime(s,k)} сек`,`${bonuses[k]||p.bonus} ${W.travelReason(s,k,root.IsekaiLocale?.language||'ru')}`,btn('travel',k,'Перейти',W.canTravel(s,k)));
       row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
       row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));
