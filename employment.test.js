@@ -1,6 +1,18 @@
 'use strict';
 const assert=require('node:assert/strict'),E=require('./engine.js');
 const s=E.fresh();s.found=true;
+assert(E.clickVisible(s,'squat'));assert(E.clickVisible(s,'run'));
+assert(!E.clickVisible(s,'sweep'));assert(!E.clickVisible(s,'haul'));assert(!E.activityVisible(s,'work'));
+for(const kind of ['sweep','haul','ledger']){
+  const state=E.fresh();state.employment.order={kind,progress:0,pay:8};
+  assert.equal(E.clickVisible(state,'sweep'),kind==='sweep');
+  assert.equal(E.clickVisible(state,'haul'),kind==='haul');
+  assert.equal(E.activityVisible(state,'work'),kind==='ledger');
+  state.stamina=0;state.clickCooldown=1;
+  assert(E.clickVisible(state,'squat')); // Temporary limits disable rather than hide.
+}
+const ruins=E.fresh();ruins.world.location='ruins';assert(E.clickVisible(ruins,'scout'));
+ruins.found=true;assert(!E.clickVisible(ruins,'scout'));
 assert(!E.action(s,'order','haul'));assert(!E.action(s,'click','sweep'));assert(E.action(s,'order','sweep'));
 assert(!E.action(s,'order','ledger'));assert(!E.action(s,'claim-order'));
 for(let i=0;i<10;i++){E.advance(s,1);assert(E.action(s,'click','sweep'));}

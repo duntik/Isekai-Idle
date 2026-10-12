@@ -28,9 +28,9 @@
       {
         row('Выносливость',`${f(s.stamina)}/100`,'Восстановление +0,4/сек; интервал 0,6 сек');
         row('Спокойствие',`${f(s.calm)}/100`,'Растёт от медитации');
-        for(const [k,c] of Object.entries(E.clicks).filter(([k])=>k!=='scout'||s.stage<2))row(c.name,s.clicks[k],`${c.desc}; выносливость −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
+        for(const [k,c] of Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)))row(c.name,s.clicks[k],`${c.desc}; выносливость −${c.stamina}`,btn('click',k,'Выполнить',E.canClick(s,k)));
       }
-      for(const [k,a] of Object.entries(E.activities).filter(([,a])=>a.stage<=s.stage)) row(activityLabels[k],s.activity===k?(E.activityRunning(s)?'Активно':'Приостановлено'):'Ожидание',a.desc+' '+Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие героя',btn('activity',k,'Назначить',s.activity!==k));
+      for(const [k,a] of Object.entries(E.activities).filter(([k])=>E.activityVisible(s,k))) row(activityLabels[k],s.activity===k?(E.activityRunning(s)?'Активно':'Приостановлено'):'Ожидание',a.desc+' '+Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие героя',btn('activity',k,'Назначить',s.activity!==k));
       if(s.stage>=1) {
         for(const [k,label] of Object.entries({balanced:'Равновесие',swift:'Быстрый шаг',piercing:'Пробивающий удар',ward:'Духовный заслон'})) row(label,s.style===k?'Выбран':'—','Боевой стиль',btn('style',k,'Применить'));
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
@@ -40,7 +40,7 @@
       row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','В деревне и городе; уборка и разгрузка приостанавливаются в пути');
       const order=s.employment.order;
       if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
-      for(const[k,o]of Object.entries(E.orders))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
+      for(const[k,o]of Object.entries(E.orders).filter(()=>!order))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
       for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
     }
