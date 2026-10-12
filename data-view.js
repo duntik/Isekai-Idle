@@ -17,6 +17,9 @@
     };
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
+      const milestones=E.achievements.list(s,root.IsekaiLocale?.language||'ru');
+      for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
+      for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
       const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',root.IsekaiLocale?.language||'ru');
       if(hint)row(root.IsekaiLocale?.language==='en'?'Next step':'Следующий шаг','→',hint);
       if(s.stage===0) {
