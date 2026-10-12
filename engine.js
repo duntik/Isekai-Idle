@@ -45,7 +45,16 @@
     ledger:{name:'Сверить накладные',neutral:'Заказ C',target:180,pay:20,body:0,desc:'3 минуты фоновой работы. Пока работаешь, медитация не идёт.'}
   };
   const orderPay=(s,k)=>Math.floor(orders[k].pay*(1+Math.min(10,Math.floor(s.employment.completed/5))*.1)*(s.world.location==='city'&&!s.world.journey?1.25:1));
-  const canOrder=(s,k)=>Object.hasOwn(orders,k)&&!s.world.journey&&['village','city'].includes(s.world.location)&&!s.employment.order&&s.body>=orders[k].body;
+  const orderAvailable=(s,k)=>{
+    if(!Object.hasOwn(orders,k)||s.world.journey)return false;
+    const place=s.world.location,d=s.world.director.decisions;
+    if(place==='village')return k==='sweep'?s.storyStep>=1:!!(d['village:1/work']||d['village:0/help']);
+    if(place==='city')return k==='ledger'?!!(d['city:0/study']||d['city:wei-letter/deliver-letter']):!!(d['city:0/job']||d['city:3/courier-help']);
+    return false;
+  };
+  const canWorkOrder=s=>!!s.employment.order&&!s.world.journey&&s.world.location===(s.employment.order.place||'village');
+  const canClaimOrder=s=>canWorkOrder(s)&&s.employment.order.progress>=orders[s.employment.order.kind].target;
+  const canOrder=(s,k)=>orderAvailable(s,k)&&!s.employment.order&&s.body>=orders[k].body;
   const story = [
     { title: 'Чужое небо', text: 'Последнее, что ты помнишь, — свет фар. Теперь над тобой два бледных солнца. На дороге скрипит телега. Женщина протягивает флягу: «Живой? Тогда помоги поднять колесо. До деревни довезу». Никто не называет тебя избранным.', goal: 'Принять помощь и добраться до деревни.', ready: () => true, reward: { gold: 5, herbs: 5 }, button: 'Подняться и пойти за телегой' },
     { title: 'Работа за место у очага', text: 'Хозяйка постоялого двора Мэй даёт тебе метлу. «За красивые истории не кормят. Подметёшь двор — получишь ужин». У ворот ученики секты смеются над твоей потрёпанной одеждой. Их лёгкие шаги почему-то оставляют трещины в камне.', goal: 'Подмести двор 10 раз или накопить 15 монет любой работой.', ready: s => s.clicks.sweep >= 10 || s.resources.gold >= 15, reward: { gold: 10 }, button: 'Получить первую плату' },
@@ -113,7 +122,7 @@
     if(peaceful&&s.stage===4)return 'Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.';
     return stages[s.stage].intro;
   }
-  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||s.employment.order?.kind==='ledger')&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||(s.employment.order?.kind==='ledger'&&canWorkOrder(s)))&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
   const activityRunning=s=>canActivity(s,s.activity);
   function guidance(s,action,key='',language='ru') {
     const en=language==='en',say=(ru,english)=>en?english:ru;
@@ -167,6 +176,7 @@
     }
     if(action==='order'&&orders[key]){
       if(s.world.journey||!['village','city'].includes(s.world.location))return say('Заказы принимают в деревне и городе. Открой «Путешествия» и отправься в поселение.','Contracts are accepted in the village and city. Open Travel and go to a settlement.');
+      if(!orderAvailable(s,key))return say('Сначала познакомься с заказчиком во встрече в этом поселении: он предложит работу.','First meet the employer in an encounter in this settlement: they will offer work.');
       if(s.body<orders[key].body)return say(`Нужно тело ${orders[key].body}; сейчас ${n(s.body)}. Нажимай «Присесть» или «Пробежать отрезок».`,`Requires body ${orders[key].body}; you have ${n(s.body)}. Click Squat or Run.`);
       return key==='ledger'?say('Прими заказ: начнётся фоновая сверка накладных. Через 180 секунд работы нажми «Получить оплату».','Accept the contract to start background invoice checking. After 180 seconds of work, press Collect payment.'):say(`Прими заказ → выполни ${orders[key].target} кликов «${clicks[key].name}» → нажми «Получить оплату».`,`Accept the contract → perform ${orders[key].target} ${key==='sweep'?'Sweep':'Carry crates'} clicks → press Collect payment.`);
     }
@@ -178,10 +188,10 @@
     }
     if(action==='claim-order'){
       const order=s.employment.order;if(!order)return '';
+      if(!canWorkOrder(s)){const place=order.place||'village';return say(`Работа и оплата доступны только у заказчика: ${W.locations[place].name}. Вернись туда через «Путешествия». Прогресс сохранён.`,`Work and payment are available only at the employer's location: ${place==='city'?'Silver Bridge City':'Wellside Village'}. Return through Travel. Progress is saved.`);}
       if(order.progress>=orders[order.kind].target)return say('Заказ завершён. Нажми «Получить оплату» — деньги не выдаются автоматически.','Contract complete. Press Collect payment — payment is not automatic.');
-      if(order.kind!=='ledger'&&(s.world.journey||!['village','city'].includes(s.world.location)))return say('Работа приостановлена. Вернись в деревню или город через «Путешествия», затем продолжи клики заказа.','Work is paused. Return to the village or city through Travel, then continue the contract clicks.');
       if(order.kind==='ledger')return say(`Осталось ${remaining(orders.ledger.target,order.progress)} сек работы. Выбери «Работать над заказом» и подожди, затем получи оплату.`,`Work remaining: ${remaining(orders.ledger.target,order.progress)} sec. Select Work on contract and wait, then collect payment.`);
-      return say(`Осталось ${remaining(orders[order.kind].target,order.progress)} действий. В деревне или городе нажимай «${clicks[order.kind].name}», затем получи оплату.`,`Actions remaining: ${remaining(orders[order.kind].target,order.progress)}. In the village or city, click ${order.kind==='sweep'?'Sweep':'Carry crates'}, then collect payment.`);
+      return say(`Осталось ${remaining(orders[order.kind].target,order.progress)} действий. Оставайся у заказчика и нажимай «${clicks[order.kind].name}», затем получи оплату.`,`Actions remaining: ${remaining(orders[order.kind].target,order.progress)}. Stay at the employer's location, click ${order.kind==='sweep'?'Sweep':'Carry crates'}, then collect payment.`);
     }
     if(action==='click'&&clicks[key]){
       if(s.stamina<clicks[key].stamina)return say(`Нужно ${clicks[key].stamina} выносливости; сейчас ${n(s.stamina)}. Подожди восстановления (+0,4/сек).`,`Requires ${clicks[key].stamina} stamina; you have ${n(s.stamina)}. Wait for recovery (+0.4/sec).`);
@@ -210,18 +220,18 @@
   // Visibility follows context, independently of stamina, cooldowns and progress.
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
   const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order?.kind==='ledger':canActivity(s,k)||s.activity===k);
-  const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(!s.world.journey&&['village','city'].includes(s.world.location)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
+  const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
     if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
     if(type==='learn-technique'){if(!canLearn(s,value))return false;spend(s,techniqueCost(s,value));const t=s.cultivation.learned[value]||(s.cultivation.learned[value]={rank:0,progress:0});if(t.rank)t.progress-=techniqueNeeded(t.rank);t.rank++;if(!s.cultivation.active)s.cultivation.active=value;log(s,`Изучена техника: ${techniques[value].name}, ранг ${t.rank}.`);return true;}
     if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
-    if (['travel','encounter','choice','apply-sect'].includes(type)) return W.action(s,type,value,api);
+    if (['travel','encounter','choice','apply-sect','map-inspect'].includes(type)) return W.action(s,type,value,api);
     if(type==='order'){
       if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value),place:s.world.location};
       if(value==='ledger')s.activity='work';
     }else if(type==='claim-order'){
-      const order=s.employment.order;if(!order||order.progress<orders[order.kind].target)return false;
+      const order=s.employment.order;if(!canClaimOrder(s))return false;
       s.resources.gold+=order.pay;s.employment.completed++;log(s,`Заказ выполнен: ${orderName(s,order.kind,order.place||'village')}. Получено ${order.pay} монет.`);s.employment.order=null;
       if(s.activity==='work')s.activity='meditate';
     }else if(type==='cancel-order'){
@@ -297,7 +307,7 @@
       s.stamina=Math.min(100,s.stamina+.4*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
       s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
       for (const [k, v] of Object.entries(a.rates || {})) if((k!=='qi'||s.found)&&(s.activity!=='explore'||k!=='relics'||s.world.location==='ruins'))s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?techniqueBonus(s,'qi'):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
-      if(s.activity==='work'&&s.employment.order?.kind==='ledger')s.employment.order.progress=Math.min(orders.ledger.target,s.employment.order.progress+dt);
+      if(s.activity==='work'&&s.employment.order?.kind==='ledger'&&activityRunning(s))s.employment.order.progress=Math.min(orders.ledger.target,s.employment.order.progress+dt);
       s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery * techniqueBonus(s,'mastery'));
       const practicing=s.cultivation.learned[s.cultivation.active];if(s.activity==='technique'&&practicing&&practicing.rank<5)practicing.progress=Math.min(techniqueNeeded(practicing.rank),practicing.progress+dt*mult);
       if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp * (s.activity==='meditate'?techniqueBonus(s,'xp'):1));
@@ -337,7 +347,7 @@
     for (const k of Object.keys(base)) if (!['resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
-      if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
+      if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay,place:'village'};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
     base.world=W.validate(input.world,input.stage);
     if(input.playerName!==undefined&&input.playerName!==null){const name=N.normalize(input.playerName);if(!name)throw Error('Неверное имя героя');base.playerName=name;}
@@ -387,6 +397,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, canOrder, story, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

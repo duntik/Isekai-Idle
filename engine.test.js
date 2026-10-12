@@ -6,7 +6,9 @@ const E = require('./engine.js');
 const s = E.fresh();
 assert.equal(E.action(s, 'activity', 'meditate'), true);
 assert.equal(E.action(s, 'story'), true);
-E.action(s,'order','ledger');E.advance(s,180);E.action(s,'claim-order');assert.equal(E.action(s,'story'),true);
+assert(E.action(s,'order','sweep'));
+for(let i=0;i<10;i++){E.advance(s,1);assert(E.action(s,'click','sweep'));}
+assert(E.action(s,'claim-order'));assert.equal(E.action(s,'story'),true);
 assert.equal(E.action(s, 'build', 'dorm'), false);
 assert.equal(E.action(s, 'advance'), false);
 assert(E.action(s,'travel','ruins'));E.advance(s,60);assert(E.action(s, 'activity', 'explore')); E.advance(s, 599); assert.equal(s.found, false);

@@ -1,6 +1,9 @@
 'use strict';
 const assert=require('node:assert/strict'),E=require('./engine.js');
 const s=E.fresh();s.found=true;
+assert(!E.orderAvailable(s,'sweep'));assert(!E.canOrder(s,'sweep'));
+s.storyStep=1;assert(E.orderAvailable(s,'sweep'));
+s.world.director.decisions['village:1/work']=1;
 assert(E.clickVisible(s,'squat'));assert(E.clickVisible(s,'run'));
 assert(!E.clickVisible(s,'sweep'));assert(!E.clickVisible(s,'haul'));assert(!E.activityVisible(s,'work'));
 for(const kind of ['sweep','haul','ledger']){
@@ -19,16 +22,18 @@ for(let i=0;i<10;i++){E.advance(s,1);assert(E.action(s,'click','sweep'));}
 assert.equal(s.activity,'meditate');assert.equal(s.body,0);assert(s.xp>0);assert.equal(s.resources.gold,0);
 assert(!E.action(s,'click','sweep'));assert(E.action(s,'claim-order'));assert.equal(s.resources.gold,8);
 assert.equal(s.employment.completed,1);assert(!E.action(s,'claim-order'));assert.equal(s.resources.gold,8);
+s.world.location='city';assert(!E.orderAvailable(s,'sweep'));assert(!E.orderAvailable(s,'haul'));assert(!E.orderAvailable(s,'ledger'));s.world.location='village';
 s.body=1;E.advance(s,1);assert(E.action(s,'order','haul'));
+s.world.location='city';assert(!E.action(s,'click','haul'));assert.equal(s.employment.order.progress,0);s.world.location='village';
 for(let i=0;i<8;i++){E.advance(s,10);assert(E.action(s,'click','haul'));}
-assert.equal(s.body,1);assert(E.action(s,'claim-order'));assert.equal(s.resources.gold,20);
+assert.equal(s.body,1);s.world.location='city';assert(!E.action(s,'claim-order'));s.world.location='village';assert(E.action(s,'claim-order'));assert.equal(s.resources.gold,20);
 assert(E.action(s,'order','ledger'));assert.equal(s.activity,'work');const xp=s.xp;
 E.advance(s,179);assert(!E.action(s,'claim-order'));assert.equal(s.xp,xp);assert.equal(s.body,1);
 const restored=E.validate(JSON.parse(JSON.stringify(s)));E.advance(restored,1);assert(E.action(restored,'claim-order'));
 assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'meditate');assert.equal(restored.employment.completed,3);
-restored.world.location='city';restored.employment.completed=5;assert.equal(E.orderPay(restored,'ledger'),27);
+restored.world.location='city';restored.world.director.decisions['city:0/study']=1;restored.employment.completed=5;assert.equal(E.orderPay(restored,'ledger'),27);
 assert(E.action(restored,'order','ledger'));const lockedPay=restored.employment.order.pay;
-restored.world.location='village';E.advance(restored,180);assert.equal(restored.employment.order.pay,lockedPay);
+restored.world.location='village';E.advance(restored,180);assert.equal(restored.employment.order.pay,lockedPay);assert.equal(restored.employment.order.progress,0);assert(!E.canClaimOrder(restored));
 assert(E.action(restored,'cancel-order'));assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'meditate');
 const old=E.fresh();old.activity='train';delete old.employment;
 const migrated=E.validate(old);assert.equal(migrated.activity,'meditate');assert.deepEqual(migrated.employment,{completed:0,order:null});

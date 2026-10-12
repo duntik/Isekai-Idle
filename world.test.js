@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),E=require('./engine.js'),W=E.world,D=require('./data-view.js');
-const s=E.fresh();assert(!E.action(s,'travel','mountains'));assert(!E.action(s,'travel','village'));
+const s=E.fresh();assert(!E.action(s,'travel','mountains'));assert(!E.action(s,'travel','village'));s.storyStep=1;
 assert(E.action(s,'travel','forest'));assert(!E.action(s,'travel','city'));
 E.advance(s,59);assert.equal(s.world.location,'village');assert.equal(s.world.encounter,null);
 E.advance(s,1);assert.equal(s.world.location,'forest');assert(W.eligible(s,W.current(s)));s.world.encounter={location:'forest',index:0};
@@ -30,7 +30,7 @@ helper.world.encounter={location:'city',index:0};helper.resources.gold=10;assert
 helper.found=true;E.action(helper,'activity','meditate');E.advance(helper,1);assert.equal(helper.xp,.05*1.15);
 
 // Travel completes offline, but no choice or lethal encounter resolves itself.
-const traveler=E.fresh();E.action(traveler,'order','ledger');E.action(traveler,'travel','city');
+const traveler=E.fresh();traveler.storyStep=1;traveler.world.contacts.push('scholar');E.action(traveler,'travel','city');
 const online=structuredClone(traveler),offline=structuredClone(traveler);
 for(let i=0;i<180;i++)E.advance(online,1);E.advance(offline,180);
 assert.equal(offline.world.location,'city');assert(W.eligible(offline,W.current(offline)));assert.equal(offline.world.deaths,0);
@@ -46,3 +46,15 @@ for(const [location,list]of Object.entries(W.encounters))for(let index=0;index<l
   for(const c of list[index].choices)assert(html.includes(`data-value="${c.id}"`));
 }
 console.log('PASS: travel, encounter rotation, mentors, costs, safe/strong choices, death preserves progression, offline travel, migration, all neutral encounter controls');
+
+// Social gates preserve the courier route; fog grows without consuming story randomness.
+const gated=E.fresh();assert(!W.canTravel(gated,'city'));assert(!W.canTravel(gated,'forest'));
+assert.deepEqual(W.knownLocations(gated),['village']);gated.storyStep=1;
+assert(W.travelReason(gated,'city').includes('Мэй'));
+assert(W.map(gated).nodes.some(n=>n.id==='city'));const mapSeed=gated.world.seed;W.map(gated);assert.equal(gated.world.seed,mapSeed);
+gated.world.contacts.push('scholar');assert(W.canTravel(gated,'city'));
+gated.world.location='forest';gated.world.encounter=null;gated.world.encounterCooldown=0;
+assert(W.action(gated,'map-inspect','dark-forest',E));assert.equal(gated.world.encounter,null);assert.equal(gated.world.deaths,0);
+gated.body=8;gated.calm=5;assert(W.action(gated,'map-inspect','dark-forest',E));assert.equal(W.current(gated).id,'forest:1');
+assert(gated.world.map.explored.includes('dark-forest'));assert.deepEqual(E.validate(gated),gated);
+const migration=E.fresh();delete migration.world.map;assert.deepEqual(E.validate(migration).world.map,{explored:[],sites:[]});

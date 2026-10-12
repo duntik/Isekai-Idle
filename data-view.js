@@ -42,10 +42,11 @@
         row('Оружие',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; город +25%');
-      row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','В деревне и городе; уборка и разгрузка приостанавливаются в пути');
+      row('Приём заявок',Object.keys(E.orders).some(k=>E.orderAvailable(s,k))?'Доступен':'Недоступен','У знакомого заказчика; работа и оплата только в месте принятого заказа');
       const order=s.employment.order;
-      if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
-      for(const[k,o]of Object.entries(E.orders).filter(()=>!order))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
+      if(!order&&!Object.keys(E.orders).some(k=>E.orderAvailable(s,k)))row('Поручения','—','Сначала познакомься с заказчиком. Поручения появляются после встреч; принятый заказ нужно выполнять и сдавать в указанном месте.');
+      if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',E.canClaimOrder(s)));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
+      for(const[k,o]of Object.entries(E.orders).filter(([k])=>!order&&E.orderAvailable(s,k)))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
       for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
     }
@@ -65,7 +66,7 @@
       row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
       for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
       const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
-      for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.name,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
+      for(const[k,p]of Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)))row(p.name,`${p.time} сек`,`${bonuses[k]||p.bonus} ${W.travelReason(s,k,root.IsekaiLocale?.language||'ru')}`,btn('travel',k,'Перейти',W.canTravel(s,k)));
       row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
       row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));

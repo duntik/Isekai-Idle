@@ -57,3 +57,29 @@ html[data-interface="data"] .action-hint{font:12px/1.5 Arial;color:#334a60;margi
 .next-step{margin:0 0 18px;padding:14px 18px;border:1px solid #527563;border-radius:8px;background:#193329}
 .next-step h3{margin:0 0 6px;color:var(--green)}
 .next-step p{margin:0;font-size:13px;line-height:1.7;color:var(--text)}
+/* Growing world map: only known places are drawn over unexplored darkness. */
+#world-map-dialog{width:min(1200px,94vw);max-width:1200px;max-height:92vh;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text)}
+#world-map-dialog::backdrop{background:#000b}
+#map-viewport{position:relative;height:65vh;min-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#091419;scrollbar-color:#546d60 #102025}
+#map-canvas{position:relative;isolation:isolate;background:radial-gradient(ellipse at 40% 40%,#25463a99,transparent 58%),repeating-linear-gradient(0deg,transparent,transparent 49px,#67806c0c 50px),repeating-linear-gradient(90deg,transparent,transparent 49px,#67806c0c 50px),#091419}
+.map-roads{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.map-roads line{stroke:#afbc8e55;stroke-width:2;stroke-dasharray:7 8}
+.map-fog-label{position:absolute;right:40px;bottom:40px;color:#61716c;font:22px Georgia;letter-spacing:3px;opacity:.45}
+.map-node{position:absolute;width:210px;padding:14px;border:1px solid #65816d;border-radius:10px;background:#18302d;box-shadow:0 8px 25px #0004;color:var(--text)}
+.map-node strong{display:block;font-size:13px;line-height:1.5}
+.map-node>small{display:block;font-size:10px;color:var(--green);margin:6px 0}
+.map-node p{font-size:12px;line-height:1.6;margin:6px 0 12px;color:var(--muted)}
+.map-node summary{font-size:11px;padding:7px 0;color:var(--muted)}
+.map-node button{width:100%;font-size:11px;padding:8px}
+.map-node.locked{border-color:#867251;background:#2b2e28}
+.map-node.locked>small{color:var(--gold)}
+.map-node.current{outline:2px solid #b7c58a;outline-offset:4px;background:#1b3b31;border-color:#a1b887}
+.map-node.site{background:#152b30;border-color:#4f6971}
+.map-node:focus-within,.map-node:hover{z-index:2}
+html[data-interface="data"] #world-map-dialog{background:#fff;border-radius:2px;font:12px Arial}
+html[data-interface="data"] #map-viewport,html[data-interface="data"] #map-canvas{background:#f0f2f3}
+html[data-interface="data"] .map-node{background:#fff;color:#20252a;border-color:#adb6bd;border-radius:2px;box-shadow:none}
+html[data-interface="data"] .map-node small,html[data-interface="data"] .map-node p,html[data-interface="data"] .map-node summary{color:#525b64}
+html[data-interface="data"] .map-node.current{outline-color:#556c7e}
+html[data-interface="data"] .map-roads line{stroke:#778792}
+@media(max-width:600px){#world-map-dialog{padding:14px;width:96vw}#map-viewport{height:62vh}#world-map-title{font-size:20px}.map-node button{min-height:44px}}

@@ -4,10 +4,17 @@ const missing=new Set();
 function check(html){for(const text of html.split(/<[^>]*>/g))if(/[А-Яа-яЁё]/.test(text))missing.add(text.trim());}
 function boot(state,view='visual',language='en'){
   const elements=new Map(),handlers={},storage=new Map([['isekai-idle-v2',JSON.stringify(state)],['isekai-idle-interface',view],['isekai-idle-language',language]]);
-  const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(){}});return elements.get(id);};
+  const element=id=>{if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',style:{},replaceChildren(){},append(){},addEventListener(type,fn){this[type]=fn;}});return elements.get(id);};
   const context=vm.createContext({Isekai:E,document:{documentElement:{dataset:{}},querySelectorAll:()=>[],getElementById:element,addEventListener:(t,f)=>handlers[t]=f,createElement:()=>({append(){},click(){}}),createTextNode:t=>t},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},window:{addEventListener(){}},Date,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},confirm:()=>true});
   for(const path of ['names.js','event-generator.js','i18n.js','i18n-story.js','i18n-ui.js','chapter-one-locale.js','data-view.js','quotes.js','game.js'])vm.runInContext(fs.readFileSync(path,'utf8'),context);
   return {context,element,handlers,storage};
+}
+for(const view of ['visual','data']){
+  const state=E.fresh();state.storyStep=1;state.world.location='forest';state.world.visits.forest=1;
+  state.world.map.sites=[E.world.encounters.forest.find(scene=>scene.generated&&!scene.payoff).id];
+  const app=boot(state,view);app.element('open-map').click();
+  check(app.element('map-canvas').innerHTML);check(app.element('map-status').textContent);
+  assert(app.element('map-canvas').innerHTML.includes('Dark thicket'));
 }
 for(const view of ['visual','data'])for(let stage=0;stage<8;stage++){
   const s=E.fresh();s.stage=stage;s.found=true;s.world.mentors=Object.keys(E.world.mentorNames);s.world.admissionRoutes=['rescue','remains','invitation'];s.world.admission=stage>=1?'invitation':null;

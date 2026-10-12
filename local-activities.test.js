@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),E=require('./engine.js');
 const s=E.fresh();assert(!E.action(s,'activity','explore'));assert(!E.action(s,'click','scout'));
+assert(E.action(s,'story')); // Mei introduces the nearby paths before travel.
 s.world.location='forest';assert(E.action(s,'activity','explore'));E.advance(s,3600);assert(s.resources.herbs>0);assert.equal(s.resources.relics,0);assert.equal(s.explored,0);assert(!s.found);assert(!E.action(s,'click','scout'));
 assert(E.action(s,'travel','ruins'));const h=s.resources.herbs;E.advance(s,60);assert.equal(s.resources.herbs,h);assert(E.activityRunning(s));E.advance(s,599);assert(!s.found);E.advance(s,1);assert(s.found);assert(s.resources.relics>0);
 s.stage=2;s.world.location='city';assert(E.action(s,'activity','mission'));E.advance(s,100);const rep=s.resources.reputation;assert(rep>0);E.action(s,'travel','forest');const online=structuredClone(s),offline=structuredClone(s);for(let i=0;i<160;i++)E.advance(online,1);E.advance(offline,160);assert.deepEqual(online.world,offline.world);assert.equal(offline.resources.reputation,rep);assert(!E.activityRunning(offline));assert.equal(offline.activity,'mission');assert(!E.action(offline,'activity','mission'));

@@ -53,6 +53,11 @@ for (let stage = 0; stage < 8; stage++) {
   assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':'data-action="breakthrough"'));
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');
+  element('open-map').click();
+  const mapHTML=element('map-canvas').innerHTML;
+  assert(mapHTML.includes('data-map-node="village"'));
+  if(stage===0)assert(!mapHTML.includes('data-map-node="city"'));
+  assert(!mapHTML.includes('NaN'));assert(!mapHTML.includes('undefined'));
   const tabs = ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
   for (const tab of tabs) {
     handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});

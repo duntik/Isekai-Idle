@@ -70,6 +70,10 @@
   encounters.ruins[3].requires=s=>s.stage<=1&&!s.world.admissionRoutes.includes('remains');
   encounters.ruins[4].requires=s=>s.stage<=1&&!s.world.admissionRoutes.includes('invitation');
   encounters.city[1].requires=s=>s.stage<=2;
+  encounters.village[0].text+=' После помощи Мэй познакомит тебя с возчиками: у них бывают заказы на ящики и сверку накладных.';
+  encounters.village[1].text+=' Если согласишься помочь возчикам, они будут предлагать заказы на перенос ящиков и сверку накладных здесь, в деревне.';
+  encounters.city[0].text+=' Работа на складе открывает местные заказы на ящики и уборку двора. После чтения рукописи Вэй доверит тебе сверку накладных своего архива.';
+  encounters.city[3].text+=' После доставки Жу познакомит тебя с городскими складскими хозяевами: они поручают перенос ящиков и уборку двора.';
   const chose=(s,id)=>!!s.world.director.decisions[id];
   encounters.village.push({id:'village:road-return',once:true,title:'Весть с городской дороги',text:'Мэй слышала, что ты не дал ученику Белого Клыка втянуть тебя в драку. «Иногда сохранить силы важнее, чем ответить». Возчики предлагают небольшую доставку, а Мэй — запас трав для дальнейшего пути.',requires:s=>chose(s,'city:1/avoid'),choices:[choice('road-work','Помочь возчикам с доставкой','Выполнить доставку',{reward:{gold:12}}),choice('road-herbs','Принять травы от Мэй','Получить помощь',{reward:{herbs:8}})]});
   encounters.forest.push({id:'forest:sen-followup',once:true,title:'Сэнь держит слово',text:'Сэнь уже может идти сам. Он узнаёт того, кто поделился травами: «Долг не забывают. Вот припасы для твоих первых прорывов». Можно попросить лекарства или спокойный урок дыхания. Это продолжение вашей встречи, а не новое спасение.',requires:s=>chose(s,'forest:2/heal')||s.world.admissionRoutes.includes('rescue'),choices:[choice('sen-herbs','Принять лекарственные травы','Получить помощь',{reward:{herbs:12}}),choice('sen-breath','Повторить дыхательный приём','Повторить методику',{reward:{qi:12},calm:3})]});
@@ -83,7 +87,7 @@
   const eligible=(s,scene)=>!s.world.completed.includes(scene.id)&&(!scene.requires||scene.requires(s));
   function random(w){let x=w.seed;x^=x<<13;x^=x>>>17;x^=x<<5;w.seed=x>>>0;return w.seed/4294967296;}
   const physical=['gold','herbs','qi','relics','wood','ore','pills','supplies','cosmic'];
-  const fresh=()=>({location:'village',journey:null,encounter:null,visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],admissionRoutes:[],admission:null,director:{misses:{},decisions:{},paths:{},pending:{}},seed:Math.floor(Math.random()*4294967295)+1,recent:[],completed:[],deaths:0,encounterCooldown:0});
+  const fresh=()=>({location:'village',journey:null,encounter:null,map:{explored:[],sites:[]},visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],admissionRoutes:[],admission:null,director:{misses:{},decisions:{},paths:{},pending:{}},seed:Math.floor(Math.random()*4294967295)+1,recent:[],completed:[],deaths:0,encounterCooldown:0});
   const sceneText=(item,field,language='ru',state)=>{const value=language==='en'&&item.en?.[field]?item.en[field]:item[field]||'';return typeof value==='function'?value(state):value;};
   const recognition=(s,chapter=s.stage)=>Object.values(s.world.director.paths[chapter]||{}).reduce((sum,n)=>sum+n,0);
   const recognitionNeeded=s=>12+Math.max(0,s.stage-1)*8;
@@ -91,7 +95,34 @@
   const pendingQuests=s=>Object.entries(s.world.director.pending).map(([id,deed])=>{const location=id.split(':')[0];return {scene:encounters[location].find(e=>e.id===id),location,...deed};});
   const canChoice=(s,c,E)=>!!c&&!s.world.journey&&(!current(s)?.generated||c.skip||eligible(s,current(s)))&&(!c.requires||c.requires(s))&&E.affordable(s,c.cost||{})&&(!c.recognition||!!s.world.director.pending[c.recognition]);
   const current=s=>{const e=s.world.encounter;return e?(e.id?encounters[e.location].find(scene=>scene.id===e.id):encounters[e.location][e.index]):null;};
-  const canTravel=(s,k)=>!!locations[k]&&locations[k].stage<=s.stage&&!s.world.journey&&s.world.location!==k;
+  const frontiers={
+    'dark-forest':{base:'forest',name:'Тёмная чаща',en:'Dark thicket',x:5,y:1,scene:'forest:1',ready:s=>s.body>=8&&s.calm>=5||s.realm>=1,reason:'Из темноты смотрят звериные глаза. Ноги не слушаются: ты отступаешь к светлой опушке. Укрепи тело до 8 и накопи 5 спокойствия или достигни первого духовного уровня.',reasonEn:'Animal eyes watch from the darkness. Your legs refuse to move: you retreat to the bright forest edge. Train your body to 8 and gain 5 calm, or reach spiritual realm 1.'},
+    'sealed-crypt':{base:'ruins',name:'Запечатанный склеп',en:'Sealed crypt',x:1,y:0,scene:'ruins:1',ready:s=>s.found&&s.realm>=1,reason:'Печать давит на грудь. Пока ты не нашёл наследие и не достиг первого духовного уровня, тело не выдержит даже подхода к двери.',reasonEn:'The seal presses against your chest. Discover the legacy and reach spiritual realm 1 before approaching this door.'},
+    'upper-pass':{base:'mountains',name:'Верхняя тропа перевала',en:'Upper pass trail',x:6,y:0,scene:'mountains:1',ready:s=>s.realm>=3,reason:'Страж опускает копьё: дальше идут только практики третьего духовного уровня. Нижний склон остаётся открыт.',reasonEn:'The guard lowers his spear: only practitioners of spiritual realm 3 may pass. The lower slope remains open.'}
+  };
+  encounters.forest[1].requires=s=>frontiers['dark-forest'].ready(s);
+  encounters.ruins[1].requires=s=>frontiers['sealed-crypt'].ready(s);
+  encounters.mountains[1].requires=s=>frontiers['upper-pass'].ready(s);
+  function knownLocations(s){return Object.keys(locations).filter(k=>locations[k].stage<=s.stage&&(k==='village'||k==='city'&&(s.world.contacts.includes('scholar')||s.world.admissionRoutes.length)||k===s.world.location||s.world.visits[k]>0||(s.storyStep>=1||s.stage>=1)&&k!=='mountains'||s.stage>=1&&k==='mountains'));}
+  function travelReason(s,k,language='ru'){
+    const say=(ru,en)=>language==='en'?en:ru;
+    if(!locations[k]||!knownLocations(s).includes(k))return say('Дорога ещё неизвестна.','This route is not yet known.');
+    if(s.world.journey)return say('Сначала закончи текущий переход.','Finish the current journey first.');
+    if(s.world.location===k)return say('Ты уже здесь.','You are already here.');
+    if(k==='city'&&s.stage<1&&!s.world.contacts.includes('scholar')&&!s.world.admissionRoutes.length)return say('Страж не пускает безымянного оборванца за ворота. Получи у Мэй письмо для Вэя, поручительство наставника или приглашение секты; начинающих практиков также пропускают.','The guard refuses an unknown ragged stranger. Obtain Mei’s letter for Wei, a mentor’s recommendation or a sect invitation; novice practitioners are also admitted.');
+    return '';
+  }
+  const canTravel=(s,k)=>!!locations[k]&&!travelReason(s,k);
+  function map(s,language='ru'){
+    const coords={village:[2,3],forest:[4,2],city:[0,4],ruins:[1,1],mountains:[5,0]};
+    const known=knownLocations(s),nodes=known.map(id=>({id,kind:'location',name:locations[id].name,x:coords[id][0],y:coords[id][1],visited:s.world.visits[id]>0||s.world.location===id,locked:!!travelReason(s,id,language),reason:travelReason(s,id,language),detail:locations[id].desc}));
+    for(const[id,f]of Object.entries(frontiers))if(s.world.location===f.base||s.world.visits[f.base]>0)nodes.push({id,kind:'frontier',name:language==='en'?f.en:f.name,x:f.x,y:f.y,visited:s.world.map.explored.includes(id),locked:!f.ready(s),reason:f.ready(s)?'':language==='en'?f.reasonEn:f.reason,detail:language==='en'?'A deeper route. Approach here from the nearby location.':'Путь вглубь. Подойти можно из ближайшей локации.',base:f.base});
+    for(const[id,index]of s.world.map.sites.entries()){const base=index.split(':')[0],scene=encounters[base]?.find(e=>e.id===(s.world.director.pending[index]?index+':return':index));if(!scene||!known.includes(base))continue;nodes.push({id:`site:${index}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:coords[base][0]+(id%3-1)*.6,y:coords[base][1]+1+Math.floor(id/3)*.55,visited:true,locked:!eligible(s,scene),reason:eligible(s,scene)?'':language==='en'?'This meeting has been resolved.':'Эта встреча уже завершена.',detail:sceneText(scene,'text',language,s)});}
+    const ordinary=nodes.filter(n=>n.kind!=='site');for(const node of ordinary){node.x=70+node.x*260;node.y=70+node.y*200;}
+    const bottom=Math.max(70,...ordinary.map(n=>n.y))+240;
+    for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=70+index%5*260;node.y=bottom+Math.floor(index/5)*200;}
+    return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(900,...nodes.map(n=>n.x+240)),height:Math.max(750,...nodes.map(n=>n.y+240))};
+  }
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
   function offer(s,E){const w=s.world,k=w.location;let pool=encounters[k].map((scene,index)=>({scene,index})).filter(({scene})=>eligible(s,scene));
     for(const{scene}of pool)if(opportunity(s,scene))w.director.misses[scene.id]=Math.min(1000000,(w.director.misses[scene.id]||0)+1);
@@ -102,6 +133,7 @@
     const authoredCount=pool.length-generatedCount;
     const weighted=pool.map(e=>({...e,weight:(e.scene.generated&&!e.scene.payoff?Math.max(1,authoredCount)/Math.max(1,generatedCount):1)*(e.scene.choices.some(c=>c.danger)?(s.realm>=2?1.2:.6):1)*(needsHerbs&&e.scene.choices.some(c=>(c.reward?.herbs||0)>(c.cost?.herbs||0))?1.6:1)*(opportunity(s,e.scene)?1+(w.director.misses[e.scene.id]||0)*.15:1)}));let roll=random(w)*weighted.reduce((n,e)=>n+e.weight,0);let picked=weighted[weighted.length-1];for(const e of weighted){roll-=e.weight;if(roll<0){picked=e;break;}}
     w.director.misses[picked.scene.id]=0;w.encounter={location:k,index:picked.index,id:picked.scene.id};w.visits[k]++;w.recent=[...w.recent,picked.scene.id].slice(-2);
+    if(picked.scene.generated&&!picked.scene.payoff&&!w.map.sites.includes(picked.scene.id))w.map.sites.push(picked.scene.id);
   }
   function die(s,E){
     for(const k of physical)s.resources[k]*=.5;
@@ -111,6 +143,17 @@
   function action(s,type,value,E){
     const w=s.world;
     if(type==='apply-sect'){if(!canApply(s,value))return false;w.admission=value;E.log(s,`${admissions[value].name}: ${admissions[value].text} Поручительство принято. Для вступления заверши подготовку и оплати общий запас снаряжения, указанный в следующей главе.`);}
+    else if(type==='map-inspect'){
+      const f=frontiers[value],id=value.startsWith('site:')?value.slice(5):null,base=f?.base||id?.split(':')[0];
+      if(w.journey||w.encounter)return false;
+      if(!base||!map(s).nodes.some(n=>n.id===value))return false;
+      if(w.location!==base){E.log(s,`Сначала вернись: ${locations[base].name}.`);return true;}
+      if(f&&!f.ready(s)){E.log(s,f.reason);return true;}
+      if(w.encounterCooldown>0){E.log(s,'Нужно дождаться новой встречи: сейчас местные люди заняты.');return true;}
+      const scene=encounters[base].find(e=>e.id===(f?.scene||(w.director.pending[id]?id+':return':id)));if(!scene||!eligible(s,scene))return false;
+      if(f&&!w.map.explored.includes(value))w.map.explored.push(value);
+      w.encounter={location:base,index:encounters[base].indexOf(scene),id:scene.id};E.log(s,`Ты осмотрел местность: ${f?.name||scene.title}.`);
+    }
     else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:locations[value].time};E.log(s,`Ты отправился: ${locations[value].name}.`);}
     else if(type==='encounter'){if(!canEncounter(s))return false;offer(s,E);}
     else if(type==='choice'){
@@ -143,6 +186,7 @@
     if(!locations[input.location]||locations[input.location].stage>stage)throw Error('Неверное место');w.location=input.location;
     const seed=input.seed??2166136261;if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)throw Error('Неверная случайность');w.seed=seed;
     const ids=new Set(Object.values(encounters).flat().map(e=>e.id));
+    if(input.map!==undefined){const m=input.map;if(!m||!Array.isArray(m.explored)||!Array.isArray(m.sites)||m.explored.some(id=>!frontiers[id])||m.sites.some(id=>!Object.values(encounters).flat().some(e=>e.id===id&&e.generated&&!e.payoff))||new Set(m.explored).size!==m.explored.length||new Set(m.sites).size!==m.sites.length)throw Error('Неверная карта');w.map={explored:[...m.explored],sites:[...m.sites]};}
     if(input.director!==undefined){const d=input.director;if(!d||typeof d!=='object')throw Error('Неверная история встреч');
       for(const key of ['paths','pending'])if(d[key]!==undefined&&(!d[key]||typeof d[key]!=='object'||Array.isArray(d[key])))throw Error('Неверное поручение');
       const decisions=new Set(Object.values(encounters).flat().flatMap(e=>e.choices.map(c=>`${e.id}/${c.id}`)));
@@ -163,5 +207,5 @@
     if(input.encounter!==null){const e=input.encounter;if(!e||e.location!==w.location||!Number.isInteger(e.index)||w.journey)throw Error('Неверная встреча');const index=e.id===undefined?e.index:encounters[e.location]?.findIndex(scene=>scene.id===e.id);if(index===undefined||index<0||!encounters[e.location]?.[index])throw Error('Неверная встреча');w.encounter={location:e.location,index,...(e.id===undefined?{}:{id:e.id})};}
     return w;
   }
-  const api={eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,canTravel,canEncounter,canChoice,sceneText,pathNames,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);
