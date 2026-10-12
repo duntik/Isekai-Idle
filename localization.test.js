@@ -10,6 +10,11 @@ function boot(state,view='visual',language='en'){
   return {context,element,handlers,storage};
 }
 for(const view of ['visual','data']){
+  const previewState=E.fresh();previewState.world.location='forest';previewState.world.encounter={location:'forest',index:2,id:'forest:2'};
+  const previewApp=boot(previewState,view);previewApp.handlers.click({target:{closest:()=>({dataset:{tab:'world'},disabled:false})}});
+  const previewHTML=previewApp.element('content').innerHTML;
+  for(const label of ['Intent','Cost','Benefit','Relationships'])assert(previewHTML.includes(label),`${view} explains ${label}`);
+  assert(previewHTML.includes('5 herbs'));assert(previewHTML.includes('No lethal check'));
   const state=E.fresh();state.storyStep=1;state.world.location='forest';state.world.visits.forest=1;
   state.world.map.sites=[E.world.encounters.forest.find(scene=>scene.generated&&!scene.payoff).id];
   const app=boot(state,view);app.element('open-map').click();

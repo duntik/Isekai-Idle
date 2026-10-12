@@ -96,3 +96,4 @@ html:not([data-interface="data"]) .technique-actions .card{border-color:#c9af6b5
 html:not([data-interface="data"]) .people-panel{margin-top:24px;padding:22px;border:1px solid #b9a87b44;border-radius:14px;background:#192c2bcc}
 html:not([data-interface="data"]) .encounter-memory{margin:14px 0;padding:14px 18px;border-left:3px solid #b8c993;background:#253b3155;border-radius:0 10px 10px 0}
 html:not([data-interface="data"]) .encounter-memory p{margin:7px 0;color:#c4d4bc;line-height:1.6}
+html:not([data-interface="data"]) .encounter-choice{border-color:#a6bf8b55}html:not([data-interface="data"]) .dangerous-choice{border-color:#cb795d88;background:linear-gradient(135deg,#392d2a,#213031)}html:not([data-interface="data"]) .choice-benefit dd{color:#c8deb6}html:not([data-interface="data"]) .choice-relationship dd{color:#d8c694}

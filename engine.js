@@ -202,6 +202,64 @@
     const gains=[g.body?`${en?'Body':'Тело'} +${g.body}`:'',g.calm?`${en?'Calm':'Спокойствие'} +${g.calm}`:'',g.xp?`${en?'Understanding (after discovery)':'Понимание (после находки)'} +${g.xp}`:'',g.mastery?`${en?'Mastery':'Освоение'} +${g.mastery}`:''].filter(Boolean).join(' · ');
     return gains+(kind==='ledger'||kind==='explore'?(en?' per second of actual work.':' за секунду фактической работы.'):(en?' per completed action.':' за выполненное действие.'))+(g.body?(en?' A stronger body raises stamina capacity and recovery.':' Рост тела увеличивает запас и восстановление выносливости.'):'');
   }
+  function choiceExplanation(s,scene,c,language='ru') {
+    const en=language==='en',say=(ru,english)=>en?english:ru;
+    if(!c)return {intent:'',cost:'',risk:'',benefit:'',relationship:'',requirement:'',available:false};
+    const n=v=>Number(v.toFixed(3)).toLocaleString(en?'en-US':'ru-RU');
+    const resourceNames={gold:'coins',herbs:'herbs',qi:'qi',relics:'shards',reputation:'reputation',wood:'wood',ore:'ore',pills:'pills',influence:'influence',supplies:'supplies',cosmic:'stellar essence',worlds:'worlds'};
+    const resourceList=values=>Object.entries(values||{}).map(([k,v])=>`${n(v)} ${en?resourceNames[k]||k:names[k]||k}`).join(', ');
+    const profile=choicePractice(c),failed=!!c.danger&&power(s)<c.danger;
+    let intent=c.skip?say('Отложить эту возможность и продолжить путь.','Put this opportunity aside and continue travelling.'):
+      c.danger?say('Решить препятствие силой; проверить свою боевую подготовку.','Overcome the obstacle by force and test your combat preparation.'):
+      c.route?say({help:'Помочь местным жителям физической работой.',study:'Применить знакомую технику для решения местной задачи.',trade:'Обеспечить работу инструментами и припасами.',combat:'Защитить людей от вымогателей.'}[c.route],{help:'Help local people with physical work.',study:'Use a learned technique to solve a local problem.',trade:'Supply the work with tools and provisions.',combat:'Protect people from extortionists.'}[c.route]):
+      c.recognition?say('Встретиться после выполненной помощи и получить благодарность.','Meet after your completed help and collect thanks.'):
+      c.practice?say('Практиковать уже изученную технику с собеседником.','Practise an already learned technique with your companion.'):
+      c.mentor?say('Учиться у собеседника и открыть его наставления.','Learn from your companion and gain access to their teaching.'):
+      c.contact?say('Принять поручение для нового знакомого; доставка ещё впереди.','Accept an errand for a new contact; delivery is still ahead.'):
+      c.admission?say('Заслужить поручительство для будущего вступления в секту.','Earn sponsorship for a future sect application.'):
+      c.restore?say('Перевести дыхание и восстановить силы.','Take a breather and recover your strength.'):
+      c.explore?say('Исследовать местные следы и продвинуть поиск наследия.','Study local clues and advance the search for the legacy.'):
+      c.cost?say('Передать указанные ресурсы в обмен на предложенную помощь.','Hand over the listed resources in exchange for the offered help.'):
+      profile==='physical'?say('Выполнить местную работу и потренировать тело.','Perform local work and exercise your body.'):
+      profile==='focus'?say('Внимательно выполнить местную задачу.','Complete the local task attentively.'):
+      say('Воспользоваться предложенной здесь возможностью.','Take the opportunity offered here.');
+    const promise=c.memory?.kind==='promise';
+    if(promise)intent=scene?.id==='village:mei-caravan'?say('Передать припасы и принять поручение; оплата будет после доставки.','Hand over supplies and accept an errand; payment follows delivery.'):say('Передать сведения Линь, чтобы она смогла помочь раненому.','Tell Lin where the injured traveller is so she can help him.');
+    const costs=[];if(Object.keys(c.cost||{}).length)costs.push(resourceList(c.cost));
+    if(!c.skip)costs.push(say('Прерывает текущее занятие.','Interrupts the current activity.'));
+    if(c.stamina)costs.push(say(`${n(c.stamina)} выносливости`,`${n(c.stamina)} stamina`));
+    const learned=c.practice&&s.cultivation.learned[c.practice.technique],definition=c.practice&&techniques[c.practice.technique];
+    const practiced=learned&&learned.rank<5?Math.max(0,Math.min(c.practice.amount,techniqueNeeded(learned.rank)-learned.progress,definition?.practiceBody?Math.max(0,s.stamina-(c.stamina||0))/.1:Infinity)):0;
+    if(practiced&&definition?.practiceBody)costs.push(say(`до ${n(practiced*.1)} выносливости на движения техники`,`up to ${n(practiced*.1)} stamina for technique movements`));
+    const benefits=[];
+    if(Object.keys(c.reward||{}).length)benefits.push(say('Награда: ','Reward: ')+resourceList(c.reward));
+    if(c.restore)benefits.push(say('Восстановление выносливости до максимума.','Restore stamina to its maximum.'));
+    if(c.calm)benefits.push(say(`Спокойствие +${n(c.calm)} (до предела 100).`,`Calm +${n(c.calm)} (up to 100).`));
+    if(c.mastery)benefits.push(say(`Освоение +${n(c.mastery)} (до предела ступени).`,`Mastery +${n(c.mastery)} (up to the realm limit).`));
+    if(profile)benefits.push(taskPracticeText(profile,language));
+    if(c.practice){
+      const growth=practiced&&definition?.practiceBody?Math.max(0,Math.min(10*(s.realm+1)-s.body,practiced*definition.practiceBody*W.bonus(s).body*techniqueBonus(s,'body'))):0;
+      benefits.push(practiced?say(`Практика изученной техники +${n(practiced)}.${growth?` Тело +${n(growth)} от движений.`:''}`,`Learned technique practice +${n(practiced)}.${growth?` Body +${n(growth)} from movements.`:''}`):say('Практика не прибавится: сначала изучи технику или повысь её ранг после заполнения освоения.','Practice will not increase: first learn the technique or raise its rank after filling practice.'));
+    }
+    const mentorHints={trainer:['Тренировка тела +15%; доступ к урокам Жэня.','Body training +15%; access to Ren’s lessons.'],herbalist:['Травы при исследовании +20%; доступ к урокам Линь.','Herbs from exploration +20%; access to Lin’s lessons.'],breathing:['Понимание +10%; доступ к дыхательному приёму.','Understanding +10%; access to a breathing method.'],scholar:['Понимание +15%; доступ к рукописи Вэя.','Understanding +15%; access to Wei’s manuscript.'],swordsman:['Освоение +15%; доступ к урокам Юнь.','Mastery +15%; access to Yun’s lessons.']};
+    if(c.mentor&&!s.world.mentors.includes(c.mentor))benefits.push(say(...mentorHints[c.mentor]));
+    if(c.contact&&!s.world.contacts.includes(c.contact))benefits.push(say('Контакт и возможность доставить письмо; это ещё не завершённое поручение.','A contact and a letter-delivery opportunity; the errand is not completed yet.'));
+    if(c.admission&&!s.world.admissionRoutes.includes(c.admission))benefits.push(say('Открывает путь подачи заявки в секту; членство не выдаётся автоматически.','Opens a sect application route; membership is not granted automatically.'));
+    if(c.explore)benefits.push(say(`Исследование +${n(c.explore)} сек; находка открывается при 600 сек в храме.`,`Research +${n(c.explore)} sec; the discovery opens at 600 sec in the temple.`));
+    if(c.route)benefits.push(say('Начинает местное поручение. Награда и признание — при следующей встрече здесь.','Starts a local task. Reward and recognition come at a follow-up meeting here.'));
+    if(c.recognition)benefits.push(say('Признание +1 в главе, где была выполнена помощь.','Recognition +1 in the chapter where you provided the help.'));
+    const requirements=[];
+    const authored={'village:ren-balance/carry':['Тело ≥ 2','Body ≥ 2'],'ruins:wei-compare/compare':['Спокойствие ≥ 3','Calm ≥ 3'],'city:rival-rumor/witnesses':['Спокойствие ≥ 3','Calm ≥ 3'],'city:rival-rumor/wei':['Знакомство с Вэем или его наставления','Meet Wei or obtain his teaching'],'village:ren-recovery/work':['Выносливость ≥ 15','Stamina ≥ 15']};
+    const requirement=c.requirement?W.sceneText(c,'requirement',language,s):authored[`${scene?.id}/${c.id}`]?say(...authored[`${scene.id}/${c.id}`]):'';
+    if(c.requires)requirements.push((c.requires(s)?say('Выполнено: ','Met: '):say('Нужно: ','Required: '))+(requirement||say('условия указанной встречи','the conditions stated in this encounter')));
+    const deficits=Object.fromEntries(Object.entries(c.cost||{}).filter(([k,v])=>s.resources[k]<v).map(([k,v])=>[k,v-s.resources[k]]));
+    if(Object.keys(deficits).length)requirements.push(say('Не хватает: ','Missing: ')+resourceList(deficits));
+    if(s.world.journey)requirements.push(say('Дождись прибытия.','Wait until you arrive.'));
+    if(scene&&!c.skip&&!W.eligible(s,scene))requirements.push(say('Эта возможность уже завершена или её условия изменились.','This opportunity is already completed or its conditions changed.'));
+    const preview=W.memory?.preview?.(s,scene,c,language,failed?'failure':c.skip?'declined':'success');
+    if(profile)benefits.push(say('Рост ограничен текущими пределами развития.','Growth is limited by current progression caps.'));
+    return {intent,cost:costs.join(' · ')||say('Ресурсы не расходуются.','No resources are spent.'),risk:c.danger?say(`Проверка силы: ${n(power(s))}/${n(c.danger)}. ${failed?'Сейчас сил недостаточно: действие приведёт к гибели.':'Сейчас силы достаточно для победы.'} При гибели теряется половина переносимых ресурсов; развитие и сюжет сохраняются. Указанные расходы списываются до проверки.`,`Power check: ${n(power(s))}/${n(c.danger)}. ${failed?'Your power is insufficient: this action leads to death.':'You currently have enough power to win.'} Death loses half of carried resources; progression and story are retained. Listed resource costs are spent before the check.`):say('Смертельной проверки нет.','No lethal check.'),benefit:(failed?say('При текущей силе награды и развитие не будут получены. Возможная польза после достаточной подготовки: ','At your current power, no rewards or progression will be gained. Potential benefit after sufficient preparation: '):c.danger?say('При победе: ','If victorious: '):'')+(benefits.join(' ')||say('Без немедленной прибавки к ресурсам или развитию.','No immediate resource or progression gain.')),relationship:preview?.text||'',requirement:requirements.join(' '),available:W.canChoice(s,c,api)};
+  }
   function guidance(s,action,key='',language='ru') {
     if(action==='technique-action')return techniqueActionHint(s,key,language);
     const en=language==='en',say=(ru,english)=>en?english:ru;
@@ -494,6 +552,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
