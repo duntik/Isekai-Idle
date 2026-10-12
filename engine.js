@@ -14,6 +14,7 @@
   ];
   const names = { gold: 'Монеты', herbs: 'Травы', qi: 'Духовная энергия', relics: 'Осколки', reputation: 'Репутация', wood: 'Древесина', ore: 'Руда', pills: 'Пилюли', influence: 'Влияние', supplies: 'Припасы', cosmic: 'Звёздная эссенция', worlds: 'Миры' };
   const activities = {
+    rest: { name: 'Отдыхать', stage: 0, desc: 'Восстанавливает выносливость. Для медитации или освоения техники выбери занятие отдельно.', rates: {} },
     work: { name: 'Работать над заказом', stage: 0, desc: 'Сверяет накладные для принятого заказа. На время работы медитация останавливается.', rates: {} },
     explore: { name: 'Исследовать местность', stage: 0, desc: 'В лесу — травы; в храме — травы, осколки и находка после 10 минут исследования. В пути занятие приостановлено.', rates: { herbs: .025, relics: 1 / 600 } },
     meditate: { name: 'Медитировать', stage: 0, desc: 'Успокаивает разум. После находки накапливает понимание и духовную энергию.', xp: .05, calm: .02, rates: { qi: .1 } },
@@ -40,7 +41,7 @@
     scout: { name: 'Осмотреть развалины', neutral: 'Проверить данные', stamina: 4, explore: 2, herbs: .05, desc: '+2 сек исследования и +0,05 трав' }
   };
   const orders={
-    sweep:{name:'Уборка двора Мэй',neutral:'Заказ A',target:10,pay:8,body:0,desc:'10 подметаний. Выполняется кликами, пока ты медитируешь.'},
+    sweep:{name:'Уборка двора Мэй',neutral:'Заказ A',target:10,pay:8,body:0,desc:'10 подметаний. Каждый клик останавливает фоновое занятие: уборка требует движения.'},
     haul:{name:'Разгрузка телеги',neutral:'Заказ B',target:8,pay:12,body:1,desc:'8 переносов ящика. Нужен показатель тела 1; выполняется кликами.'},
     ledger:{name:'Сверить накладные',neutral:'Заказ C',target:180,pay:20,body:0,desc:'3 минуты фоновой работы. Пока работаешь, медитация не идёт.'}
   };
@@ -67,12 +68,12 @@
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
     sky:{name:'Сутра Пустого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
-    stance:{name:'Корни камня',source:'Урок Жэня в деревне',desc:'Тело от кликов +8% за ранг.',effect:'body',available:s=>s.world.mentors.includes('trainer')},
+    stance:{name:'Корни камня',source:'Урок Жэня в деревне',desc:'Тело от кликов +8% за ранг.',effect:'body',practiceBody:.004,available:s=>s.world.mentors.includes('trainer')},
     herb:{name:'Слух зелёных жил',source:'Помощь Линь в лесу',desc:'Травы при исследовании +8% за ранг.',effect:'herbs',available:s=>s.world.mentors.includes('herbalist')},
     breath:{name:'Дыхание тихой реки',source:'Спасение Сэня в лесу',desc:'Энергия от медитации +8% за ранг.',effect:'qi',available:s=>s.world.mentors.includes('breathing')},
-    sword:{name:'Меч облачного перевала',source:'Урок Юнь в горах',desc:'Боевая сила +8% за ранг.',effect:'power',available:s=>s.world.mentors.includes('swordsman')},
+    sword:{name:'Меч облачного перевала',source:'Урок Юнь в горах',desc:'Боевая сила +8% за ранг.',effect:'power',practiceBody:.003,available:s=>s.world.mentors.includes('swordsman')},
     grove:{name:'Нефритовый круг',source:'Ученичество в Нефритовой Роще',desc:'Травы при исследовании +8% и энергия медитации +4% за ранг.',effect:'herbs',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='rescue'},
-    cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
+    cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',practiceBody:.003,available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='invitation'}
   };
   const fresh = () => ({...baseFresh(), playerName:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
@@ -122,13 +123,26 @@
     if(peaceful&&s.stage===4)return 'Секта наладила помощь и снабжение долины. Поселения доверили тебе управление городом. Теперь нужны торговля, запасы и устойчивое управление.';
     return stages[s.stage].intro;
   }
-  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k!=='work'||(s.employment.order?.kind==='ledger'&&canWorkOrder(s)))&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  const canActivity=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(!s.world.journey||k==='rest')&&(k!=='work'||(s.employment.order?.kind==='ledger'&&canWorkOrder(s)))&&(k!=='technique'||(s.found&&!!s.cultivation.active))&&(!['explore','mission'].includes(k)||(!s.world.journey&&(k==='explore'?['forest','ruins']:['city','mountains']).includes(s.world.location)));
+  const interruptActivity=s=>{s.activity='rest';};
+  function techniquePractice(s,k,amount){
+    const learned=s.cultivation.learned[k],definition=techniques[k];
+    if(!learned||learned.rank>=5||amount<=0)return 0;
+    const practiced=Math.max(0,Math.min(amount,techniqueNeeded(learned.rank)-learned.progress,definition.practiceBody?s.stamina/.1:Infinity));
+    learned.progress+=practiced;
+    if(definition.practiceBody){
+      s.stamina=Math.max(0,s.stamina-practiced*.1);
+      s.body=Math.min(10*(s.realm+1),s.body+practiced*definition.practiceBody*W.bonus(s).body*techniqueBonus(s,'body'));
+    }
+    return practiced;
+  }
   const activityRunning=s=>canActivity(s,s.activity);
   const staminaMax=s=>100+Math.min(100,Math.floor(s.body*2));
   const staminaRecovery=s=>.4+Math.min(.2,s.body*.002);
   const taskGains={sweep:{body:.012,calm:.01},haul:{body:.035},scout:{calm:.005},ledger:{calm:.005,xp:.005},explore:{calm:.001,xp:.001},physical:{body:.15},focus:{calm:.3,xp:.3},combat:{body:.1,mastery:.1}};
   function taskPractice(s,kind,amount=1){
     const gains=taskGains[kind];if(!gains||amount<=0)return;
+    if(gains.body||gains.mastery)interruptActivity(s);
     s.body=Math.min(10*(s.realm+1),s.body+(gains.body||0)*amount*W.bonus(s).body*techniqueBonus(s,'body'));
     s.calm=Math.min(100,s.calm+(gains.calm||0)*amount);
     if(s.found)s.xp=Math.min(needed(s),s.xp+(gains.xp||0)*amount);
@@ -204,6 +218,7 @@
       return key==='ledger'?say('Прими заказ: начнётся фоновая сверка накладных. Через 180 секунд работы нажми «Получить оплату».','Accept the contract to start background invoice checking. After 180 seconds of work, press Collect payment.'):say(`Прими заказ → выполни ${orders[key].target} кликов «${clicks[key].name}» → нажми «Получить оплату».`,`Accept the contract → perform ${orders[key].target} ${key==='sweep'?'Sweep':'Carry crates'} clicks → press Collect payment.`);
     }
     if(action==='activity'){
+      if(key==='rest')return say('Фоновое развитие остановлено. Выносливость восстанавливается; для продолжения выбери медитацию, технику или работу.','Background progress is stopped. Stamina recovers; select meditation, technique practice or work to continue.');
       if(key==='work')return guidance(s,'claim-order','',language);
       if(key==='meditate')return s.found?say('Идёт автоматически: растут спокойствие, понимание и энергия. На пределе понимания соверши прорыв.','Runs automatically: calm, understanding and qi grow. At the understanding limit, break through.'):say('Пока растёт только спокойствие. Для понимания и энергии сначала найди древнюю технику в руинах.','Only calm grows for now. To gain understanding and qi, first discover the ancient technique in the ruins.');
       if(key==='technique')return say('Практика идёт автоматически для активной техники. Когда освоение заполнится, оплати повышение её ранга в блоке техник.','Practice runs automatically for the active technique. When practice is full, pay to increase its rank in the techniques section.');
@@ -243,24 +258,30 @@
   // Visibility follows context, independently of stamina, cooldowns and progress.
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
   const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order?.kind==='ledger':canActivity(s,k)||s.activity===k);
-  const canClick = (s,k) => !!clicks[k] && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
+  const canClick = (s,k) => !!clicks[k] && !s.world.journey && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
   function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function action(s, type, value) {
     if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
     if(type==='learn-technique'){if(!canLearn(s,value))return false;spend(s,techniqueCost(s,value));const t=s.cultivation.learned[value]||(s.cultivation.learned[value]={rank:0,progress:0});if(t.rank)t.progress-=techniqueNeeded(t.rank);t.rank++;if(!s.cultivation.active)s.cultivation.active=value;log(s,`Изучена техника: ${techniques[value].name}, ранг ${t.rank}.`);return true;}
     if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
-    if (['travel','encounter','choice','apply-sect','map-inspect'].includes(type)) return W.action(s,type,value,api);
+    if (['travel','encounter','choice','apply-sect','map-inspect'].includes(type)) {
+      const choice=type==='choice'?W.current(s)?.choices.find(c=>c.id===value):null;
+      const result=W.action(s,type,value,api);
+      if(result&&(type==='travel'||(type==='choice'&&choice&&!choice.skip)))interruptActivity(s);
+      return result;
+    }
     if(type==='order'){
       if(!canOrder(s,value))return false;s.employment.order={kind:value,progress:0,pay:orderPay(s,value),place:s.world.location};
       if(value==='ledger')s.activity='work';
     }else if(type==='claim-order'){
       const order=s.employment.order;if(!canClaimOrder(s))return false;
       s.resources.gold+=order.pay;s.employment.completed++;log(s,`Заказ выполнен: ${orderName(s,order.kind,order.place||'village')}. Получено ${order.pay} монет.`);s.employment.order=null;
-      if(s.activity==='work')s.activity='meditate';
+      if(s.activity==='work')interruptActivity(s);
     }else if(type==='cancel-order'){
-      if(!s.employment.order)return false;s.employment.order=null;if(s.activity==='work')s.activity='meditate';
+      if(!s.employment.order)return false;s.employment.order=null;if(s.activity==='work')interruptActivity(s);
     }else if (type === 'click') {
       if (!canClick(s,value)) return false;
+      interruptActivity(s);
       const c=clicks[value];s.stamina-=c.stamina;s.clickCooldown=.6;s.clicks[value]++;
       const mentors=s.world.mentors;
       s.body=Math.min(10*(s.realm+1),s.body+(c.body||0)*W.bonus(s).body*techniqueBonus(s,'body'));s.calm=Math.min(100,s.calm+(c.calm||0));
@@ -338,7 +359,7 @@
       }
       if(s.activity==='explore'&&activityRunning(s))taskPractice(s,'explore',dt);
       s.mastery = Math.min(10 * (s.realm + 1), s.mastery + (a.mastery || 0) * mult * dt * wb.mastery * techniqueBonus(s,'mastery'));
-      const practicing=s.cultivation.learned[s.cultivation.active];if(s.activity==='technique'&&practicing&&practicing.rank<5)practicing.progress=Math.min(techniqueNeeded(practicing.rank),practicing.progress+dt*mult);
+      if(s.activity==='technique'&&activityRunning(s))techniquePractice(s,s.cultivation.active,dt*mult);
       if (s.found) s.xp = Math.min(needed(s), s.xp + (a.xp || 0) * mult * dt * wb.xp * (s.activity==='meditate'?techniqueBonus(s,'xp'):1));
       if (s.activity === 'explore' && activityRunning(s) && s.world.location==='ruins') { s.explored += dt; discover(s); }
       if (s.stage >= 3) {
@@ -426,6 +447,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { world:W, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

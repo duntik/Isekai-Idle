@@ -2,10 +2,11 @@
   'use strict';
   const labels = {gold:'Монеты',herbs:'Травы',qi:'Духовная энергия',relics:'Осколки',reputation:'Репутация',wood:'Древесина',ore:'Руда',pills:'Пилюли',influence:'Влияние',supplies:'Припасы',cosmic:'Звёздная эссенция',worlds:'Миры'};
   const tabs = {hero:'Путь героя',combat:'Испытания',world:'Путешествия',sect:'Секта',city:'Город',planet:'Планета',galaxy:'Галактика',legacy:'Наследие',roadmap:'Горизонты'};
-  const activityLabels = {work:'Работать над заказом',explore:'Исследовать местность',train:'Тренировать тело',meditate:'Медитировать',technique:'Осваивать технику',mission:'Поручения секты',govern:'Управлять владениями',laws:'Постигать законы'};
+  const activityLabels = {rest:'Отдыхать',work:'Работать над заказом',explore:'Исследовать местность',train:'Тренировать тело',meditate:'Медитировать',technique:'Осваивать технику',mission:'Поручения секты',govern:'Управлять владениями',laws:'Постигать законы'};
   const projectLabels = {dorm:'Обитель учеников',garden:'Духовный сад',market:'Торговый район',granary:'Склад снабжения',node:'Мировой узел',fleet:'Звёздный корабль',observatory:'Обсерватория законов'};
   const jobs = {herb:'Садовники',lumber:'Лесорубы',miner:'Рудокопы',alchemist:'Алхимики',disciple:'Ученики'};
   function render(s,tab,E) {
+    const uiText=(ru,en)=>root.IsekaiLocale?.language==='en'?en:ru;
     const f = n=>n.toLocaleString(root.IsekaiLocale?.locale||'ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
     const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))&&(action!=='fight'||E.canFight(s))?'':'disabled'}>${label}</button>`;
@@ -24,10 +25,10 @@
         else row('Сюжет','Завершён','Доступна следующая глава');
       }
       row('Текущее место',E.world.locations[s.world.location].name,activityLabels[s.activity]);
-      row('Занятие',activityLabels[s.activity],E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
+      row('Занятие',activityLabels[s.activity],(E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.')+' '+uiText('Ручные действия, бой и путешествие прерывают занятие. Выбери его снова, когда закончишь.','Manual actions, combat and travel interrupt your activity. Select it again when finished.'));
       row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
       row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
-      row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
+      row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,uiText('Растёт от физических действий, работы и двигательных техник. Медитация тело не развивает.','Grows through physical actions, work and movement techniques. Meditation does not train the body.'));
       row('Освоение техники',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Скорость развития: ${f(E.speed(s))}`);
       row('Древнее наследие',s.found?'Найдено':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 сек исследования до находки');
       {
@@ -47,7 +48,7 @@
       if(!order&&!Object.keys(E.orders).some(k=>E.orderAvailable(s,k)))row('Поручения','—','Сначала познакомься с заказчиком. Поручения появляются после встреч; принятый заказ нужно выполнять и сдавать в указанном месте.');
       if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',E.canClaimOrder(s)));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
       for(const[k,o]of Object.entries(E.orders).filter(([k])=>!order&&E.orderAvailable(s,k)))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
-      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
+      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc}${t.practiceBody?uiText(" Практика этой двигательной техники также укрепляет тело и расходует выносливость."," Practicing this movement technique also strengthens the body and uses stamina."):""} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
     }
     if(tab==='combat') {

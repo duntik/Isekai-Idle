@@ -3,6 +3,8 @@
   L.add([
     ['Карта','Map'],['Карта известного мира','Map of the known world'],
     ['выносливости/сек.','stamina/sec.'],
+    ['Отдыхать','Rest'],['Восстанавливает выносливость. Для медитации или освоения техники выбери занятие отдельно.','Recovers stamina. Select meditation or technique practice separately to begin them.'],
+    ['10 подметаний. Каждый клик останавливает фоновое занятие: уборка требует движения.','10 sweeps. Every click stops the background activity: cleaning requires movement.'],
     ['Знакомства открывают разные знания. Изученные техники остаются с тобой; можно свободно менять активную. Эффект даёт одна выбранная техника. Для следующего ранга занимайся «Осваивать технику», затем оплати изучение. Физическая работа и помощь также укрепляют тело.','Acquaintances unlock different knowledge. Learned techniques stay with you; freely change the active one. One selected technique provides its effects. Practise it, then pay to increase its rank. Physical work and helping others also strengthen your body.'],
     ['Неверная карта','Invalid map'],
     ['Об этой дороге','Route details'],['Известное место встречи. Вернись сюда, чтобы искать продолжение.','A recorded meeting. Return to this area to look for its continuation.'],

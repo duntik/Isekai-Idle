@@ -81,7 +81,7 @@ active.world.location='ruins';active.explored=598;assert(E.action(active,'click'
 E.advance(active,1);assert.equal(E.action(active,'click','scout'),false);
 assert.equal(E.action(active,'activity','train'),false);
 assert.equal(E.action(active,'click','breathe'),false);
-const beforeBody=active.body;E.advance(active,1200);assert.equal(active.body,beforeBody);assert.equal(active.xp,E.needed(active));
+const beforeBody=active.body;assert(E.action(active,'activity','meditate'));E.advance(active,1200);assert.equal(active.body,beforeBody);assert.equal(active.xp,E.needed(active));
 assert.deepEqual(E.validate(JSON.parse(JSON.stringify(active))),active);
 
 // Story rewards are claimed once and cannot bypass an unfinished objective.

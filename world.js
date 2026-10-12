@@ -168,7 +168,7 @@
       if(uniqueIds.includes(scene.id)&&(c.admission||scene.once)&&!c.skip&&!w.completed.includes(scene.id))w.completed.push(scene.id);
       for(const [k,v]of Object.entries(c.reward||{}))s.resources[k]+=v;
       E.taskPractice(s,E.choicePractice(c));
-      if(c.practice){const learned=s.cultivation.learned[c.practice.technique];learned.progress=Math.min(E.techniqueNeeded(learned.rank),learned.progress+c.practice.amount);}
+      if(c.practice)E.techniquePractice(s,c.practice.technique,c.practice.amount);
       s.mastery=Math.min(10*(s.realm+1),s.mastery+(c.mastery||0));s.calm=Math.min(100,s.calm+(c.calm||0));
       if(c.restore)s.stamina=E.staminaMax(s);
       if(c.mentor&&!w.mentors.includes(c.mentor))w.mentors.push(c.mentor);

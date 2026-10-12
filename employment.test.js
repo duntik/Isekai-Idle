@@ -19,7 +19,7 @@ ruins.found=true;assert(!E.clickVisible(ruins,'scout'));
 assert(!E.action(s,'order','haul'));assert(!E.action(s,'click','sweep'));assert(E.action(s,'order','sweep'));
 assert(!E.action(s,'order','ledger'));assert(!E.action(s,'claim-order'));
 for(let i=0;i<10;i++){E.advance(s,1);assert(E.action(s,'click','sweep'));}
-assert.equal(s.activity,'meditate');assert(Math.abs(s.body-.132)<1e-9);assert(s.xp>0);assert.equal(s.resources.gold,0);
+assert.equal(s.activity,'rest');assert(Math.abs(s.body-.132)<1e-9);assert(s.xp>0);assert.equal(s.resources.gold,0);
 assert(!E.action(s,'click','sweep'));assert(E.action(s,'claim-order'));assert.equal(s.resources.gold,8);
 assert.equal(s.employment.completed,1);assert(!E.action(s,'claim-order'));assert.equal(s.resources.gold,8);
 s.world.location='city';assert(!E.orderAvailable(s,'sweep'));assert(!E.orderAvailable(s,'haul'));assert(!E.orderAvailable(s,'ledger'));s.world.location='village';
@@ -30,13 +30,13 @@ assert(Math.abs(s.body-1.308)<1e-9);s.world.location='city';assert(!E.action(s,'
 assert(E.action(s,'order','ledger'));assert.equal(s.activity,'work');const xp=s.xp;
 E.advance(s,179);assert(!E.action(s,'claim-order'));assert(s.xp>xp);assert(Math.abs(s.body-1.308)<1e-9);
 const restored=E.validate(JSON.parse(JSON.stringify(s)));E.advance(restored,1);assert(E.action(restored,'claim-order'));
-assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'meditate');assert.equal(restored.employment.completed,3);
+assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'rest');assert.equal(restored.employment.completed,3);
 restored.world.location='city';restored.world.director.decisions['city:0/study']=1;restored.employment.completed=5;assert.equal(E.orderPay(restored,'ledger'),27);
 assert(E.action(restored,'order','ledger'));const lockedPay=restored.employment.order.pay;
 restored.world.location='village';E.advance(restored,180);assert.equal(restored.employment.order.pay,lockedPay);assert.equal(restored.employment.order.progress,0);assert(!E.canClaimOrder(restored));
-assert(E.action(restored,'cancel-order'));assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'meditate');
+assert(E.action(restored,'cancel-order'));assert.equal(restored.resources.gold,40);assert.equal(restored.activity,'rest');
 const old=E.fresh();old.activity='train';delete old.employment;
 const migrated=E.validate(old);assert.equal(migrated.activity,'meditate');assert.deepEqual(migrated.employment,{completed:0,order:null});
 const offline=E.fresh();offline.found=true;E.advance(offline,86400);assert.equal(offline.body,0);assert.equal(offline.xp,E.needed(offline));
 assert.equal(offline.resources.gold,0);
-console.log('PASS: active contracts, meditation alongside clicks, offline accounting, manual claim, no duplicate pay, cancellation, rates, migration, no passive body');
+console.log('PASS: active contracts, physical work interrupts meditation, offline accounting, manual claim, no duplicate pay, cancellation, rates, migration, no passive body');
