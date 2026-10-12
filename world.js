@@ -114,14 +114,16 @@
   }
   const canTravel=(s,k)=>!!locations[k]&&!travelReason(s,k);
   function map(s,language='ru'){
-    const coords={village:[2,3],forest:[4,2],city:[0,4],ruins:[1,1],mountains:[5,0]};
+    const coords={village:[1,1],forest:[2,1],city:[0,1],ruins:[1,0],mountains:[2,0]};
     const known=knownLocations(s),nodes=known.map(id=>({id,kind:'location',name:locations[id].name,x:coords[id][0],y:coords[id][1],visited:s.world.visits[id]>0||s.world.location===id,locked:!!travelReason(s,id,language),reason:travelReason(s,id,language),detail:locations[id].desc}));
     for(const[id,f]of Object.entries(frontiers))if(s.world.location===f.base||s.world.visits[f.base]>0)nodes.push({id,kind:'frontier',name:language==='en'?f.en:f.name,x:f.x,y:f.y,visited:s.world.map.explored.includes(id),locked:!f.ready(s),reason:f.ready(s)?'':language==='en'?f.reasonEn:f.reason,detail:language==='en'?'A deeper route. Approach here from the nearby location.':'Путь вглубь. Подойти можно из ближайшей локации.',base:f.base});
     for(const[id,index]of s.world.map.sites.entries()){const base=index.split(':')[0],scene=encounters[base]?.find(e=>e.id===(s.world.director.pending[index]?index+':return':index));if(!scene||!known.includes(base))continue;nodes.push({id:`site:${index}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:coords[base][0]+(id%3-1)*.6,y:coords[base][1]+1+Math.floor(id/3)*.55,visited:true,locked:!eligible(s,scene),reason:eligible(s,scene)?'':language==='en'?'This meeting has been resolved.':'Эта встреча уже завершена.',detail:sceneText(scene,'text',language,s)});}
-    const ordinary=nodes.filter(n=>n.kind!=='site');for(const node of ordinary){node.x=70+node.x*260;node.y=70+node.y*200;}
+    const ordinary=nodes.filter(n=>n.kind!=='site');
+    const frontierCoords={'dark-forest':[3,1],'sealed-crypt':[0,0],'upper-pass':[3,0]};
+    for(const node of ordinary){if(frontierCoords[node.id])[node.x,node.y]=frontierCoords[node.id];node.x=40+node.x*245;node.y=40+node.y*195;}
     const bottom=Math.max(70,...ordinary.map(n=>n.y))+240;
-    for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=70+index%5*260;node.y=bottom+Math.floor(index/5)*200;}
-    return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(900,...nodes.map(n=>n.x+240)),height:Math.max(750,...nodes.map(n=>n.y+240))};
+    for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=40+index%4*245;node.y=bottom+Math.floor(index/4)*195;}
+    return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(540,...nodes.map(n=>n.x+250)),height:Math.max(400,...nodes.map(n=>n.y+240))};
   }
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
   function offer(s,E){const w=s.world,k=w.location;let pool=encounters[k].map((scene,index)=>({scene,index})).filter(({scene})=>eligible(s,scene));

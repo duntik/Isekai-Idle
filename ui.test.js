@@ -58,6 +58,20 @@ for (let stage = 0; stage < 8; stage++) {
   assert(mapHTML.includes('data-map-node="village"'));
   if(stage===0)assert(!mapHTML.includes('data-map-node="city"'));
   assert(!mapHTML.includes('NaN'));assert(!mapHTML.includes('undefined'));
+  assert(mapHTML.includes('class="map-icon"'));
+  element('map-zoom-in').click();
+  assert.equal(element('map-zoom-level').textContent,'115%');
+  assert.equal(element('map-canvas').style.transform,'scale(1.15)');
+  element('map-zoom-out').click();
+  assert.equal(element('map-zoom-level').textContent,'100%');
+  for(let i=0;i<20;i++)element('map-zoom-out').click();
+  assert.equal(element('map-zoom-level').textContent,'45%');
+  for(let i=0;i<20;i++)element('map-zoom-in').click();
+  assert.equal(element('map-zoom-level').textContent,'160%');
+  element('map-fit').click();
+  assert(parseFloat(element('map-stage').style.width)>0);
+  element('map-center').click();
+  assert(element('map-viewport').scrollLeft>=0);
   const tabs = ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
   for (const tab of tabs) {
     handlers.click({target:{closest:()=>({dataset:{tab},disabled:false})}});

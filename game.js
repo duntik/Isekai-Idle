@@ -34,6 +34,17 @@
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
   function save(manual = false) { try { localStorage.setItem(KEY, JSON.stringify(s)); if (manual) toast('Прогресс сохранён'); } catch { if (manual) toast('Не удалось сохранить. Используй экспорт.'); } }
   function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0;E.advance(s,pending?0:elapsed);s.last=now;return pending?0:elapsed; }
+  let mapZoom=1;
+  function centerMap(){
+    const node=E.world.map(s).nodes.find(n=>n.id===s.world.location),v=$('map-viewport');
+    if(node){v.scrollLeft=Math.max(0,(node.x+105)*mapZoom-(v.clientWidth||800)/2);v.scrollTop=Math.max(0,(node.y+70)*mapZoom-(v.clientHeight||500)/2);}
+  }
+  function zoomMap(value,anchor){
+    const v=$('map-viewport'),old=mapZoom,x=anchor?.[0]??(v.clientWidth||800)/2,y=anchor?.[1]??(v.clientHeight||500)/2;
+    mapZoom=Math.max(.45,Math.min(1.6,value));
+    const left=((v.scrollLeft||0)+x)/old*mapZoom-x,top=((v.scrollTop||0)+y)/old*mapZoom-y;
+    renderMap();v.scrollLeft=Math.max(0,left);v.scrollTop=Math.max(0,top);
+  }
   function renderMap(){
     const language=L?.language||'ru',en=language==='en',map=E.world.map(s,language),viewport=$('map-viewport');
     const canvas=$('map-canvas'),openNodes=Array.from(canvas.querySelectorAll?.('details[open]')||[]).map(node=>node.closest('[data-map-node]')?.dataset.mapNode);
@@ -42,11 +53,18 @@
     const width=map.width||1200,height=map.height||900;
     const edges=map.edges.map(edge=>{const from=byId.get(edge.from),to=byId.get(edge.to);return from&&to?`<line x1="${from.x+90}" y1="${from.y+40}" x2="${to.x+90}" y2="${to.y+40}"/>`:'';}).join('');
     $('map-canvas').style.width=`${width}px`;$('map-canvas').style.height=`${height}px`;
+    canvas.style.transform=`scale(${mapZoom})`;canvas.style.transformOrigin='0 0';
+    $('map-stage').style.width=`${width*mapZoom}px`;$('map-stage').style.height=`${height*mapZoom}px`;
+    $('map-zoom-level').textContent=`${Math.round(mapZoom*100)}%`;
+    $('map-center').textContent=en?'My location':'Где я';$('map-fit').textContent=en?'All routes':'Все пути';
+    $('map-zoom-in').setAttribute?.('aria-label',en?'Zoom in':'Приблизить');$('map-zoom-out').setAttribute?.('aria-label',en?'Zoom out':'Отдалить');
+    $('map-help').textContent=en?'Drag the background to move. Use + / − or the mouse wheel to zoom. Icons mark settlements, wilderness and meetings.':'Тяни фон, чтобы перемещаться. Масштаб: + / − или колёсико мыши. Значки обозначают поселения, природу и встречи.';
     $('map-canvas').innerHTML=h(`<svg class="map-roads" width="${width}" height="${height}" aria-hidden="true">${edges}</svg><div class="map-fog-label" aria-hidden="true">${en?'Unknown lands':'Неизведанные земли'}</div>${map.nodes.map(node=>{
       const place=node.kind==='location',current=place&&s.world.location===node.id,action=place?'travel':'map-inspect';
       const status=current?(en?'You are here':'Ты здесь'):node.locked?(en?'Route blocked':'Путь закрыт'):node.visited?(en?'Discovered':'Исследовано'):(en?'Known route':'Известная дорога');
       const info=node.kind==='site'?(en?'A recorded meeting. Return to this area to look for its continuation.':'Известное место встречи. Вернись сюда, чтобы искать продолжение.'):node.reason||node.detail;
-      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''}" style="left:${node.x}px;top:${node.y}px"><strong>${node.name}</strong><small>${status}</small><details ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><p>${info}</p></details><button data-action="${action}" data-value="${node.id}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${place?(node.locked?(en?'Approach the gate':'Подойти к проходу'):(en?'Travel here':'Отправиться')):(en?'Explore route':'Исследовать путь')}</button></article>`;
+      const icon=node.kind==='site'?'♧':({village:'⌂',city:'♜',forest:'♠',ruins:'▥',mountains:'▲','dark-forest':'♠','sealed-crypt':'▥','upper-pass':'▲'}[node.id]||'◇');
+      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''}" style="left:${node.x}px;top:${node.y}px"><strong><span class="map-icon" aria-hidden="true">${icon}</span>${node.name}</strong><small>${current?'● ':node.locked?'⊘ ':'○ '}${status}</small><details ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><p>${info}</p></details><button data-action="${action}" data-value="${node.id}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${place?(node.locked?(en?'Approach the gate':'Подойти к проходу'):(en?'Travel here':'Отправиться')):(en?'Explore route':'Исследовать путь')}</button></article>`;
     }).join('')}`);
     $('map-status').textContent=(en?`Known routes: ${map.nodes.length}. New encounters leave landmarks on the map.`:`Известных мест: ${map.nodes.length}. Новые встречи оставляют ориентиры на карте.`)+(s.world.encounter?(en?' Resolve your current encounter before exploring a deeper route.':' Заверши текущую встречу, прежде чем исследовать путь вглубь.'):'');
     if(focus){const target=Array.from(canvas.querySelectorAll?.(focus.summary?'summary':'button')||[]).find(node=>focus.summary?node.closest('[data-map-node]')?.dataset.mapNode===focus.node:node.dataset.action===focus.action&&node.dataset.value===focus.value);target?.focus?.({preventScroll:true});}
@@ -164,9 +182,17 @@
   });
   $('open-map').addEventListener('click',()=>{
     renderMap();$('world-map-dialog').showModal?.();
-    const current=E.world.map(s).nodes.find(node=>node.id===s.world.location),viewport=$('map-viewport');
-    if(current){viewport.scrollLeft=Math.max(0,current.x+105-(viewport.clientWidth||800)/2);viewport.scrollTop=Math.max(0,current.y+70-(viewport.clientHeight||500)/2);}
+    centerMap();
   });
+  $('map-zoom-in').addEventListener('click',()=>zoomMap(mapZoom+.15));
+  $('map-zoom-out').addEventListener('click',()=>zoomMap(mapZoom-.15));
+  $('map-center').addEventListener('click',centerMap);
+  $('map-fit').addEventListener('click',()=>{const m=E.world.map(s),v=$('map-viewport');zoomMap(Math.min((v.clientWidth||800)/m.width,(v.clientHeight||500)/m.height));v.scrollLeft=0;v.scrollTop=0;});
+  $('map-viewport').addEventListener('wheel',e=>{e.preventDefault();const r=$('map-viewport').getBoundingClientRect();zoomMap(mapZoom*(e.deltaY<0?1.12:1/1.12),[e.clientX-r.left,e.clientY-r.top]);},{passive:false});
+  let mapDrag;
+  $('map-viewport').addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button,details,.map-node'))return;const v=$('map-viewport');mapDrag={x:e.clientX,y:e.clientY,left:v.scrollLeft,top:v.scrollTop};v.setPointerCapture?.(e.pointerId);});
+  $('map-viewport').addEventListener('pointermove',e=>{if(!mapDrag)return;const v=$('map-viewport');v.scrollLeft=mapDrag.left+mapDrag.x-e.clientX;v.scrollTop=mapDrag.top+mapDrag.y-e.clientY;});
+  for(const event of ['pointerup','pointercancel','lostpointercapture'])$('map-viewport').addEventListener(event,()=>{mapDrag=null;});
   $('close-map').addEventListener('click',()=>$('world-map-dialog').close?.());
   $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const text=await file.text();const loaded = typeof IsekaiSaveCode !== 'undefined' ? await IsekaiSaveCode.decode(text,E) : E.validate(JSON.parse(text)); if(saves) saves.replace(loaded,'Импорт файла'); else if (confirm(t('Заменить текущий прогресс?'))) { s = loaded; tick(); tab = 'hero'; save(); render(); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
   $('identity-form').addEventListener('submit',e=>{

@@ -60,6 +60,7 @@ html[data-interface="data"] .action-hint{font:12px/1.5 Arial;color:#334a60;margi
 /* Growing world map: only known places are drawn over unexplored darkness. */
 #world-map-dialog{width:min(1200px,94vw);max-width:1200px;max-height:92vh;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text)}
 #world-map-dialog::backdrop{background:#000b}
+.map-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.map-toolbar button{padding:8px 14px}.map-zoom-controls{display:flex;align-items:center;gap:8px;margin-right:auto}.map-zoom-controls output{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}#map-stage{position:relative;overflow:hidden;min-width:1px;min-height:1px}#map-viewport{cursor:grab;touch-action:pan-x pan-y}#map-viewport:active{cursor:grabbing}.map-node{cursor:default;box-sizing:border-box}.map-icon{display:inline-grid;place-items:center;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:#98bd8d20;color:var(--gold);font-size:24px;margin-right:8px}.map-node strong{display:flex;align-items:center}.map-node.locked .map-icon{opacity:.6}html[data-interface="data"] .map-icon{background:#edf0f2;color:#52616c;border-radius:2px;font-size:20px}
 #map-viewport{position:relative;height:65vh;min-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#091419;scrollbar-color:#546d60 #102025}
 #map-canvas{position:relative;isolation:isolate;background:radial-gradient(ellipse at 40% 40%,#25463a99,transparent 58%),repeating-linear-gradient(0deg,transparent,transparent 49px,#67806c0c 50px),repeating-linear-gradient(90deg,transparent,transparent 49px,#67806c0c 50px),#091419}
 .map-roads{position:absolute;inset:0;z-index:-1;pointer-events:none}
@@ -83,3 +84,4 @@ html[data-interface="data"] .map-node small,html[data-interface="data"] .map-nod
 html[data-interface="data"] .map-node.current{outline-color:#556c7e}
 html[data-interface="data"] .map-roads line{stroke:#778792}
 @media(max-width:600px){#world-map-dialog{padding:14px;width:96vw}#map-viewport{height:62vh}#world-map-title{font-size:20px}.map-node button{min-height:44px}}
+.map-node>strong{display:flex;align-items:center}.map-toolbar button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
