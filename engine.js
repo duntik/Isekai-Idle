@@ -4,6 +4,7 @@
   const N = typeof module !== 'undefined' && module.exports ? require('./names.js') : root.IsekaiNames;
   const A = typeof module !== 'undefined' && module.exports ? require('./achievements.js') : root.IsekaiAchievements;
   const Atlas = typeof module !== 'undefined' && module.exports ? require('./atlas.js') : root.IsekaiAtlas;
+  const S = typeof module !== 'undefined' && module.exports ? require('./sects.js') : root.IsekaiSects;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -76,9 +77,10 @@
     herb:{name:'Слух зелёных жил',source:'Помощь Линь в лесу',desc:'Травы при исследовании +8% за ранг.',effect:'herbs',available:s=>s.world.mentors.includes('herbalist')},
     breath:{name:'Дыхание тихой реки',source:'Спасение Сэня в лесу',desc:'Энергия от медитации +8% за ранг.',effect:'qi',available:s=>s.world.mentors.includes('breathing')},
     sword:{name:'Меч облачного перевала',source:'Урок Юнь в горах',desc:'Боевая сила +8% за ранг.',effect:'power',practiceBody:.003,available:s=>s.world.mentors.includes('swordsman')},
-    grove:{name:'Нефритовый круг',source:'Ученичество в Нефритовой Роще',desc:'Травы при исследовании +8% и энергия медитации +4% за ранг.',effect:'herbs',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='rescue'},
-    cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',practiceBody:.003,available:s=>s.stage>=2&&['remains','gates'].includes(s.world.admission)},
-    seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>s.stage>=2&&s.world.admission==='invitation'}
+    grove:{name:'Нефритовый круг',source:'Ученичество в Нефритовой Роще',desc:'Травы при исследовании +8% и энергия медитации +4% за ранг.',effect:'herbs',secondary:'qi',available:s=>S.library(s,'rescue')},
+    cloud:{name:'Возвращающийся клинок',source:'Учёба в Облачном Пределе',desc:'Боевая сила +8% и освоение техники +4% за ранг.',effect:'power',secondary:'mastery',practiceBody:.003,available:s=>S.library(s,'remains')},
+    seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>S.library(s,'invitation')},
+    iron:{name:'Железные сухожилия',source:'Закрытая библиотека Каменного Оплота',desc:'Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.',effect:'body',secondary:'power',practiceBody:.005,available:s=>S.library(s,'gates')}
   };
   const fresh = () => ({...baseFresh(), atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
@@ -106,7 +108,7 @@
   const orderName=(s,k,place=s.world.location)=>place==='city'?({sweep:'Уборка торгового двора',haul:'Разгрузка городского склада',ledger:orders.ledger.name})[k]:orders[k].name;
   const techniqueCost=(s,k)=>!s.found&&!s.cultivation.learned[k]&&['stance','herb','breath','ink'].includes(k)?{gold:5,herbs:2}:({qi:20*2**(s.cultivation.learned[k]?.rank||0),herbs:5*2**(s.cultivation.learned[k]?.rank||0)});
   const techniqueNeeded=rank=>120*2**rank;
-  const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return 1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0);};
+  const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return (1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0))*(s.stage>=2&&S.schools[s.world.admission]?.bonus===effect?1.15:1);};
   const canLearn=(s,k)=>Object.hasOwn(techniques,k)&&(techniques[k].available(s)||!!s.cultivation.learned[k])&&affordable(s,techniqueCost(s,k))&&(!s.cultivation.learned[k]||(s.cultivation.learned[k].rank<5&&s.cultivation.learned[k].progress>=techniqueNeeded(s.cultivation.learned[k].rank)));
   const log = (s, text) => { s.events.unshift({ text, day: Math.floor(s.age / 3600) + 1 }); s.events = s.events.slice(0, 30); };
   const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2);
@@ -146,7 +148,8 @@
     'sword-drill':{technique:'sword',places:['village','mountains'],stamina:12,cooldown:60,name:['Отработать ответный удар','Drill a counterstrike'],desc:['+0,12 освоения, +0,04 тела и практика техники.','+0.12 mastery, +0.04 body and technique practice.']},
     'grove-gather':{technique:'grove',places:['forest'],stamina:8,cooldown:60,name:['Замкнуть нефритовый круг','Close the jade circle'],desc:['Собрать 3 травы и 1 энергии.','Gather 3 herbs and 1 qi.']},
     'cloud-drill':{technique:'cloud',places:['village','mountains'],stamina:12,cooldown:60,name:['Вернуть клинок в стойку','Return the blade to stance'],desc:['+0,16 освоения, +0,04 тела и практика техники.','+0.16 mastery, +0.04 body and technique practice.']},
-    'seal-read':{technique:'seal',places:['ruins','city'],stamina:6,cooldown:90,name:['Восстановить последовательность знаков','Restore the sequence of signs'],desc:['+2 понимания и практика техники.','+2 understanding and technique practice.']}
+    'seal-read':{technique:'seal',places:['ruins','city'],stamina:6,cooldown:90,name:['Восстановить последовательность знаков','Restore the sequence of signs'],desc:['+2 понимания и практика техники.','+2 understanding and technique practice.']},
+    'iron-lift':{technique:'iron',places:['village','city'],stamina:14,cooldown:60,name:['Поднять связку на железных сухожилиях','Lift a bundle with Iron Sinews'],desc:['+0,2 тела; при разгрузке выполняет 3 переноса.','+0.2 body; completes 3 lifts during a hauling contract.']}
   };
   function techniqueActionHint(s,id,language='ru'){
     const d=techniqueActionDefs[id],en=language==='en';if(!d)return '';
@@ -167,6 +170,7 @@
     const body=v=>{s.body=Math.min(10*(s.realm+1),s.body+v*W.bonus(s).body*techniqueBonus(s,'body'));};
     const understanding=v=>{if(s.found)s.xp=Math.min(needed(s),s.xp+v);};
     if(id==='stone-load'){body(.16);if(canWorkOrder(s)&&s.employment.order.kind==='haul')s.employment.order.progress=Math.min(orders.haul.target,s.employment.order.progress+2);}
+    if(id==='iron-lift'){body(.2);if(canWorkOrder(s)&&s.employment.order.kind==='haul')s.employment.order.progress=Math.min(orders.haul.target,s.employment.order.progress+3);}
     if(id==='herb-listen'||id==='grove-gather'){s.resources.herbs+=id==='grove-gather'?3:2;s.calm=Math.min(100,s.calm+.1);if(id==='grove-gather')s.resources.qi++;}
     if(id==='river-breath'){s.calm=Math.min(100,s.calm+.4);if(s.found)s.resources.qi+=2;understanding(.5);}
     if(id==='ink-read'){if(!s.found){s.explored=Math.min(600,s.explored+30);discover(s);}else understanding(1);}
@@ -201,6 +205,7 @@
     s.mastery=Math.min(10*(s.realm+1),s.mastery+(gains.mastery||0)*amount);
   }
   function choicePractice(c){
+    if(c.training&&!c.skip&&['physical','focus'].includes(c.training))return c.training;
     if(c.skip||c.recognition||c.practice||c.restore)return null;
     if(c.route)return {help:'physical',study:'focus',trade:'focus',combat:'combat'}[c.route];
     if(c.danger)return 'combat';
@@ -610,6 +615,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

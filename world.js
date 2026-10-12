@@ -3,6 +3,7 @@
   const G=typeof module!=='undefined'&&module.exports?require('./event-generator.js'):root.IsekaiEventGenerator;
   const C=typeof module!=='undefined'&&module.exports?require('./causal-events.js'):root.IsekaiCausalEvents;
   const M=typeof module!=='undefined'&&module.exports?require('./npc-memory.js'):root.IsekaiNpcMemory;
+  const S=typeof module!=='undefined'&&module.exports?require('./sects.js'):root.IsekaiSects;
   const locations={
     village:{name:'Деревня у колодца',neutral:'Базовый участок',stage:0,time:30,desc:'Мэй и Жэнь, безопасная работа и помощь в тренировках.',bonus:'Тренировка тела +10%.'},
     forest:{name:'Лес Шепчущих Корней',neutral:'Участок A',stage:0,time:60,desc:'Лекарственные травы, травница Линь и звери на дальних тропах.',bonus:'При исследовании травы +50%.'},
@@ -43,7 +44,7 @@
     rescue:{name:'Нефритовая Роща · наставник Сэнь',neutral:'Допуск A',gift:{herbs:20},text:'Спасённый в лесу Сэнь поручился за тебя. Он примет тебя личным учеником и передаст 20 лекарственных трав при вступлении.'},
     remains:{name:'Облачный Предел · наставница Юнь',neutral:'Допуск B',mastery:1,text:'Ты вернёшь останки пропавшего ученика. Юнь благодарна за возможность проститься и предлагает место в школе меча. Её личный урок при вступлении даст +1 освоения техники.'},
     invitation:{name:'Пустое Небо · хранитель Вэй',neutral:'Допуск C',gift:{qi:40},text:'Найденная карта открывает доступ к отбору хранителей древних печатей. При вступлении хранитель передаст 40 духовной энергии для изучения наследия.'},
-    gates:{name:'Облачный Предел · общий набор',neutral:'Допуск D',gift:{reputation:10},text:'Ты самостоятельно пришёл в городское представительство. Без поручителя придётся пройти общий отбор и начинать с внешних учеников. Успешное испытание даст 10 репутации при вступлении.'}
+    gates:{name:'Каменный Оплот · общий набор',neutral:'Допуск D',gift:{reputation:10},text:'Ты самостоятельно пришёл в городское представительство. Без поручителя придётся пройти общий отбор и начинать с внешних учеников. Успешное испытание даст 10 репутации при вступлении.'}
   };
   encounters.forest[2].text='У дерева лежит раненый Сэнь, наставник Нефритовой Рощи. Если поделиться травами, он покажет дыхательный приём и предложит стать его учеником после подготовки к вступлению.';
   encounters.forest[2].choices[0].admission='rescue';
@@ -104,6 +105,7 @@
     choice('press','Подойти к корню, не сводя глаз с тени','Подойти к корню',{danger,reward:{herbs,relics:key==='trail'?0:1},riskCue:text,en:{label:'Approach the root, watching the shadow',riskCue:enText}}),
     choice('retreat','Вернуться по своим следам','Вернуться по своим следам',{skip:true,en:{label:'Return along your own tracks'}})
   ]});
+  for(const[k,list]of Object.entries(S.build()))encounters[k].push(...list);
   for(const[k,list]of Object.entries(G.build()))encounters[k].push(...list);
   if(C)for(const[k,list]of Object.entries(C.build()))encounters[k].push(...list);
   for(const[k,list]of Object.entries(encounters))for(const[e,scene]of list.entries())scene.id??=`${k}:${e}`;
@@ -173,7 +175,7 @@
     for(const[id,f]of Object.entries(frontiers))if(s.world.location===f.base||s.world.visits[f.base]>0)nodes.push({id,kind:'frontier',name:language==='en'?f.en:f.name,x:f.x,y:f.y,visited:s.world.map.explored.includes(id),locked:!f.ready(s),reason:f.ready(s)?'':language==='en'?f.reasonEn:f.reason,detail:language==='en'?'A deeper route. Approach here from the nearby location.':'Путь вглубь. Подойти можно из ближайшей локации.',base:f.base});
     for(const[id,index]of s.world.map.sites.entries()){const base=index.split(':')[0],scene=encounters[base]?.find(e=>e.id===(s.world.director.pending[index]?index+':return':index));if(!scene||!known.includes(base))continue;nodes.push({id:`site:${index}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:coords[base][0]+(id%3-1)*.6,y:coords[base][1]+1+Math.floor(id/3)*.55,visited:true,locked:!eligible(s,scene),reason:eligible(s,scene)?'':language==='en'?'This meeting has been resolved.':'Эта встреча уже завершена.',detail:sceneText(scene,'text',language,s)});}
     for(const lead of causalLeads(s,language))if(known.includes(lead.location))nodes.push({id:`lead:${lead.id}`,kind:'site',base:lead.location,name:lead.title,x:0,y:0,visited:true,locked:false,pending:true,detail:language==='en'?'Your previous deed has a continuation here. Return to this area to seek the encounter.':'У прежнего поступка есть продолжение. Вернись в эту область и ищи встречу.'});
-    for(const[base,list]of Object.entries(encounters))if(known.includes(base))for(const scene of list)if(scene.causal&&(s.atlas?.notes[`lead:${scene.id}`]||s.atlas?.pins.includes(`lead:${scene.id}`))&&!nodes.some(n=>n.id===`lead:${scene.id}`))nodes.push({id:`lead:${scene.id}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:0,y:0,visited:true,locked:true,detail:language==='en'?'A resolved encounter kept with your note or bookmark.':'Завершённая встреча, сохранённая вместе с заметкой или отметкой.'});
+    for(const[base,list]of Object.entries(encounters))if(known.includes(base))for(const scene of list)if((scene.causal||scene.school)&&(s.atlas?.notes[`lead:${scene.id}`]||s.atlas?.pins.includes(`lead:${scene.id}`))&&!nodes.some(n=>n.id===`lead:${scene.id}`))nodes.push({id:`lead:${scene.id}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:0,y:0,visited:true,locked:true,detail:language==='en'?'A resolved encounter kept with your note or bookmark.':'Завершённая встреча, сохранённая вместе с заметкой или отметкой.'});
     for(const node of nodes)if(node.kind==='site')node.pending||=!!s.world.director.pending[node.id.slice(5)];
     for(const node of nodes)if(node.kind==='location')node.pending=nodes.filter(n=>n.base===node.id&&n.pending).length;
     const ordinary=nodes.filter(n=>n.kind!=='site');
@@ -277,6 +279,6 @@
     if(input.encounter!==null){const e=input.encounter;if(!e||e.location!==w.location||!Number.isInteger(e.index)||w.journey)throw Error('Неверная встреча');const index=e.id===undefined?e.index:encounters[e.location]?.findIndex(scene=>scene.id===e.id);if(index===undefined||index<0||!encounters[e.location]?.[index])throw Error('Неверная встреча');w.encounter={location:e.location,index,...(e.id===undefined?{}:{id:e.id})};}
     w.people=M?.validate(input.people,{stage,world:w})||{};return w;
   }
-  const causalLeads=(s,language='ru')=>Object.entries(encounters).flatMap(([location,list])=>list.filter(scene=>scene.causal&&eligible(s,scene)).map(scene=>({id:scene.id,location,title:sceneText(scene,'title',language,s)})));
+  const causalLeads=(s,language='ru')=>Object.entries(encounters).flatMap(([location,list])=>list.filter(scene=>(scene.causal||scene.school)&&eligible(s,scene)).map(scene=>({id:scene.id,location,title:sceneText(scene,'title',language,s)})));
   const api={travelTime,causalLeads,memory:M,eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,developmentPaths,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

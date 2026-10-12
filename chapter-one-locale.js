@@ -1,6 +1,8 @@
 (function(root){
   if(root.IsekaiCausalEvents)root.IsekaiLocale.add(root.IsekaiCausalEvents.pairs);
+  if(root.Isekai?.sects)root.IsekaiLocale.add(root.Isekai.sects.pairs);
   root.IsekaiLocale.add([
+    ['Железные сухожилия','Iron Sinews'],['Закрытая библиотека Каменного Оплота','Stone Bastion restricted library'],['Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.','Body growth +8% and combat power +4% per rank. Movement practice.'],
     ['Выполняет принятый заказ на месте: накладные сразу, физическую работу после освоения. На время работы медитация останавливается.','Performs the accepted contract locally: ledgers immediately, physical work after mastery. Meditation stops during work.'],
     ['Распорядок Жэня: упражнения без постоянных кликов. Только в деревне или городе; занимает всё внимание и не даёт духовную энергию.','Ren’s routine: exercises without repeated clicks. Village or city only; occupies your attention and generates no qi.'],
     ['После изучения приёма: практика выбранной техники и рост освоения. Можно заниматься до открытия наследия. Медитация на это время останавливается.','After learning a method, practise your active technique and improve mastery. Practice is available before discovering the legacy. Meditation pauses during practice.'],

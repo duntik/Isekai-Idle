@@ -89,9 +89,11 @@
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));
       if(s.stage===1)for(const[k,a]of Object.entries(W.admissions))row(a.name,w.admission===k?'Выбран':'Не выбран',k==='gates'?'Общий набор в городе':w.admissionRoutes.includes(k)?'Поручительство получено; подай заявку в городе':'Найди встречу в лесу или храме',btn('apply-sect',k,'Оформить',W.canApply(s,k)));
       if(s.stage>=2&&w.admission)row('Твоя секта',W.admissions[w.admission].name,'Сохранено в личном деле');
+      if(s.stage===1||s.stage>=2&&w.admission)for(const k of s.stage===1?Object.keys(E.sects.schools):[w.admission]){const lang=root.IsekaiLocale?.language||'ru',a=E.sects.info(s,k,lang);row(a.name,a.role,a.teacher+' · '+a.perk+' '+a.rule+' '+E.sects.progress(s,k,lang));}
       row('Возвращения после гибели',w.deaths,'После гибели теряется 50% переносимых ресурсов; прокачка, знания, сюжет и владения сохраняются');
     }
     if(tab==='sect') {
+      if(s.world.admission){const lang=root.IsekaiLocale?.language||'ru',a=E.sects.info(s,s.world.admission,lang);row(a.name,a.role,a.rule+' '+a.perk+' '+E.sects.progress(s,s.world.admission,lang));}
       const c={reputation:20*(s.study+1),gold:100*(s.study+1)};
       row('Библиотека',`${s.study}/10`,cost(c),btn('study','','Изучить',s.study<10&&E.affordable(s,c)));
       if(s.stage>=3) {
