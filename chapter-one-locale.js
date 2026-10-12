@@ -1,4 +1,5 @@
 (function(root){
+  if(root.IsekaiCausalEvents)root.IsekaiLocale.add(root.IsekaiCausalEvents.pairs);
   root.IsekaiLocale.add([
     ['После изучения приёма: практика выбранной техники и рост освоения. Можно заниматься до открытия наследия. Медитация на это время останавливается.','After learning a method, practise your active technique and improve mastery. Practice is available before discovering the legacy. Meditation pauses during practice.'],
     ['Неверное восстановление техники','Invalid technique recovery'],

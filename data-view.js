@@ -61,6 +61,10 @@
       row('Результат',s.wins,`Монеты +${f(30*1.8**s.wins)}; травы +${(s.wins+1)*10}; осколки +1`);
     }
     if(tab==='world') {
+      const memoryScene=E.world.current(s),context=memoryScene&&E.world.memory?.context(s,memoryScene,root.IsekaiLocale?.language||'ru');
+      if(context)row(uiText('Вы уже знакомы','You have met before'),'—',context);
+      for(const q of E.world.causalLeads(s,root.IsekaiLocale?.language||'ru'))row(uiText('Нить истории','Story thread'),q.title,`${E.world.locations[q.location].name}. ${uiText('Возможное продолжение после прошлых поступков; ищи встречи на месте.','A possible continuation of your past deeds; seek encounters here.')}`);
+      for(const p of E.world.memory?.people(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,p.status,`${p.role}; ${E.world.locations[p.location]?.name||p.location}; ${(p.memories||[]).join(' ')}`);
       const W=E.world,w=s.world,scene=W.current(s);
       row('Текущее место',W.locations[w.location].name,E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
       row('Переход',w.journey?`${W.locations[w.journey.destination].name}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна встреча');

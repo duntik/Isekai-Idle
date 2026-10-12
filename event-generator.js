@@ -23,13 +23,24 @@
   const pairs=Object.values(labels);
   const techniqueNames={stance:['Корни камня','Roots of Stone'],herb:['Слух зелёных жил','Listening to Green Veins'],breath:['Дыхание тихой реки','Quiet River Breathing'],sky:['Сутра Пустого Неба','Empty Sky Sutra'],sword:['Меч облачного перевала','Cloud Pass Sword']};
   const outcomes={help:['Твоя работа позволила бригаде продолжить без потерь.','Your work allowed the crew to continue without losses.'],study:['Показанный тобой приём помог исправить порядок работы и избежать повторения ошибки.','The method you demonstrated helped improve the work and prevent another mistake.'],trade:['На переданные припасы купили инструменты и наняли сопровождающих.','Your supplies paid for tools and escorts.'],combat:['После твоей победы вымогатели ушли, и бригада смогла вернуться к работе.','After your victory the extortionists left, allowing the crew to resume work.']};
+  function continuity(s,location,actorIndex,en){
+    if(!s?.world)return '';
+    const re=new RegExp(`^${location}:generated:[0-2]:${actorIndex}:`);
+    const completed=Object.keys(s.world.director.decisions).some(k=>re.test(k)&&/:return\/(claim|lesson)$/.test(k));
+    if(completed)return en?' You have already completed work together. They know your methods, but this new task still needs a decision.':' Вы уже довели совместную работу до результата. Твои приёмы знакомы этому человеку, но новое поручение требует отдельного решения.';
+    const declined=Object.keys(s.world.director.decisions).some(k=>re.test(k)&&/\/skip$/.test(k));
+    return declined?(en?' You declined an earlier offer. They are willing to discuss a different task; you owe them nothing.':' Раньше ты отказался от предложения. Этот человек готов обсудить другое дело; ты ничего ему не должен.'):'';
+  }
   function build(){
     const result=Object.fromEntries(Object.keys(places).map(k=>[k,[]]));
     for(const[location,p]of Object.entries(places))for(const[phaseIndex,phase]of phases.entries())for(const[actorIndex,actor]of p.actors.entries())for(const[taskIndex,task]of p.tasks.entries())for(const obstacle of obstacles){
       const id=`${location}:generated:${phaseIndex}:${actorIndex}:${taskIndex}:${obstacle.id}`;
       const person=`${actor[0]} ${names[actorIndex][0]}`,personEn=`${actor[1]} ${names[actorIndex][1]}`;
       const title=`${person}: ${task[0]}`,titleEn=`${personEn}: ${task[1]}`;
-      const eligible=s=>s.stage>=phase.min&&s.stage<=phase.max&&(phase.min!==2||!!s.world.admission);
+      // One unfinished commission per person: a meeting cannot invent a second
+      // unpaid job while that same person's previous result awaits collection.
+      const actorPattern=new RegExp(`^${location}:generated:[0-2]:${actorIndex}:`);
+      const eligible=s=>s.stage>=phase.min&&s.stage<=phase.max&&(phase.min!==2||!!s.world.admission)&&!Object.keys(s.world.director.pending).some(k=>actorPattern.test(k));
       const solved=s=>!!s.world.director.pending[id]&&['labor','study','supply','fight'].some(k=>s.world.director.decisions[`${id}/${k}`]);
       const choice=(key,options={})=>({id:key,label:labels[key][0],en:{label:labels[key][1]},...options});
       // Early crews need affordable supplies, but their thanks reflect the actual task.
@@ -55,6 +66,10 @@
       choices.push(choice('skip',{skip:true}));
       result[location].push({id,generated:true,once:true,title,en:{title:titleEn,text:`${personEn} asks you to ${task[1]}. ${phase.en} ${obstacle.en} You may help with labour, knowledge or supplies${obstacle.id==='raiders'?', or challenge the extortionists':''}. After a successful choice, find this person here again to learn the outcome.`},text:`${person} просит ${task[0]}. ${phase.ru} ${obstacle.ru} Можно помочь трудом, знаниями или припасами${obstacle.id==='raiders'?', а можно бросить вызов вымогателям':''}. После успешного выбора найди этого человека здесь снова, чтобы узнать результат.`,requires:eligible,choices});
       result[location].push({id:`${id}:return`,generated:true,payoff:true,once:true,title:`${person}: работа завершена`,text:s=>`${person} узнаёт тебя. ${outcomes[s?.world.director.pending[id]?.route||'help'][0]} Удалось ${task[0]}. За этот поступок ты получаешь награду и признание в той главе, где помог бригаде. Вместо припасов можно попросить время для совместной практики уже известного приёма. Он не заменяет личную культивацию.`,en:{title:`${personEn}: work completed`,text:s=>`${personEn} recognises you. ${outcomes[s?.world.director.pending[id]?.route||'help'][1]} Your help made it possible to ${task[1]}. You receive a reward and recognition in the chapter where you helped the crew. Instead of supplies, you may ask for time to practise a method you already know together. This does not replace personal cultivation.`},requires:s=>s.stage>=phase.min&&solved(s),choices:[choice('claim',{reward:{[rewardResource]:rewardAmount,...(phase.min>=2?{reputation:phase.reward/2}:{})},...(exploration?{explore:exploration}:{}),recognition:id}),choice('lesson',{requires:s=>!!s.cultivation.learned[p.technique],requirement:`Техника: ${techniqueNames[p.technique][0]}`,en:{label:labels.lesson[1],requirement:`Technique: ${techniqueNames[p.technique][1]}`},practice:{technique:p.technique,amount:60*(phaseIndex+1)},calm:2,recognition:id})]});
+    }
+    for(const[location,list]of Object.entries(result))for(const scene of list){
+      const actorIndex=+scene.id.split(':')[3];scene.person=`local:${location}:${actorIndex}`;
+      if(!scene.payoff){const ru=scene.text,en=scene.en.text;scene.text=s=>ru+continuity(s,location,actorIndex,false);scene.en.text=s=>en+continuity(s,location,actorIndex,true);}
     }
     return result;
   }

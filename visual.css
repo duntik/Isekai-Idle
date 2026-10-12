@@ -93,3 +93,6 @@ html:not([data-interface="data"]) footer{border-color:#8d986f26;color:#8aa49d;le
 html:not([data-interface="data"]) .development-paths,html:not([data-interface="data"]) .technique-actions{margin:22px 0;padding:20px;border:1px solid #aec89333;border-radius:14px;background:linear-gradient(120deg,#24433966,#13282d88)}
 html:not([data-interface="data"]) .path-next{display:block;margin-top:12px;padding-top:10px;border-top:1px solid #aec89322;color:#d4dfbf;font-size:12px}
 html:not([data-interface="data"]) .technique-actions .card{border-color:#c9af6b55}
+html:not([data-interface="data"]) .people-panel{margin-top:24px;padding:22px;border:1px solid #b9a87b44;border-radius:14px;background:#192c2bcc}
+html:not([data-interface="data"]) .encounter-memory{margin:14px 0;padding:14px 18px;border-left:3px solid #b8c993;background:#253b3155;border-radius:0 10px 10px 0}
+html:not([data-interface="data"]) .encounter-memory p{margin:7px 0;color:#c4d4bc;line-height:1.6}

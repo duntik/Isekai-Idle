@@ -338,6 +338,7 @@
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
       if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
       for(const [k,v] of Object.entries(beat.reward))s.resources[k]+=v;
+      W.memory?.recordStory(s,s.storyStep);
       log(s,`История: ${beat.title}.`);s.storyStep++;
     } else if (type === 'activity' && canActivity(s,value)) s.activity = value;
     else if (type === 'style' && s.stage >= 1 && ['balanced', 'swift', 'piercing', 'ward'].includes(value)) s.style = value;
@@ -444,6 +445,7 @@
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay,place:'village'};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
     base.world=W.validate(input.world,input.stage);
+    if(input.world?.people===undefined&&W.memory)base.world.people=W.memory.validate(undefined,input);
     if(input.playerName!==undefined&&input.playerName!==null){const name=N.normalize(input.playerName);if(!name)throw Error('Неверное имя героя');base.playerName=name;}
     if(input.chapterOneRoute!==undefined&&input.chapterOneRoute!==null){if(!Object.hasOwn(firstRoutes,input.chapterOneRoute))throw Error('Неверный путь первой главы');base.chapterOneRoute=input.chapterOneRoute;}
     if(input.chapterOneTraining!==undefined&&input.chapterOneTraining!==null){if(!['body','technique'].includes(input.chapterOneTraining))throw Error('Неверная подготовка героя');base.chapterOneTraining=input.chapterOneTraining;}
