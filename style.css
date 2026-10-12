@@ -17,3 +17,33 @@ html[data-interface="data"]{color-scheme:light;--bg:#fff;--panel:#fff;--line:#d4
 .identity-panel{max-width:760px;margin:48px auto;padding:32px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.identity-panel[hidden]{display:none}.identity-panel h1{font-size:40px;margin:14px 0}.identity-panel>p{color:var(--muted);line-height:1.8}.identity-panel form{margin:24px 0}.identity-panel label{display:block;margin-bottom:8px}.identity-panel input{width:100%;padding:12px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:5px;font:18px system-ui}.identity-panel small{display:block;margin-top:8px;color:var(--muted);font-size:12px}.identity-panel .view-switch{flex-wrap:wrap}.name-suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}.name-suggestions button{text-align:left;padding:12px;overflow-wrap:anywhere}#identity-error{color:var(--gold);min-height:20px}#player-name{max-width:230px;overflow-wrap:anywhere}html[data-naming="required"] main>:not(#identity-panel){display:none}html[data-interface="data"] .identity-panel{margin:24px auto;padding:20px;border-radius:0;background:#fff}html[data-interface="data"] .identity-panel h1{font:600 22px Arial}html[data-interface="data"] .identity-panel input{color:#222;background:#fff;font:14px Arial}@media(max-width:650px){.identity-panel{margin:20px auto;padding:20px}.identity-panel h1{font-size:30px}.name-suggestions{grid-template-columns:1fr}}
 .header-meta{gap:12px;flex-wrap:wrap;font-size:12px}.header-meta .view-switch{flex-shrink:0}@media(max-width:850px){header{height:auto;min-height:88px;padding-top:12px;padding-bottom:12px}.header-meta{justify-content:flex-end}.brand{white-space:nowrap}}@media(max-width:650px){.header-meta{font-size:12px;width:100%;justify-content:flex-start}.header-meta button{font-size:11px}.view-switch button{padding:5px 8px}}
 .story-panel{margin:0 0 26px;padding:26px;border:1px solid #73674b;border-left:3px solid var(--gold);border-radius:8px;background:linear-gradient(135deg,#2e3c36,#18272e)}.story-panel h2{margin:16px 0}.story-panel>p{font-size:13px;line-height:1.9;color:#d1dbcf}.story-goal{padding:14px 16px;margin:20px 0;background:#101b2155;border-radius:5px}.story-goal strong{font-size:11px;color:var(--gold)}.story-goal p{font-size:12px;margin:6px 0}.story-goal small{font-size:10px;color:var(--gold)}.story-panel details{margin-top:16px;color:var(--muted);font-size:12px}.story-panel details p{line-height:1.8}.story-panel summary{cursor:pointer}.clicker-panel{margin:24px 0 30px;padding:18px;border:1px solid var(--line);border-radius:8px;background:#10212a55}.clicker-panel .card{padding:14px}.clicker-panel .card h3{margin-top:0}.clicker-panel .card p{margin-bottom:12px}.clicker-panel h3{margin:4px 0 12px}.clicker-panel progress{accent-color:var(--green)}@media(max-width:650px){.story-panel{padding:18px}.clicker-panel{padding:12px}}
+/* Keep the current goal and daily actions within reach. */
+html:not([data-interface="data"]) .hero{min-height:0;padding:28px 0 24px;gap:24px}
+html:not([data-interface="data"]) .hero h1{font-size:34px;margin:12px 0}
+html:not([data-interface="data"]) .hero p{margin:8px 0;max-width:650px;font-size:12px}
+html:not([data-interface="data"]) .hero-tags{margin-top:12px}
+html:not([data-interface="data"]) .portal{width:230px;height:180px;flex-shrink:0}
+html:not([data-interface="data"]) .portal-inner{width:100px;height:145px;font-size:60px}
+html:not([data-interface="data"]) .portal:before{width:165px;height:165px}
+html:not([data-interface="data"]) .portal:after{width:200px;height:140px}
+html:not([data-interface="data"]) .resources{margin-bottom:20px;gap:10px}
+html:not([data-interface="data"]) .resource{padding:12px 14px}
+html:not([data-interface="data"]) .resource .value{font-size:22px;margin:5px 0}
+html:not([data-interface="data"]) .layout{grid-template-columns:165px minmax(0,1fr) 210px;gap:22px;padding-top:20px}
+#content{min-width:0}
+.story-panel{padding:20px;margin-bottom:20px}
+.story-panel h2{margin:10px 0;font-size:23px}
+.story-panel>p{line-height:1.65;margin:10px 0}
+.story-goal{margin:14px 0;padding:12px}
+.story-panel>button{margin:0 6px 8px 0}
+.clicker-panel{margin:20px 0;padding:16px}
+.card h3{line-height:1.5}
+.card p{font-size:12px;line-height:1.65}
+.card button{font-size:12px;min-height:38px}
+summary{cursor:pointer;padding:8px 0;line-height:1.6}
+summary:focus-visible,.table-scroll:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+html[data-interface="data"] .data-table td:last-child{white-space:normal;min-width:130px}
+html[data-interface="data"] .data-table td:last-child button{white-space:normal;max-width:240px;margin:2px 3px 2px 0;line-height:1.4}
+@media(max-width:1200px){html:not([data-interface="data"]) .layout{grid-template-columns:150px minmax(0,1fr)}html:not([data-interface="data"]) .journal{grid-column:2;border-left:0;padding-left:0}}
+@media(max-width:750px){html:not([data-interface="data"]) .hero h1{font-size:29px}html:not([data-interface="data"]) .portal{display:none}html:not([data-interface="data"]) .layout{display:block}html:not([data-interface="data"]) #navigation{display:flex;gap:6px;flex-wrap:wrap;width:100%}html:not([data-interface="data"]) .tab{width:auto;margin:0;padding:10px 12px}html:not([data-interface="data"]) .aside-note{display:none}html:not([data-interface="data"]) .layout>aside:first-child{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}html:not([data-interface="data"]) .journal{margin-top:28px}html:not([data-interface="data"]) .layout>aside:first-child>.eyebrow{width:100%}}
+@media(max-width:600px){.cards{grid-template-columns:minmax(0,1fr)}html:not([data-interface="data"]) .hero{padding:22px 0 18px}.story-panel{padding:16px}.story-panel h2{font-size:21px}.card{padding:16px}.card p{font-size:13px}.clicker-panel{padding:12px}button,.card button{min-height:44px}html[data-interface="data"] button{min-height:36px}html[data-interface="data"] .data-table{font-size:12px}html[data-interface="data"] .data-table td:nth-child(2){white-space:normal;min-width:85px}html[data-interface="data"] .data-table td:nth-child(3){min-width:170px}html[data-interface="data"] .resources .data-table td{min-width:0}.hero-tags{line-height:1.7}}

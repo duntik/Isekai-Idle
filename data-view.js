@@ -10,21 +10,21 @@
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
     const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))&&(action!=='fight'||E.canFight(s))?'':'disabled'}>${label}</button>`;
     const rows=[];
-    const row=(name,value,note,operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
+    const row=(name,value,note='',operation='—')=>rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}</td><td>${operation}</td></tr>`);
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
-      if(!E.activityRunning(s))row('Занятие','Приостановлено: смени место или занятие.');
-      row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
-      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
-      row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
-      row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
-      row('Освоение техники',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Скорость развития: ${f(E.speed(s))}`);
-      row('Древнее наследие',s.found?'Найдено':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 сек исследования до находки');
       if(s.stage===0) {
         const beat=E.storyBeat(s);
         if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):btn('story','',beat.button,beat.ready(s)));
         else row('Сюжет','Завершён','Доступна следующая глава');
       }
+      row('Текущее место',E.world.locations[s.world.location].name,activityLabels[s.activity]);
+      row('Занятие',activityLabels[s.activity],E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
+      row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
+      row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
+      row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,'Лимит зависит от уровня');
+      row('Освоение техники',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Скорость развития: ${f(E.speed(s))}`);
+      row('Древнее наследие',s.found?'Найдено':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 сек исследования до находки');
       {
         row('Выносливость',`${f(s.stamina)}/100`,'Восстановление +0,4/сек; интервал 0,6 сек');
         row('Спокойствие',`${f(s.calm)}/100`,'Растёт от медитации');
@@ -36,12 +36,13 @@
         const c={gold:Math.ceil(40*1.8**s.weapon),...(s.stage>=3?{ore:Math.ceil(10*1.4**s.weapon)}:{})};
         row('Оружие',s.weapon,cost(c),btn('weapon','','Обновить',s.weapon<(s.realm+1)*2&&E.affordable(s,c)));
       }
-      if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
       row('Выполненные заказы',s.employment.completed,'Расценки +10% за каждые 5; до +100%; город +25%');
       row('Приём заявок',['village','city'].includes(s.world.location)&&!s.world.journey?'Доступен':'Недоступен','В деревне и городе; уборка и разгрузка приостанавливаются в пути');
       const order=s.employment.order;
       if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',order.progress>=E.orders[order.kind].target));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
       for(const[k,o]of Object.entries(E.orders))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
+      for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
+      if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
     }
     if(tab==='combat') {
       if(s.stage===0)row('Первый бой','Деревня','После прорыва и перед финалом первой арки. Можно завершить арку без боя.');
@@ -52,16 +53,16 @@
     }
     if(tab==='world') {
       const W=E.world,w=s.world,scene=W.current(s);
-      row('Текущее место',W.locations[w.location].name,'Занятие продолжается в пути');
-      row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
-      row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
+      row('Текущее место',W.locations[w.location].name,E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
       row('Переход',w.journey?`${W.locations[w.journey.destination].name}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна встреча');
+      if(scene)row('Встреча',W.sceneText(scene,'title',root.IsekaiLocale?.language),W.sceneText(scene,'text',root.IsekaiLocale?.language,s));
+      if(scene)for(const c of scene.choices)row(W.sceneText(c,'label',root.IsekaiLocale?.language),c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${W.sceneText(c,'requirement',root.IsekaiLocale?.language)} ${c.danger&&E.power(s)<c.danger?'Гибель: потеря 50% ресурсов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.practice?`+${c.practice.amount} практики. `:''}${c.recognition?'Признание +1. ':''}${c.mentor?'Урок наставника. ':''}${c.explore?`Исследование +${c.explore} сек. `:''}${c.restore?'Восстановление выносливости. ':''}${c.body?`Тело +${c.body}. `:''}${c.calm?`Спокойствие +${c.calm}. `:''}${c.mastery?`Освоение техники +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',W.canChoice(s,c,E)));
+      row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
+      for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
       const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
       for(const[k,p]of Object.entries(W.locations).filter(([,p])=>p.stage<=s.stage))row(p.name,`${p.time} сек`,bonuses[k],btn('travel',k,'Перейти',W.canTravel(s,k)));
-      row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
-      if(scene)row('Встреча',W.sceneText(scene,'title',root.IsekaiLocale?.language),W.sceneText(scene,'text',root.IsekaiLocale?.language,s));
-      for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
-      if(scene)for(const c of scene.choices)row(W.sceneText(c,'label',root.IsekaiLocale?.language),c.danger?`Порог ${c.danger}; показатель ${E.power(s)}`:'Без риска',`${W.sceneText(c,'requirement',root.IsekaiLocale?.language)} ${c.danger&&E.power(s)<c.danger?'Гибель: потеря 50% ресурсов. ':''}${c.cost?`Расход: ${cost(c.cost)}. `:''}${c.reward?`Результат: ${cost(c.reward)}. `:''}${c.practice?`+${c.practice.amount} практики. `:''}${c.recognition?'Признание +1. ':''}${c.mentor?'Урок наставника. ':''}${c.explore?`Исследование +${c.explore} сек. `:''}${c.restore?'Восстановление выносливости. ':''}${c.body?`Тело +${c.body}. `:''}${c.calm?`Спокойствие +${c.calm}. `:''}${c.mastery?`Освоение техники +${c.mastery}. `:''}`,btn('choice',c.id,c.danger?'Выполнить с риском':'Выбрать',W.canChoice(s,c,E)));
+      row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
+      row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));
       if(s.stage===1)for(const[k,a]of Object.entries(W.admissions))row(a.name,w.admission===k?'Выбран':'Не выбран',k==='gates'?'Общий набор в городе':w.admissionRoutes.includes(k)?'Поручительство получено; подай заявку в городе':'Найди встречу в лесу или храме',btn('apply-sect',k,'Оформить',W.canApply(s,k)));
       if(s.stage>=2&&w.admission)row('Твоя секта',W.admissions[w.admission].name,'Сохранено в личном деле');
@@ -92,7 +93,7 @@
     if(tab==='legacy') {row('Цикл',s.life,`Бонус душ +${s.souls*10}%`);row('Перерождение',`+${Math.max(1,Math.floor(s.realm/6))}`,'Требуется ступень 24; ресурсы и владения сбросятся',btn('rebirth','','Переродиться',s.realm>=24));}
     if(tab==='roadmap') for(let i=0;i<=Math.min(7,s.stage+1);i++) row(E.stages[i].name,i<s.stage?'Завершён':i===s.stage?'Активен':'Ожидание',['Древнее наследие','Техники и испытания','Жизнь ученика','Управление сектой','Управление городом','Мировые порталы','Звёздные колонии','Наследие души'][i]);
     if(tab==='roadmap'&&s.stage>0&&s.stage<7){row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${E.stages[s.stage].realm}; победы ${s.wins}/${E.stages[s.stage].wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}; ${cost(E.stages[s.stage].cost)}`,btn('advance','','Перейти',E.canAdvance(s)));for(const[k,n]of Object.entries(s.world.director.paths[s.stage]||{}))row(E.world.pathNames[k],n);}
-    return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · Активно: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div class="table-scroll"><table class="data-table"><caption>Показатели и действия</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th><th scope="col">Условия</th><th scope="col">Действие</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · ${E.activityRunning(s)?'Активно':'Приостановлено'}: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div class="table-scroll" tabindex="0" role="region" aria-label="Показатели и действия"><table class="data-table"><caption>Показатели и действия</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th><th scope="col">Условия</th><th scope="col">Действие</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   }
   root.IsekaiDataView={labels,tabs,render};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.IsekaiDataView;

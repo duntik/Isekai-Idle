@@ -30,11 +30,27 @@ for (let stage = 0; stage < 8; stage++) {
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
   let stored = JSON.stringify(state);
   let preference = view;
-  const context = { Isekai:E, IsekaiDataView:D, IsekaiQuotes:Q, IsekaiNames:require('./names.js'), document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(){}, confirm:()=>true };
+  let intervalRender;
+  const context = { Isekai:E, IsekaiDataView:D, IsekaiQuotes:Q, IsekaiNames:require('./names.js'), document:{documentElement:{dataset:{}},querySelectorAll:()=>[], getElementById:element, addEventListener:(t,f)=>handlers[t]=f, createElement:()=>({append(){},click(){}}), createTextNode:t=>t }, localStorage:{getItem:k=>k==='isekai-idle-interface'?preference:stored,setItem:(k,v)=>{if(k==='isekai-idle-interface') preference=v;else stored=v;}}, window:{addEventListener(){}}, Date, Blob, URL, setTimeout:()=>0, clearTimeout(){}, setInterval(fn,delay){if(delay===1000)intervalRender=fn;}, confirm:()=>true };
   vm.runInNewContext(fs.readFileSync('game.js','utf8'), context);
+  if(view==='visual'&&stage===0){
+    const content=element('content'),oldDetail={open:true},newDetail={open:false};
+    let restoredSummary=false,restoredButton=false,detailReads=0,summaryReads=0;
+    const oldSummary={},newSummary={focus(options){restoredSummary=options.preventScroll;}};
+    content.querySelectorAll=selector=>selector==='details'?[detailReads++%2===0?oldDetail:newDetail]:selector==='details summary'?[summaryReads++%2===0?oldSummary:newSummary]:[];
+    context.document.activeElement=oldSummary;
+    intervalRender();assert.equal(newDetail.open,true);assert.equal(restoredSummary,true);
+    const oldButton={dataset:{action:'click',value:'squat'}},newButton={dataset:{action:'click',value:'squat'},focus(options){restoredButton=options.preventScroll;}};
+    content.contains=node=>node===oldButton;
+    content.querySelectorAll=selector=>selector==='button'?[newButton]:[];
+    context.document.activeElement=oldButton;
+    intervalRender();assert.equal(restoredButton,true);
+    content.querySelectorAll=()=>[];content.contains=()=>false;context.document.activeElement=null;
+  }
   assert(element('navigation').innerHTML.includes('data-tab="world"'));
   assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent));
-  assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':E.stages[stage].name));
+  assert(element('chapter').textContent.includes(E.stages[stage].name.toUpperCase()));
+  assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':'data-action="breakthrough"'));
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');
   const tabs = ['hero','combat','world','roadmap',...(stage>=2?['sect']:[]),...(stage>=4?['city']:[]),...(stage>=5?['planet']:[]),...(stage>=6?['galaxy']:[]),...(stage>=7?['legacy']:[])];
