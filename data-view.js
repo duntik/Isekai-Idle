@@ -70,6 +70,10 @@
       for(const p of E.world.memory?.people(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,p.status,`${p.role}; ${E.world.locations[p.location]?.name||p.location}; ${(p.memories||[]).join(' ')}`);
       const W=E.world,w=s.world,scene=W.current(s);
       row(uiText('Осмотр окрестностей','Survey surroundings'),s.atlas.surveys[w.location]||0,E.atlas.hint(s,root.IsekaiLocale?.language||'ru'),btn('atlas-survey','',uiText('Осмотреть','Survey'),E.atlas.canSurvey(s)));
+      if(w.location==='forest'){
+        row(uiText('Лесная тропа','Forest trail'),'15',uiText('Птицы ещё поют; у ручья свежие следы. Можно отступить после осмотра. Отдых 5 минут.','Birds still sing; fresh tracks by the stream. You can retreat after inspecting. Recovery 5 minutes.'),btn('forest-search','trail',uiText('Осторожно пройти','Walk cautiously'),E.atlas.canSurvey(s)));
+        row(uiText('Лесная чаща','Forest thicket'),'15',uiText('Сломанные ветви, затихшие птицы. Редкие корни и их обитатели. Можно отступить. Отдых 5 минут.','Broken branches, silent birds. Rare roots and their inhabitants. You can retreat. Recovery 5 minutes.'),btn('forest-search','deep',uiText('Пойти за следами','Follow the tracks'),E.atlas.canSurvey(s)));
+      }
       row('Текущее место',W.locations[w.location].name,E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.');
       row('Переход',w.journey?`${W.locations[w.journey.destination].name}; ${Math.ceil(w.journey.remaining)} сек`:'Отсутствует','При прибытии доступна встреча');
       if(scene)row('Встреча',W.sceneText(scene,'title',root.IsekaiLocale?.language),W.sceneText(scene,'text',root.IsekaiLocale?.language,s));

@@ -94,6 +94,16 @@
   localScene('city','city:wei-margin','Заметка на полях','Вэй видит, что рукопись заинтересовала тебя. На полях нарисован знак заброшенного храма. Он предлагает сделать точную копию: не вскрывать печати, а сравнить линии. Это исследование можно совместить с работой или уроками других наставников.','A note in the margin','Wei sees your interest in the manuscript. A temple symbol is drawn in the margin. Make a careful copy, then compare its lines at the abandoned temple without opening seals. This research can be combined with work or other mentors’ lessons.',s=>s.stage<=1&&s.world.mentors.includes('scholar'),[localChoice('copy','Скопировать знак для сверки в храме','Copy the symbol to compare at the temple',{calm:2,reward:{herbs:3}}),localChoice('later','Сначала отдохнуть','Rest first',{restore:true,skip:true})]);
   localScene('ruins','ruins:wei-compare','Знак на внешней стене','Копия Вэя совпадает со знаком на внешней стене. Здесь нет стража: опасные печати глубже. Сопоставить линии можно с ясной головой — спокойствие 3. Исследование помогает понять устройство храма, но само наследие ещё предстоит найти.','The outer-wall symbol','Wei’s copy matches a symbol on the outer wall. No guardian stands here; the dangerous seals are deeper. Comparing the lines takes calm 3. The study helps you understand the temple, but the legacy must still be found.',s=>s.stage<=1&&chose(s,'city:wei-margin/copy'),[localChoice('compare','Сверить линии: спокойствие 3','Compare the lines: calm 3',{requires:s=>s.calm>=3,explore:90,calm:2,reward:{herbs:4}}),localChoice('later','Вернуться после отдыха','Return after resting',{skip:true})]);
   localScene('city','city:wei-return','Один знак — часть сети','Вэй сверяет твою копию с архивом. «Значит, храм был узлом, а не дворцом. Ты сделал полезное наблюдение». За работу он платит и предлагает материалы для дальнейшего обучения. Даже хороший исследователь может нуждаться в сильном теле или помощи травника.','One symbol in a network','Wei compares your copy with the archive. “So the temple was a node, not a palace. A useful observation.” He pays for your work and offers study materials. A good researcher may still need a strong body or a herbalist’s help.',s=>s.stage<=1&&chose(s,'ruins:wei-compare/compare'),[localChoice('study','Получить плату и материалы для обучения','Receive payment and study materials',{reward:{gold:15,herbs:6},calm:3}),localChoice('medicine','Получить плату и дорожные травы','Receive payment and travel herbs',{reward:{gold:15,herbs:10},calm:1})]);
+  const forestSearches=[
+    ['trail','Под пологом деревьев','Beneath the canopy','Птицы ещё перекликаются, но на влажной земле видны свежие следы. У ручья растёт полынь. Можно собрать её вдоль тропы или пройти за следами к корням.','Birds still call, but fresh tracks mark the damp soil. Wormwood grows by the stream. You can gather along the trail or follow the tracks towards the roots.',30,8],
+    ['deep','За сломанными ветвями','Beyond the broken branches','Свет опушки исчезает. Птицы замолкли; на коре свежие борозды, а у редкого корня шевелится тяжёлая тень. Обратная тропа пока хорошо видна.','The light of the edge fades. Birds have fallen silent; fresh gouges scar the bark and a heavy shadow moves beside a rare root. The way back is still clearly visible.',65,20],
+    ['deep-old','След у чёрного ручья','Tracks by the black stream','Под ногами хрустят кости. След шире твоей ладони; из-за камней слышно низкое дыхание. За ручьём блестит духовный корень. Ещё можно уйти, пока тебя не заметили.','Bones crack underfoot. A track is wider than your palm; low breathing comes from behind the rocks. A spirit root glints across the stream. You can still leave before being noticed.',110,30]
+  ];
+  for(const[key,title,enTitle,text,enText,danger,herbs]of forestSearches)encounters.forest.push({id:`forest:search-${key}`,exploration:true,remote:true,requires:s=>s.world.encounter?.id===`forest:search-${key}`,title,text,en:{title:enTitle,text:enText},choices:[
+    choice('gather','Собрать у обратной тропы','Собрать у обратной тропы',{reward:{herbs:3},calm:.2,en:{label:'Gather beside the return trail'}}),
+    choice('press','Подойти к корню, не сводя глаз с тени','Подойти к корню',{danger,reward:{herbs,relics:key==='trail'?0:1},riskCue:text,en:{label:'Approach the root, watching the shadow',riskCue:enText}}),
+    choice('retreat','Вернуться по своим следам','Вернуться по своим следам',{skip:true,en:{label:'Return along your own tracks'}})
+  ]});
   for(const[k,list]of Object.entries(G.build()))encounters[k].push(...list);
   if(C)for(const[k,list]of Object.entries(C.build()))encounters[k].push(...list);
   for(const[k,list]of Object.entries(encounters))for(const[e,scene]of list.entries())scene.id??=`${k}:${e}`;
@@ -193,7 +203,15 @@
   }
   function action(s,type,value,E){
     const w=s.world;
-    if(type==='apply-sect'){if(!canApply(s,value))return false;w.admission=value;E.log(s,`${admissions[value].name}: ${admissions[value].text} Поручительство принято. Для вступления заверши подготовку и оплати общий запас снаряжения, указанный в следующей главе.`);}
+    if(type==='forest-search'){
+      if(w.location!=='forest'||!E.atlas.canSurvey(s)||!['trail','deep'].includes(value))return false;
+      const key=value==='deep'?(w.seed%2?'deep':'deep-old'):'trail';
+      w.seed=(Math.imul(w.seed,1664525)+1013904223)>>>0;
+      s.stamina-=15;s.atlas.cooldown=300;E.interruptActivity(s);
+      const scene=encounters.forest.find(e=>e.id===`forest:search-${key}`);
+      w.encounter={location:'forest',index:encounters.forest.indexOf(scene),id:scene.id};
+    }
+    else if(type==='apply-sect'){if(!canApply(s,value))return false;w.admission=value;E.log(s,`${admissions[value].name}: ${admissions[value].text} Поручительство принято. Для вступления заверши подготовку и оплати общий запас снаряжения, указанный в следующей главе.`);}
     else if(type==='map-inspect'){
       const f=frontiers[value],id=value.startsWith('site:')?value.slice(5):value.startsWith('lead:')?value.slice(5):null,base=f?.base||id?.split(':')[0];
       if(w.journey||w.encounter)return false;
