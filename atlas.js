@@ -39,16 +39,163 @@
     if(s.world.director?.decisions?.['city:2/assist']||s.world.director?.decisions?.['city:huo-clinic/clinic-pill'])add('ho-workshop','city','Аптекарь Хо упомянул тихую мастерскую за торговым двором: там варят лекарства без лишних глаз.','Apothecary Huo mentioned a quiet workshop behind the trading yard: medicines are brewed there away from prying eyes.','Ho');
     return out;
   }
-  const details=(s,place,lang='ru')=>({danger:danger[place]?.[lang==='en'?1:0]||'',survey:s.atlas.surveys[place]||0,trail:trail(s,place),label:labels[place]?.[lang==='en'?1:0]||''});
+  const details=(s,place,lang='ru')=>{
+    const en=lang==='en',say=(ru,english)=>en?english:ru;
+    const visited=(s.world.visits[place]||0)>0||(s.world.location===place&&!s.world.journey&&(s.storyStep>0||s.stage>0));
+    const sCount=s.atlas.surveys[place]||0;
+    let dText=danger[place]?.[en?1:0]||'';
+    if(sCount===0){
+      if(!visited){
+        const rList=rumors(s,lang).filter(r=>r.place===place);
+        dText=rList.length?say(`По слухам: ${rList[0].text}`,`From rumours: ${rList[0].text}`):say('Опасности не разведаны.','Hazards are unmapped.');
+      }else{
+        dText=say('Окрестности ещё не проверены осмотром.','Surroundings have not been personally surveyed yet.');
+      }
+    }
+    return {danger:dText,survey:sCount,trail:trail(s,place),label:labels[place]?.[en?1:0]||''};
+  };
   function observe(s,place,reward){if(!journalPlaces.includes(place))return;const keys=resourceKeys.filter(k=>reward?.[k]>0);if(!keys.length)return;s.atlas.discoveries[place]=[...new Set([...(s.atlas.discoveries[place]||[]),...keys])].sort();}
   function migrate(s,E){for(const[place,scenes]of Object.entries(E.world.encounters))for(const scene of scenes)for(const c of scene.choices)if(s.world.director.decisions[`${scene.id}/${c.id}`])observe(s,place,c.reward);
     for(const place of places)if(s.atlas.surveys[place]>0)observe(s,place,place==='village'||place==='city'?{gold:1}:place==='forest'||place==='ruins'?{herbs:1}:{ore:1});}
+  function overview(s,E,place,lang='ru'){
+    const en=lang==='en',say=(ru,english)=>en?english:ru;
+    const visited=(s.world.visits[place]||0)>0||(s.world.location===place&&!s.world.journey&&(s.storyStep>0||s.stage>0));
+    const surveys=s.atlas?.surveys[place]||0;
+    const placeRumors=rumors(s,lang).filter(r=>r.place===place);
+    const people=E.world?.memory?E.world.memory.people(s,lang).filter(p=>p.location===place):[];
+    const bonuses={
+      village:['Тренировка тела +10%.','Body training +10%.'],
+      forest:['При исследовании травы +50%.','Exploration herbs +50%.'],
+      city:['Оплата принятых здесь заказов +25%.','New contracts accepted here pay +25%.'],
+      ruins:['Осколки за исследование +50%.','Exploration relic shards +50%.'],
+      mountains:['Понимание от медитации +20%.','Meditation insight +20%.']
+    };
+    const canonicalDesc=en&&E.world?.locations[place]?.en?.desc?E.world.locations[place].en.desc:E.world?.locations[place]?.desc||'';
+    const canonicalBonus=bonuses[place]?bonuses[place][en?1:0]:(en&&E.world?.locations[place]?.en?.bonus?E.world.locations[place].en.bonus:E.world?.locations[place]?.bonus||'');
+    const canonicalDanger=danger[place]?.[en?1:0]||'';
+
+    let tier=0,desc='',bonus='',dangerText='';
+    if(visited){
+      tier=surveys>=1?(surveys>=2&&people.length>0?4:3):2;
+    }else if(placeRumors.length>0||(place==='city'&&s.world?.contacts?.includes('scholar'))){
+      tier=1;
+    }
+
+    if(tier===0){
+      desc=say('Неизведанная область. Ты знаешь лишь название и ещё ничего не выяснил об этом месте.','Unexplored area. You only know the name and have learned nothing about this place yet.');
+      bonus=say('Особенности ещё не разведаны.','Local traits have not yet been surveyed.');
+      dangerText=say('Опасности не разведаны.','Hazards are unmapped.');
+    }else if(tier===1){
+      if(placeRumors.length){
+        desc=say(`По слухам (${placeRumors[0].source}): «${placeRumors[0].text}»`,`From rumours (${placeRumors[0].source}): “${placeRumors[0].text}”`);
+      }else if(place==='city'&&s.world?.contacts?.includes('scholar')){
+        desc=say('По письму Мэй: в городском архиве служит библиотекарь Вэй.','From Mei’s letter: scholar Wei serves in the city archive.');
+      }else{
+        desc=say('О месте ходят смутные слухи, но точных сведений пока нет.','Vague rumours surround this place, but no certain facts are known.');
+      }
+      bonus=say('Особенности известны лишь по слухам.','Local traits are known only through rumours.');
+      dangerText=place==='forest'
+        ?say('По слухам: в глубине леса путники видят звериные глаза.','From rumours: travellers see animal eyes deeper in the forest.')
+        :place==='ruins'
+        ?say('По слухам: под алтарём есть опасные печати.','From rumours: dangerous seals lie beneath the altar.')
+        :place==='city'
+        ?say('По слухам: стража у ворот проверяет чужаков.','From rumours: guards at the gate check strangers.')
+        :place==='mountains'
+        ?say('По слухам: страж охраняет проход на верхнюю тропу.','From rumours: a guardian protects the upper trail.')
+        :say('Опасности известны лишь по слухам.','Hazards are known only through rumours.');
+    }else if(tier===2){
+      const impressions={
+        village:['Деревня у колодца — тихое поселение у тракта. В центре колодец с чистой водой, у постоялого двора останавливаются обозы.','Wellside Village — a quiet roadside settlement. A stone well stands at the centre, and caravans halt by the inn.'],
+        forest:['Лес Шепчущих Корней — вековой сосновый бор у подножия холмов. Воздух пахнет смолой и мхом, в глубине темнеет чаща.','Whispering Roots Forest — an ancient pine woodland. The air smells of resin and moss, with thickets deepening beyond.'],
+        city:['Город Серебряного Моста — каменный город за высокими воротами. Заставы охраняют въезд, внутри шумят торговые ряды.','Silver Bridge City — a stone walled city behind tall gates. Outposts guard the entrance, while bustling stalls fill the streets.'],
+        ruins:['Заброшенный храм — полуразрушенное древнее святилище на каменистом холме. Мох покрывает ступени и расколотые плиты алтаря.','Abandoned Temple — a half-ruined ancient sanctuary on a rocky crest. Moss covers stone steps and cracked altar slabs.'],
+        mountains:['Перевал Облачного Меча — продуваемый ветром горный хребет. Узкая тропа ведёт сквозь туман вдоль обрыва.','Cloud Sword Pass — a windswept mountain ridge. A narrow path climbs through the mist along sheer cliffs.']
+      };
+      desc=impressions[place]?say(impressions[place][0],impressions[place][1]):canonicalDesc;
+      if(people.length>0){
+        desc+=say(` Здесь встречены: ${people.map(p=>`${p.name} (${p.role})`).join(', ')}.`,` Met here: ${people.map(p=>`${p.name} (${p.role})`).join(', ')}.`);
+      }
+      bonus=say('Особенности прояснятся после осмотра окрестностей.','Local traits will become clear after surveying the surroundings.');
+      dangerText=say('Окрестности ещё не проверены осмотром.','Surroundings have not been personally surveyed yet.');
+    }else{
+      const impressions={
+        village:['Деревня у колодца — безопасное поселение с колодцем и постоялым двором.','Wellside Village — a safe settlement with a well and roadside inn.'],
+        forest:['Лес Шепчущих Корней — светлая опушка безопасна для сбора трав, но дальние тропы опасны.','Whispering Roots Forest — bright edge is safe for gathering herbs, but distant trails are dangerous.'],
+        city:['Город Серебряного Моста — оживлённый торговый центр и архив Пустого Неба.','Silver Bridge City — a busy market hub and the Empty Sky archives.'],
+        ruins:['Заброшенный храм — внешний двор безопасен для осмотра; под алтарём скрыты печати.','Abandoned Temple — outer yard is safe to survey; seals lie beneath the altar.'],
+        mountains:['Перевал Облачного Меча — нижний склон доступен; верхнюю тропу охраняет страж.','Cloud Sword Pass — lower slope is accessible; a guardian protects the upper trail.']
+      };
+      desc=impressions[place]?say(impressions[place][0],impressions[place][1]):canonicalDesc;
+      if(people.length>0){
+        desc+=say(` Здесь живут и работают: ${people.map(p=>`${p.name} (${p.role})`).join(', ')}.`,` Living and working here: ${people.map(p=>`${p.name} (${p.role})`).join(', ')}.`);
+      }
+      bonus=canonicalBonus;
+      dangerText=canonicalDanger;
+    }
+    return {tier,desc,bonus,danger:dangerText,visited,surveys,trail:surveys>=2,people};
+  }
   function journal(s,E,place,lang='ru'){
-    const en=lang==='en',say=(ru,english)=>en?english:ru,visited=(s.world.visits[place]||0)>0||s.world.location===place&&!s.world.journey&&(s.storyStep>0||s.stage>0),people=E.world.memory.people(s,lang).filter(p=>p.location===place),resources=(s.atlas.discoveries[place]||[]).map(k=>en?({gold:'Coins',herbs:'Herbs',qi:'Qi',relics:'Shards',wood:'Wood',ore:'Ore',pills:'Pills',reputation:'Reputation',influence:'Influence',supplies:'Supplies',cosmic:'Star essence',worlds:'Worlds'}[k]):E.names[k]),facts=[];
-    if(!visited&&!people.length&&!resources.length)return {visited:false,people:[],resources:[],facts:[],summary:say('Дорога известна, но собственных наблюдений пока нет.','The route is known, but you have no observations of your own yet.')};
+    const en=lang==='en',say=(ru,english)=>en?english:ru,
+      visited=(s.world.visits[place]||0)>0||s.world.location===place&&!s.world.journey&&(s.storyStep>0||s.stage>0),
+      people=E.world.memory.people(s,lang).filter(p=>p.location===place),
+      resources=(s.atlas.discoveries[place]||[]).map(k=>en?({gold:'Coins',herbs:'Herbs',qi:'Qi',relics:'Shards',wood:'Wood',ore:'Ore',pills:'Pills',reputation:'Reputation',influence:'Influence',supplies:'Supplies',cosmic:'Star essence',worlds:'Worlds'}[k]):E.names[k]),
+      placeRumors=rumors(s,lang).filter(r=>r.place===place),
+      facts=[];
+
+    if(!visited&&!people.length&&!resources.length){
+      return {
+        visited:false,
+        people:[],
+        resources:[],
+        facts:placeRumors.map(r=>say(`Слух (${r.source}): «${r.text}»`,`Rumour (${r.source}): “${r.text}”`)),
+        summary:placeRumors.length
+          ?say('Ты ещё не был здесь лично. Все сведения записаны исключительно со слов и слухов.','You have not been here personally. All knowledge is recorded purely from hearsay and rumours.')
+          :say('Дорога известна, но собственных наблюдений пока нет.','The route is known, but you have no observations of your own yet.')
+      };
+    }
+
+    const impressions={
+      village:['Деревня у колодца — тихое поселение у тракта, где останавливаются обозы.','Wellside Village — a quiet roadside settlement where caravans halt.'],
+      forest:['Лес Шепчущих Корней — древний сосновый бор, пахнущий смолой и мхом.','Whispering Roots Forest — an ancient pine woodland smelling of resin and moss.'],
+      city:['Город Серебряного Моста — каменный город за высокими воротами с оживлёнными лавками.','Silver Bridge City — a stone walled city behind tall gates with lively market stalls.'],
+      ruins:['Заброшенный храм — полуразрушенное древнее святилище на каменистом склоне.','Abandoned Temple — a half-ruined ancient sanctuary on a rocky slope.'],
+      mountains:['Перевал Облачного Меча — продуваемый ветром горный хребет над ущельем.','Cloud Sword Pass — a windswept mountain ridge high above the chasm.']
+    };
+    if(visited&&impressions[place])facts.push(say(`Личные впечатления: ${impressions[place][0]}`,`Firsthand impression: ${impressions[place][1]}`));
+
+    for(const r of placeRumors)facts.push(say(`Слух (${r.source}): «${r.text}»`,`Rumour (${r.source}): “${r.text}”`));
+
+    const residentDesc={
+      mei:['Здесь живёт хозяйка постоялого двора Мэй: кров и работа у очага.','Innkeeper Mei lives here: shelter and work by the hearth.'],
+      ren:['У колодца живёт и обучает наставник Жэнь: стойка и дыхание.','Mentor Ren lives by the well: stance and breathing.'],
+      lin:['На лесной тропе живёт травница Линь: знает целебные травы.','Herbalist Lin lives along the forest trail: knows medicinal herbs.'],
+      sen:['В лесной чаще тренируется наставник Сэнь из Нефритовой Рощи.','Mentor Sen of Jade Grove trains in the forest thicket.'],
+      wei:['В городском архиве служит библиотекарь Вэй: хранит древние свитки.','Scholar Wei serves in the city archive: keeps ancient scrolls.'],
+      ho:['В торговом квартале держит лавку аптекарь Хо.','Apothecary Huo keeps a shop in the merchant quarter.'],
+      wanderer:['Среди алтарей храма бродит странник в сером плаще.','A grey-cloaked wanderer roams among the temple altars.'],
+      yun:['На ветреном перевале тренируется наставница Облачного Предела Юнь.','Sword mentor Yun of Cloud Reach trains on the windswept pass.'],
+      tong:['На старой мельнице работает мастер креплений Тун.','Fastening craftsman Tong works at the old mill.'],
+      sui:['В скрытом саду живёт хранительница семян Суй.','Seed keeper Sui lives in the hidden garden.'],
+      qiao:['В обсерватории ведёт наблюдения исследовательница Цяо.','Researcher Qiao conducts observations in the observatory.'],
+      bo:['В алхимической лаборатории работает аптекарь Бо.','Apothecary Bo works in the alchemy laboratory.']
+    };
+    for(const p of people){
+      const note=residentDesc[p.id];
+      if(note)facts.push(say(note[0],note[1]));
+    }
+    if(place==='city'&&s.world?.contacts?.includes('scholar')&&!people.some(p=>p.id==='wei')){
+      facts.push(say('По письму Мэй: в городском архиве служит библиотекарь Вэй.','From Mei’s letter: scholar Wei serves in the city archive.'));
+    }
+
     if(s.atlas.surveys[place])facts.push(say(`Осмотры окрестностей: ${s.atlas.surveys[place]}.`,`Local surveys: ${s.atlas.surveys[place]}.`));
     if(trail(s,place))facts.push(say('Найдена короткая тропа: переход сюда быстрее на 20%.','A shortcut was found: travel here is 20% faster.'));
     if(place==='ruins'&&s.found)facts.push(say('В храме найдено древнее наследие.','An ancient legacy was found in the temple.'));
+
+    if(s.atlas.discoveries[place]?.includes('herbs'))facts.push(say('Сбор трав проверен лично: на светлых участках растут лекарственные растения.','Herb gathering personally confirmed: medicinal plants grow in bright clearings.'));
+    if(s.atlas.discoveries[place]?.includes('ore'))facts.push(say('Добыча руды проверена лично: в породе есть жилы ценного камня.','Ore extraction personally confirmed: rock seams contain valuable ore.'));
+    if(s.atlas.discoveries[place]?.includes('relics'))facts.push(say('Поиск осколков проверен лично: древние реликвии скрыты среди камней.','Shard search personally confirmed: ancient relics lie hidden among the stones.'));
+    if(s.atlas.discoveries[place]?.includes('gold')&&place!=='village')facts.push(say('Заработок проверен лично: за местную работу платят монетами.','Earnings personally confirmed: local work pays in coins.'));
+
     const did=k=>!!s.world.director.decisions[k];
     if(place==='forest-garden'&&did('forest-garden:0/seeds'))facts.push(say('Суй доверила тебе лекарственные семена и показала, как сохранять сбор.','Sui entrusted medicinal seeds to you and showed how to preserve the harvest.'));
     if(place==='village-mill'&&did('village-mill:0/beam'))facts.push(say('Тун показал, как удерживать балку и беречь силы при подъёме груза.','Tong showed how to brace a beam and conserve strength when lifting.'));
@@ -65,5 +212,5 @@
     const encounters=Object.values(E.world.encounters).flat().filter(scene=>scene.id.startsWith(place+':')&&s.world.completed.includes(scene.id));if(encounters.length)facts.push(say(`Завершено местных историй: ${encounters.length}.`,`Local stories completed: ${encounters.length}.`));
     return {visited,people:people.map(p=>({name:p.name,role:p.role})),resources,facts,summary:say('Собственные наблюдения. Новые встречи и находки дополняют запись.','Your own observations. New encounters and discoveries add to this record.')};
   }
-  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,observe,migrate,journal};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,overview,locationKnowledge:overview,observe,migrate,journal};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

@@ -174,9 +174,34 @@
   }
   const canTravel=(s,k)=>!!locations[k]&&!travelReason(s,k);
   const travelTime=(s,k)=>Math.ceil(locations[k].time*((s.atlas?.surveys[k]||0)>=2?.8:1));
+  function locationDesc(s,id,language='ru'){
+    const visited=(s.world.visits[id]||0)>0||s.world.location===id;
+    const en=language==='en';
+    if(!visited){
+      if(id==='forest'&&(s.storyStep>=1||s.stage>0)){
+        return en
+          ?'From Mei’s rumours: travellers speak of a bright forest edge with medicinal herbs, but beasts lurk deeper in.'
+          :'По слухам от Мэй: на светлой опушке растут целебные травы, но в глубине леса путники видят звериные глаза.';
+      }
+      if(id==='ruins'&&(s.storyStep>=1||s.stage>0)){
+        return en
+          ?'From Mei’s rumours: an abandoned temple lies beyond the village; dangerous seals lie beneath its altar.'
+          :'По слухам от Мэй: за деревней есть заброшенный храм; под его алтарём скрыты опасные печати.';
+      }
+      if(id==='city'&&s.world.contacts.includes('scholar')){
+        return en
+          ?'From Mei’s letter: scholar Wei serves in the Silver Bridge City archive.'
+          :'По письму от Мэй: в городском архиве служит библиотекарь Вэй.';
+      }
+      return en
+        ?'Unexplored area. You only know the name and direction.'
+        :'Неизведанная область. Ты знаешь лишь название и направление.';
+    }
+    return en&&locations[id].en?.desc?locations[id].en.desc:locations[id].desc;
+  }
   function map(s,language='ru'){
     const coords={village:[1,1],forest:[2,1],city:[0,1],ruins:[1,0],mountains:[2,0],...Object.fromEntries(Object.entries(Q.locations).map(([k,p])=>[k,p.coords]))};
-    const known=knownLocations(s),nodes=known.map(id=>({id,kind:'location',name:locations[id].name,x:coords[id][0],y:coords[id][1],visited:s.world.visits[id]>0||s.world.location===id,locked:!!travelReason(s,id,language),reason:travelReason(s,id,language),detail:locations[id].desc}));
+    const known=knownLocations(s),nodes=known.map(id=>({id,kind:'location',name:locations[id].name,x:coords[id][0],y:coords[id][1],visited:s.world.visits[id]>0||s.world.location===id,locked:!!travelReason(s,id,language),reason:travelReason(s,id,language),detail:locationDesc(s,id,language)}));
     for(const[id,f]of Object.entries(frontiers))if(s.world.location===f.base||s.world.visits[f.base]>0)nodes.push({id,kind:'frontier',name:language==='en'?f.en:f.name,x:f.x,y:f.y,visited:s.world.map.explored.includes(id),locked:!f.ready(s),reason:f.ready(s)?'':language==='en'?f.reasonEn:f.reason,detail:language==='en'?'A deeper route. Approach here from the nearby location.':'Путь вглубь. Подойти можно из ближайшей локации.',base:f.base});
     for(const[id,index]of s.world.map.sites.entries()){const base=index.split(':')[0],scene=encounters[base]?.find(e=>e.id===(s.world.director.pending[index]?index+':return':index));if(!scene||!known.includes(base))continue;nodes.push({id:`site:${index}`,kind:'site',base,name:sceneText(scene,'title',language,s),x:coords[base][0]+(id%3-1)*.6,y:coords[base][1]+1+Math.floor(id/3)*.55,visited:true,locked:!eligible(s,scene),reason:eligible(s,scene)?'':language==='en'?'This meeting has been resolved.':'Эта встреча уже завершена.',detail:sceneText(scene,'text',language,s)});}
     for(const lead of causalLeads(s,language))if(known.includes(lead.location))nodes.push({id:`lead:${lead.id}`,kind:'site',base:lead.location,name:lead.title,x:0,y:0,visited:true,locked:false,pending:true,detail:language==='en'?'Your previous deed has a continuation here. Return to this area to seek the encounter.':'У прежнего поступка есть продолжение. Вернись в эту область и ищи встречу.'});

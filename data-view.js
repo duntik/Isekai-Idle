@@ -89,8 +89,10 @@
       if(scene)for(const c of scene.choices){const x=E.choiceExplanation(s,scene,c,root.IsekaiLocale?.language||'ru');const fields=[[uiText('Намерение','Intent'),x.intent],[uiText('Потребуется','Cost'),x.cost],[uiText('Польза','Benefit'),x.benefit],[uiText('Отношения','Relationships'),x.relationship],[uiText('Условия','Requirements'),x.requirement]].filter(([,value])=>value).map(([label,value])=>`<div class="choice-detail"><strong>${label}:</strong> ${value}</div>`).join('');row(W.sceneText(c,'label',root.IsekaiLocale?.language),x.risk,fields,btn('choice',c.id,c.danger?uiText('Принять риск','Accept the risk'):uiText('Выбрать','Choose'),x.available));}
       row('Поиск встречи',`${Math.ceil(w.encounterCooldown)} сек`,'Интервал 300 сек',btn('encounter','','Найти',W.canEncounter(s)));
       for(const q of W.pendingQuests(s))row('Ожидают продолжения',W.sceneText(q.scene,'title',root.IsekaiLocale?.language),`${W.locations[q.location].name}; ${W.pathNames[q.route]}; Глава ${q.stage+1}; признание +1`);
-      const bonuses={village:'Тело +10%',forest:'Травы при сборе +50%',city:'Оплата нового заказа +25%',ruins:'Осколки при сборе +50%',mountains:'Понимание +20%'};
-      for(const[k,p]of Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)))row(p.name,`${W.travelTime(s,k)} сек`,`${bonuses[k]||p.bonus} ${W.travelReason(s,k,root.IsekaiLocale?.language||'ru')}`,btn('travel',k,'Перейти',W.canTravel(s,k)));
+      for(const[k,p]of Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k))){
+        const know=E.atlas.overview(s,E,k,root.IsekaiLocale?.language||'ru');
+        row(p.name,`${W.travelTime(s,k)} сек`,`${know.bonus} ${W.travelReason(s,k,root.IsekaiLocale?.language||'ru')}`,btn('travel',k,'Перейти',W.canTravel(s,k)));
+      }
       row('Выбор встречи','Случайный','Зависит от места, уровня и знакомств; без повторной выдачи уникальных находок');
       row('История','Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.');
       row('Наставники',w.mentors.length,w.mentors.map(k=>W.mentorNames[k]).join('; '));
