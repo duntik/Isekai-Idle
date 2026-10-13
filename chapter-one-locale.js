@@ -246,6 +246,25 @@ root.IsekaiLocale.add([
   ['По слухам (Вэй): «','From rumours (Wei): “'],
   ['По слухам (Возчики): «','From rumours (Carters): “'],
   ['По слухам (Юнь): «','From rumours (Yun): “'],
-  ['По слухам (Хо): «','From rumours (Ho): “']
+  ['По слухам (Хо): «','From rumours (Ho): “'],
+  ['Сведения о месте','Location details'],
+  ['Подробнее о месте','Full details'],
+  ['Подробнее','Details'],
+  ['Местность и впечатления','Atmosphere and surroundings'],
+  ['Особенность места','Local trait'],
+  ['Безопасность и разведка','Hazards and scouting'],
+  ['Жители и наставники','Residents and mentors'],
+  ['Найденные ресурсы','Discovered resources'],
+  ['Твоя личная заметка','Your personal note'],
+  ['● Ты здесь','● You are here'],
+  ['✓ Исследовано лично','✓ Personally discovered'],
+  ['? Известно по слухам','? Known from rumours'],
+  ['◇ Неизведанные земли','◇ Unexplored lands'],
+  ['Время пути: ','Travel time: '],
+  ['Осмотров окрестностей: ','Local surveys: '],
+  ['Тропа найдена: переход −20%','Shortcut trail found: travel −20%'],
+  ['Для короткой тропы: 2 осмотра','For shortcut trail: 2 surveys needed'],
+  ['Источник: ','Source: '],
+  ['В пути: осталось ','Travelling: remaining ']
 ]);
 })(globalThis);

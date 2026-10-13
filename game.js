@@ -114,7 +114,7 @@
       const trail=place&&E.atlas.trail(s,node.id),pending=node.pending?(en?' · Continuation':' · Продолжение'):'';
       const disc=s.atlas.discoveries?.[node.id]||[];
       const resourceBadges=place&&disc.length?`<span class="map-resources" title="${en?'Observed resources':'Найденные ресурсы'}">${disc.map(r=>({gold:'🪙',herbs:'🌿',qi:'✦',relics:'🔷',wood:'🪵',ore:'🪨',pills:'💊',reputation:'📜',influence:'🏛',supplies:'📦',cosmic:'✧',worlds:'🌐'}[r]||'•')).join('')}</span>`:'';
-      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''} ${node.pending?'pending':''} ${trail?'known-trail':''}" style="left:${node.x}px;top:${node.y}px"><strong><span class="map-icon" aria-hidden="true">${icon}</span>${node.name}${resourceBadges}</strong><small>${current?'● ':node.locked?'⊘ ':'○ '}${status}${pending}${trail?' · −20%':''}</small><details ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><div>${info}</div>${place?`<p>${E.atlas.details(s,node.id,language).danger}</p>`:''}</details><button data-action="${action}" data-value="${node.id}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${place?(node.locked?(en?'Approach the gate':'Подойти к проходу'):(en?'Travel here':'Отправиться')):(en?'Explore route':'Исследовать путь')}</button><div class="map-node-tools"><button data-map-note="${node.id}" title="${en?'Edit note':'Редактировать заметку'}">${s.atlas.notes[node.id]?'▤':'✎'}</button><button data-action="atlas-pin" data-value="${node.id}" aria-pressed="${s.atlas.pins.includes(node.id)}" title="${en?'Bookmark':'Отметить'}">${s.atlas.pins.includes(node.id)?'★':'☆'}</button></div></article>`;
+      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''} ${node.pending?'pending':''} ${trail?'known-trail':''}" style="left:${node.x}px;top:${node.y}px"><strong><span class="map-icon" aria-hidden="true">${icon}</span>${node.name}${resourceBadges}</strong><small>${current?'● ':node.locked?'⊘ ':'○ '}${status}${pending}${trail?' · −20%':''}</small><details ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><div>${info}</div>${place?`<p>${E.atlas.details(s,node.id,language).danger}</p><button type="button" class="location-details-btn map-node-details" data-place="${node.id}">${en?'Location details':'Подробнее о месте'}</button>`:''}</details><button data-action="${action}" data-value="${node.id}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${place?(node.locked?(en?'Approach the gate':'Подойти к проходу'):(en?'Travel here':'Отправиться')):(en?'Explore route':'Исследовать путь')}</button><div class="map-node-tools"><button data-map-note="${node.id}" title="${en?'Edit note':'Редактировать заметку'}">${s.atlas.notes[node.id]?'▤':'✎'}</button><button data-action="atlas-pin" data-value="${node.id}" aria-pressed="${s.atlas.pins.includes(node.id)}" title="${en?'Bookmark':'Отметить'}">${s.atlas.pins.includes(node.id)?'★':'☆'}</button></div></article>`;
     }).join('')}`);
     $('map-status').textContent=(en?`Known routes: ${map.nodes.length}. New encounters leave landmarks on the map.`:`Известных мест: ${map.nodes.length}. Новые встречи оставляют ориентиры на карте.`)+(s.world.encounter?(en?' Resolve your current encounter before exploring a deeper route.':' Заверши текущую встречу, прежде чем исследовать путь вглубь.'):'');
     if(focus){const target=Array.from(canvas.querySelectorAll?.(focus.summary?'summary':'button')||[]).find(node=>focus.summary?node.closest('[data-map-node]')?.dataset.mapNode===focus.node:node.dataset.action===focus.action&&node.dataset.value===focus.value);target?.focus?.({preventScroll:true});}
@@ -207,6 +207,7 @@
     }
     L?.translateDOM();
     if($('world-map-dialog').open)renderMap();
+    if($('location-dialog')?.open&&currentDialogPlace)renderLocationDialog(currentDialogPlace);
     Array.from(content.querySelectorAll?.('details')||[]).forEach((node,i)=>{node.open=node.dataset?.panel?(heroPanels.get(node.dataset.panel)||false):openDetails.includes(i);});
     if(focusedPanel)Array.from(content.querySelectorAll?.('details[data-panel]')||[]).find(node=>node.dataset.panel===focusedPanel)?.querySelector('summary')?.focus?.({preventScroll:true});
     if(!focusedPanel&&focusedSummary>=0)Array.from(content.querySelectorAll?.('details summary')||[])[focusedSummary]?.focus?.({preventScroll:true});
@@ -219,6 +220,51 @@
   function projects(levels) { return `<div class="cards">${Object.entries(E.projects).filter(([, p])=>levels.includes(p.stage) && p.stage <= s.stage).map(([k,p])=>card(`${p.name} · ${s.buildings[k]}`,p.desc,button('build',k,'Построить',E.affordable(s,E.buildCost(s,k))),costs(E.buildCost(s,k)))).join('')}</div>`; }
   function expedition() { return s.expedition ? `<p class="intro">Экспедиция в пути: осталось ${duration(s.expedition.remaining)}. Порталы и флот используют один слот экспедиции.</p>` : ''; }
   function schoolView(k){const lang=L?.language||'ru',a=E.sects.info(s,k,lang);return a?`<article class="story-panel sect-profile"><div class="eyebrow">${a.role}</div><h3>${a.name}</h3><p>${a.teacher} · ${a.perk}</p><p><strong>${uiText('Правило школы','School rule')}:</strong> ${a.rule}</p><p>${E.sects.progress(s,k,lang)}</p></article>`:'';}
+  let currentDialogPlace=null;
+  function renderLocationDialog(place){
+    const lang=L?.language||'ru',en=lang==='en';
+    const W=E.world,w=s.world,p=W.locations[place];
+    if(!p)return;
+    const know=E.atlas.overview(s,E,place,lang);
+    const journal=E.atlas.journal(s,E,place,lang);
+    const rumors=E.atlas.rumors(s,lang).filter(r=>r.place===place);
+    const travelReason=W.travelReason(s,place,lang);
+    const travelTime=W.travelTime(s,place);
+    const canTravel=W.canTravel(s,place);
+    const isCurrent=w.location===place&&!w.journey;
+    const isJourney=w.journey&&w.journey.destination===place;
+    const note=s.atlas?.notes?.[place];
+    const title=t(p.name);
+    if($('location-dialog-title'))$('location-dialog-title').textContent=title;
+    const statusText=isCurrent?uiText('● Ты здесь','● You are here'):isJourney?uiText(`В пути: осталось ${Math.ceil(w.journey.remaining)} сек.`,`Travelling: ${Math.ceil(w.journey.remaining)} s remaining`):know.visited?uiText('✓ Исследовано лично','✓ Personally discovered'):know.tier===1?uiText('? Известно по слухам','? Known from rumours'):uiText('◇ Неизведанные земли','◇ Unexplored lands');
+    let bodyHtml=`<div class="location-status-bar"><span>${statusText}</span><span class="location-status-time">${uiText('Время пути: ','Travel time: ')}${travelTime} ${uiText('сек.','s')}</span></div>`;
+    bodyHtml+=`<section class="location-section"><h3>${uiText('Местность и впечатления','Atmosphere and surroundings')}</h3><p class="location-desc-text">${know.desc}</p></section>`;
+    bodyHtml+=`<section class="location-section"><h3>${uiText('Особенность места','Local trait')}</h3><div class="location-perk-box"><span class="location-perk-badge">${know.bonus}</span><small class="location-perk-desc">${travelReason}</small></div></section>`;
+    bodyHtml+=`<section class="location-section"><h3>${uiText('Безопасность и разведка','Hazards and scouting')}</h3><p class="location-danger-text">${know.danger}</p><div class="location-survey-info"><span>${uiText('Осмотров окрестностей: ','Local surveys: ')}${know.surveys}</span><span> · </span><span>${know.trail?uiText('Тропа найдена: переход −20%','Shortcut trail found: travel −20%'):uiText('Для короткой тропы: 2 осмотра','For shortcut trail: 2 surveys needed')}</span></div></section>`;
+    if(know.people&&know.people.length>0){
+      const memoryPeople=W.memory?.people?W.memory.people(s,lang):[];
+      bodyHtml+=`<section class="location-section"><h3>${uiText('Жители и наставники','Residents and mentors')}</h3><div class="location-people-list">${know.people.map(person=>{const mem=memoryPeople.find(m=>m.id===person.id);const memo=mem?.memories?.[0]||mem?.status||'';return `<div class="location-person-card"><strong>${person.name}</strong><small>${person.role}</small>${memo?`<p>${memo}</p>`:''}</div>`;}).join('')}</div></section>`;
+    }
+    if(journal.resources&&journal.resources.length>0){
+      bodyHtml+=`<section class="location-section"><h3>${uiText('Найденные ресурсы','Discovered resources')}</h3><div class="location-resources-list">${journal.resources.map(r=>`<span class="resource-badge">${r}</span>`).join(' ')}</div></section>`;
+    }
+    if(journal.facts&&journal.facts.length>0){
+      bodyHtml+=`<section class="location-section"><h3>${uiText('Записанные наблюдения','Recorded observations')}</h3><ul class="location-facts-list">${journal.facts.map(f=>`<li>${f}</li>`).join('')}</ul></section>`;
+    }
+    if(rumors&&rumors.length>0){
+      bodyHtml+=`<section class="location-section"><h3>${uiText('Слухи','Rumours')}</h3><div class="location-rumors-list">${rumors.map(r=>`<p class="location-rumor-item"><strong>${r.confirmed?'✓':'?'}</strong> ${r.text}<br><small>${uiText('Источник: ','Source: ')}${r.source}</small></p>`).join('')}</div></section>`;
+    }
+    if(note){
+      bodyHtml+=`<section class="location-section"><h3>${uiText('Твоя личная заметка','Your personal note')}</h3><p class="location-note-text">«${note}»</p></section>`;
+    }
+    bodyHtml+=`<div class="location-dialog-actions actions">${button('travel',place,isCurrent?uiText('Ты здесь','You are here'):uiText(`Отправиться · ${travelTime} сек`,`Travel · ${travelTime} s`),canTravel)}<button type="button" id="close-location-dialog-btn">${uiText('Закрыть','Close')}</button></div>`;
+    if($('location-dialog-body'))$('location-dialog-body').innerHTML=h(bodyHtml);
+  }
+  function openLocationDialog(place){
+    currentDialogPlace=place;
+    renderLocationDialog(place);
+    $('location-dialog')?.showModal?.();
+  }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
     let html=`<h2>Дороги другого мира</h2><p class="intro">Сейчас: ${W.locations[w.location].name}. ${w.journey?`В пути: ${W.locations[w.journey.destination].name}, осталось ${Math.ceil(w.journey.remaining)} сек.`:'Можно выбрать маршрут или поискать встречу на месте.'}</p>`;
@@ -234,7 +280,18 @@
     const leads=W.causalLeads(s,L?.language||'ru');
     if(leads.length)html+=`<section class="workers"><h3>${uiText('Нити твоей истории','Threads of your story')}</h3><p class="intro">${uiText('Прошлые поступки могут получить продолжение. Ищи встречи в указанных местах; это возможности, а не автоматически принятые задания.','Your past deeds may have a continuation. Seek encounters in these locations; these are opportunities, not automatically accepted quests.')}</p><div class="cards">${leads.map(q=>card(q.title,t(W.locations[q.location].name),'')).join('')}</div></section>`;
     if(pending.length)html+=`<section class="workers"><h3>Ожидают продолжения</h3><p class="intro">Вернись в указанное место и ищи встречи. За каждое завершённое поручение: признание +1 в главе, где ты оказал помощь.</p><div class="cards">${pending.map(q=>card(W.sceneText(q.scene,'title',L?.language),`${W.locations[q.location].name} · ${W.pathNames[q.route]} · Глава ${q.stage+1}`,'')).join('')}</div></section>`;
-    html+=`<div class="cards">${Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)).map(([k,p])=>{const know=E.atlas.overview(s,E,k,L?.language||'ru');return card(p.name,`${know.desc} ${know.bonus} ${W.travelReason(s,k,L?.language||'ru')}`,button('travel',k,w.location===k?'Ты здесь':`Отправиться · ${W.travelTime(s,k)} сек`,W.canTravel(s,k)));}).join('')}</div>`;
+    html+=`<div class="cards">${Object.entries(W.locations).filter(([k])=>W.knownLocations(s).includes(k)).map(([k,p])=>{
+      const know=E.atlas.overview(s,E,k,L?.language||'ru');
+      const cutOff=know.desc.search(/(\s+(Здесь встречены|Met here|Здесь живут|Living and working):)/);
+      const base=cutOff>0?know.desc.slice(0,cutOff):know.desc;
+      const sentences=base.match(/[^.!?]+[.!?]+/g)||[base];
+      const isLong=base.length>120||sentences.length>1||cutOff>0||(know.people&&know.people.length>0)||(s.atlas.discoveries?.[k]?.length>0);
+      const teaser=isLong?sentences[0]:base;
+      const cardDesc=`${teaser}${isLong&&teaser!==know.desc?'…':''} <span class="location-trait">${know.bonus}</span>`;
+      const travelBtn=button('travel',k,w.location===k?'Ты здесь':`Отправиться · ${W.travelTime(s,k)} сек`,W.canTravel(s,k));
+      const detailsBtn=`<button type="button" class="location-details-btn" data-place="${k}">${uiText('Подробнее','Details')}</button>`;
+      return card(p.name,cardDesc,travelBtn+detailsBtn,W.travelReason(s,k,L?.language||'ru'));
+    }).join('')}</div>`;
     html+=`<p class="intro">${uiText("Работа требует нужного места. В пути, во время ручных действий и боя медитация и практика прерываются; они не возобновляются автоматически.","Work requires its assigned location. Travel, manual actions and combat interrupt meditation and practice; they do not resume automatically.")} На месте действует бонус локации к подходящему занятию. Погибнув, ты возвращаешься в деревню и теряешь 50% монет, трав, энергии, осколков и других переносимых ресурсов. Прокачка, сюжет, знакомства, здания, репутация, влияние и миры сохраняются.</p>`;
     html+='<p class="intro">Встречи случайны и зависят от места, знакомств и этапа пути. Недавние события не повторяются подряд. Полученные уникальные находки больше не выдаются; знакомые люди могут предложить новые дела. Важные доступные знакомства не теряются из-за долгого невезения; прошлые поступки открывают продолжения встреч.</p>';
     html+=`<div class="workers"><h3>Люди, которых ты встретил</h3>${w.mentors.length?w.mentors.map(k=>`<p class="intro">${W.mentorNames[k]}</p>`).join(''):'<p class="intro">Наставников пока нет. Помощь можно найти на разных дорогах.</p>'}${w.contacts.includes('scholar')?'<p class="intro">Ты знаешь, где найти библиотекаря Вэя: в городе Серебряного Моста.</p>':''}<p class="intro">Советы действуют постоянно и не складываются повторно. Материалы доступны для дальнейшего развития, даже если получены раньше соответствующей главы.</p></div>`;
@@ -250,7 +307,9 @@
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();const placesBefore=E.world.knownLocations(s).length;
-    if(b.dataset.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
+    if(b.dataset?.place&&b.classList?.contains?.('location-details-btn')){openLocationDialog(b.dataset.place);return;}
+    if(b.id==='close-location-dialog'||b.id==='close-location-dialog-btn'){$('location-dialog')?.close?.();currentDialogPlace=null;return;}
+    if(b.dataset?.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
     if(b.id==='map-show-encounter')$('world-map-dialog').close?.();
     if(b.id==='dismiss-return-report'){returnSummary=null;render();return;}
     if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();refreshNames();}
@@ -260,12 +319,15 @@
     if (['visual','data'].includes(b.dataset.view)) { view = b.dataset.view; try { localStorage.setItem('isekai-idle-interface',view); } catch {} applyView(); }
     if (b.dataset.tab) tab = b.dataset.tab;
     if(['travel','map-inspect'].includes(b.dataset.action)&&b.closest?.('#world-map-dialog')){tab='world';if(b.dataset.action==='travel'&&E.world.canTravel(s,b.dataset.value))$('world-map-dialog').close();}
+    if(b.dataset.action==='travel'&&b.closest?.('#location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}
     if (b.dataset.action) { if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); } if (E.action(s,b.dataset.action,b.dataset.value)) {save();if(b.dataset.action==='atlas-survey')toast(uiText('Окрестности осмотрены. Сведения и припасы обновлены.','Surroundings surveyed. Information and supplies updated.'));if(b.dataset.action==='map-inspect'){toast(s.events[0]?.text||'Условия пока не выполнены');if(s.world.encounter)$('world-map-dialog').close?.();}} else toast(b.dataset.action==='travel'?E.world.travelReason(s,b.dataset.value,L?.language||'ru')||'Условия пока не выполнены':'Условия пока не выполнены'); }
     if(b.dataset.action==='choice'&&E.world.knownLocations(s).length>placesBefore&&s.events[0]?.text.startsWith('Открыта дорога:'))toast(s.events[0].text);
     if (b.id === 'save') save(true);
     if (b.id === 'export') { const value = typeof IsekaiSaveCode !== 'undefined' ? IsekaiSaveCode.envelope(s) : s; const url = URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = `${view === 'data' ? 'data-snapshot' : 'isekai-idle'}-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','world','roadmap'].includes(tab)) tab = 'hero'; render();
   });
+  $('close-location-dialog')?.addEventListener('click',()=>{$('location-dialog')?.close?.();currentDialogPlace=null;});
+  $('location-dialog')?.addEventListener('click',e=>{if(e.target===$('location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}});
   $('open-map').addEventListener('click',()=>{
     renderMap();$('world-map-dialog').showModal?.();
     centerMap();
