@@ -55,4 +55,54 @@ for(const action of ['story','breakthrough','learn-technique','claim-order','adv
   assert(!/[А-Яа-яЁё]/.test(hint));assert(!hint.includes('undefined'));assert(!hint.includes('NaN'));
 }
 assert.equal(JSON.stringify(guided),snapshot);
+
+// Prologue choices at Step 0: physical actions yield distinct rewards and stats.
+for(const [choice,expectedReward,expectedBody,expectedCalm] of [
+  ['shoulder',{gold:5,herbs:5},0.11,0],
+  ['stones',{gold:5,herbs:8},0,1],
+  ['scout',{gold:10,herbs:3,relics:1},0,0]
+]){
+  const p=E.fresh();
+  assert(E.action(p,'story',choice));
+  assert.equal(p.prologueAction,choice);
+  assert.equal(p.storyStep,1);
+  for(const [k,v] of Object.entries(expectedReward))assert.equal(p.resources[k],v);
+  if(expectedBody)assert(p.body>=expectedBody);
+  if(expectedCalm)assert.equal(p.calm,expectedCalm);
+  const validated=E.validate(JSON.parse(JSON.stringify(p)));
+  assert.equal(validated.prologueAction,choice);
+}
+const badPrologue=E.fresh();
+assert(!E.action(badPrologue,'story','cheat'));
+
+// Chapter 1 Finale at Step 7: sect choices unlocked by deeds, concluding with sect oath.
+for(const [route,unlockFn] of [
+  ['rescue',s=>{s.world.admissionRoutes=['rescue'];}],
+  ['remains',s=>{s.world.admissionRoutes=['remains'];}],
+  ['invitation',s=>{s.world.completed.push('city:wei-letter');}],
+  ['gates',()=>true]
+]){
+  const fin=E.fresh();
+  fin.realm=1;fin.found=true;fin.resources.herbs=100;fin.chapterOneRoute='service';
+  fin.storyStep=7;
+  unlockFn(fin);
+  const beat=E.storyBeat(fin);
+  assert(beat.sectChoices[route].ready(fin));
+  if(route!=='gates'){
+    const locked=E.fresh();
+    locked.storyStep=7;
+    assert(!E.action(locked,'story',route));
+  }
+  assert(E.action(fin,'story',route));
+  assert.equal(fin.world.admission,route);
+  assert.equal(fin.storyStep,8);
+  assert(fin.world.admissionGiftAwarded);
+  assert(E.canAdvance(fin));
+  const post=E.storyBeat(fin,7);
+  assert.equal(post.title,'Первая глава завершена');
+  const cloneFin=E.validate(JSON.parse(JSON.stringify(fin)));
+  assert(E.action(cloneFin,'advance'));
+  assert.equal(cloneFin.stage,1);
+}
+
 console.log('PASS: first-chapter routes and contextual guidance for incomplete and completed objectives');

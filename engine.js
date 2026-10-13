@@ -61,14 +61,26 @@
   const canWorkOrder=s=>!!s.employment.order&&!s.world.journey&&s.world.location===(s.employment.order.place||'village');
   const canClaimOrder=s=>canWorkOrder(s)&&s.employment.order.progress>=orders[s.employment.order.kind].target;
   const canOrder=(s,k)=>orderAvailable(s,k)&&!s.employment.order&&s.body>=orders[k].body;
+  const prologueChoices={
+    shoulder:{id:'shoulder',name:'Налечь плечом на ось',enName:'Heave your shoulder against the axle',desc:'Навалиться на ось всем весом: тело +0,1; 5 монет и 5 трав.',enDesc:'Push with full body weight: body +0.1; 5 coins and 5 herbs.',reward:{gold:5,herbs:5},body:0.1},
+    stones:{id:'stones',name:'Подложить камни под колесо',enName:'Wedge stones under the wheel',desc:'Замостить колею камнями и хворостом: спокойствие +1; 5 монет и 8 трав.',enDesc:'Pave the rut with stones and brush: calm +1; 5 coins and 8 herbs.',reward:{gold:5,herbs:8},calm:1},
+    scout:{id:'scout',name:'Осмотреть размытую колею',enName:'Inspect the washed-out rut',desc:'Поддеть ось вагой и осмотреть глину: находка 1 осколка; 10 монет и 3 травы.',enDesc:'Lever the axle and inspect the mud: find 1 shard; 10 coins and 3 herbs.',reward:{gold:10,herbs:3,relics:1}}
+  };
+  const sectChoices={
+    rescue:{id:'rescue',name:'Нефритовая Роща · Наставник Сэнь',enName:'Jade Grove · Master Sen',role:'Алхимия и лекарственные растения',enRole:'Alchemy and medicinal plants',desc:'Путь исцеления и трав. Техника «Нефритовый круг». Стартовый дар: 20 трав.',enDesc:'Path of healing and herbs. Jade Circle technique. Starting gift: 20 herbs.',gift:'20 трав',enGift:'20 herbs',ready:s=>s.world.admissionRoutes.includes('rescue'),reason:'Требуется спасти наставника Сэня в лесу.',enReason:'Requires rescuing Master Sen in the forest.'},
+    remains:{id:'remains',name:'Облачный Предел · Наставница Юнь',enName:'Cloud Reach · Master Yun',role:'Путь меча и поединки чести',enRole:'Sword path and duels of honor',desc:'Путь клинка и боевой точности. Техника «Возвращающийся клинок». Стартовый дар: +1 освоения.',enDesc:'Path of the blade and martial precision. Returning Blade technique. Starting gift: +1 mastery.',gift:'+1 освоения',enGift:'+1 mastery',ready:s=>s.world.admissionRoutes.includes('remains'),reason:'Требуется вернуть останки ученика из руин.',enReason:'Requires returning disciple remains from the ruins.'},
+    invitation:{id:'invitation',name:'Пустое Небо · Хранитель Вэй',enName:'Empty Sky · Keeper Wei',role:'Духовные практики и печати',enRole:'Spiritual practice and seals',desc:'Путь древних сутр и печатей. Техника «Письмена беззвёздного неба». Стартовый дар: 40 духовной энергии.',enDesc:'Path of ancient sutras and seals. Starless Sky Script technique. Starting gift: 40 qi.',gift:'40 духовной энергии',enGift:'40 qi',ready:s=>s.world.admissionRoutes.includes('invitation')||s.world.completed.includes('city:wei-letter'),reason:'Требуется найти карту приглашения в руинах или доставить письмо Вэю.',enReason:'Requires finding the invitation map in the ruins or delivering the letter to Wei.'},
+    gates:{id:'gates',name:'Каменный Оплот · Общий набор',enName:'Stone Bastion · Open recruitment',role:'Закалка тела и стойкость',enRole:'Body tempering and endurance',desc:'Путь закалки тела и несгибаемой воли. Техника «Железные сухожилия». Стартовый дар: 10 репутации.',enDesc:'Path of body tempering and endurance. Iron Sinews technique. Starting gift: 10 reputation.',gift:'10 репутации',enGift:'10 reputation',ready:()=>true,reason:'',enReason:''}
+  };
   const story = [
-    { title: 'Чужое небо', text: 'Свет фар сменяется чужим небом с двумя бледными солнцами. На тракте застряла гружёная повозка — заднее колесо увязло в глубоком размытом рву. Навалившись на ось вместе с возчиком, ты помогаешь вытолкнуть повозку на сухой настил. В благодарность возчик пускает тебя на облучок. Скрипя рессорами, телега привозит тебя в долину — к постоялому двору хозяйки Мэй у каменного колодца на развилке дорог.', goal: 'Принять помощь и добраться до деревни.', ready: () => true, reward: { gold: 5, herbs: 5 }, button: 'Подняться и пойти за телегой' },
+    { title: 'Чужое небо', text: 'Свет фар сменяется чужим небом с двумя бледными солнцами. На тракте застряла гружёная повозка — заднее колесо увязло в глубоком размытом рву. Навалившись на ось вместе с возчиком, ты помогаешь вытолкнуть повозку на сухой настил. В благодарность возчик пускает тебя на облучок. Скрипя рессорами, телега привозит тебя в долину — к постоялому двору хозяйки Мэй у каменного колодца на развилке дорог.', goal: 'Принять помощь и добраться до деревни.', ready: () => true, reward: {}, button: 'Подняться и пойти за телегой' },
     { title: 'Работа за место у очага', text: 'Повозка въезжает во двор постоялого двора, но проехать к навесу не может: площадка завалена битым щебнем и размытой грязью. Возчикам нужно успеть разгрузиться до темноты. Хозяйка Мэй поручает расчистить проезд и подмести двор: за работу она обещает горячую похлёбку и место у очага. За воротами двора по тракту проходят адепты горных сект — их лёгкие шаги почему-то оставляют глубокие трещины в базальтовых плитах дороги.', goal: 'Подмести двор 10 раз или накопить 15 монет любой работой.', ready: s => s.clicks.sweep >= 10 || s.resources.gold >= 15, reward: { gold: 10 }, button: 'Получить первую плату' },
     { title: 'Тело, которое не слушается', text: 'Освободив проезд, ты берёшься помочь с разгрузкой ящиков с повозки, но тело подводит: мышцы сводит судорогой, пальцы разжимаются, и груз с грохотом валится на камни. Дыхание сбито. У каменного колодца во дворе старик Жэнь размеренно отрабатывает движения: приседает с прямой спиной и пружинит на стопах. Он показывает, как усилие должно подниматься от бёдер, оберегая спину: без крепкого фундамента здесь не выдержать нагрузок.', goal: 'Развить тело до 2 приседаниями или бегом либо изучить первый ранг любой техники.', ready: s => s.body >= 2 || Object.keys(s.cultivation.learned).length>0, reward: { herbs: 5 }, button: 'Показать, что стал крепче' },
     { title: 'Тишина между вдохами', text: 'После череды упражнений дыхание сбито, а в висках гудит кровь. Опустившись на каменный парапет колодца, ты переводишь дух. Старик Жэнь задаёт размеренный счёт вдохов и выдохов, выравнивая пульс и снимая жар в груди. Когда шум в ушах стихает и мысли приходят в покой, воздух вокруг едва заметно подрагивает: с холма за деревней, где чернеют развалины заброшенного храма, доносится тонкий вибрирующий звон. Во дворе его никто не замечает.', goal: 'Накопить 5 спокойствия фоновой медитацией.', ready: s => s.calm >= 5, reward: { herbs: 3 }, button: 'Рассказать Жэню о звоне' },
     { title: 'Осколок под пеплом', text: 'Тропа за околицей ведёт вверх на лесистый холм к развалинам святилища. Своды обрушились, ступени завалены каменными плитами и золой. Разгребая завал под рухнувшим алтарём, пальцы нащупывают пластину из холодного чёрного нефрита. От тепла ладони на камне вспыхивают древние знаки: начальные строки сутры «Пустое Небо». Знаки запечатлеваются в памяти, открывая точную схему движения духовных потоков.', goal: 'Найти технику: 10 минут исследования, ускоряемого осмотром развалин.', ready: s => s.found, reward: { relics: 1 }, button: 'Прочитать первую страницу' },
     { title: 'Первый прорыв', text: 'Горький травяной отвар обжигает горло. Сосредоточившись на узоре сутры, ты направляешь дыхание по схеме с нефритового осколка. Камень в ладони отвечает мерной тёплой пульсацией. Внутренние зажимы в груди расходятся с отчётливым треском, и по меридианам впервые устремляется плотный поток духовной энергии — совершается прорыв на первую ступень. Мышцы наливаются лёгкостью и силой, а чувства обретают неслыханную прежде чуткость.', goal: 'Заполнить понимание, собрать травы и совершить первый прорыв.', ready: s => s.realm >= 1, reward: { herbs: 10 }, button: 'Принять наставление' },
-    { title: 'За право идти дальше', text: 'У деревянного моста на выезде из деревни перекрыт проезд: человек с повязкой Белого Клыка упёрся в колесо той самой повозки, что привезла тебя в долину, и вымогает двойную пошлину. Используя силу первой ступени и окрепшее тело, ты сбиваешь вымогателя с ног в короткой схватке. Разбитый боец в спешке отступает. Хозяйка Мэй передаёт дорожный знак и адрес городского представительства: путь из долины свободен.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Узнать о наборе и собраться в путь' }
+    { title: 'За право идти дальше', text: 'У деревянного моста на выезде из деревни перекрыт проезд: человек с повязкой Белого Клыка упёрся в колесо той самой повозки, что привезла тебя в долину, и вымогает двойную пошлину. Используя силу первой ступени и окрепшее тело, ты сбиваешь вымогателя с ног в короткой схватке. Разбитый боец в спешке отступает. Хозяйка Мэй передаёт дорожный знак и адрес городского представительства: путь из долины свободен.', goal: 'Победить дорожного разбойника во вкладке испытаний.', ready: s => s.wins >= 1, reward: { gold: 25 }, button: 'Узнать о наборе и собраться в путь' },
+    { title: 'Большой набор у городских ворот', text: 'Повозка благополучно доставляет тебя на широкую площадь перед высокими каменными вратами Города Серебряного Моста. Здесь развернули шатры четыре великие секты долины. Старейшины и старшие ученики придирчиво оценивают прибывших новичков. Твои поступки на пути определили, какие школы готовы принять тебя. Выбери секту и принеси клятву ученика, чтобы завершить первую главу и начать путь адепта.', goal: 'Выбрать одну из открытых сект и принести клятву ученика.', ready: () => true, reward: {}, button: 'Вступить в секту' }
   ];
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
@@ -83,13 +95,14 @@
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>S.library(s,'invitation')},
     iron:{name:'Железные сухожилия',source:'Закрытая библиотека Каменного Оплота',desc:'Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.',effect:'body',secondary:'power',practiceBody:.005,available:s=>S.library(s,'gates')}
   };
-  const fresh = () => ({...baseFresh(), atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
   const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
   const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
   function storyBeat(s,index=s.storyStep){
     const original=story[index];if(!original)return null;
-    const location=index===4?'ruins':'village',beat={...original,location};
+    const location=index===4?'ruins':index===7?'city':'village',beat={...original,location};
+    if(index===0){beat.prologueChoices=prologueChoices;}
     if(index===2&&(s.chapterOneTraining==='technique'||(!s.chapterOneTraining&&s.body<2&&Object.keys(s.cultivation.learned).length))){beat.title='Сила начинается со знания';beat.text='Вместо подъёма неподъёмных ящиков ты методично повторяешь движения изученного приёма. Точная траектория и распределение веса заменяют слепую силу: каждое повторение укрепляет баланс тела надёжнее бездумных нагрузок.';beat.button='Показать изученный приём';}
     if(index===3&&s.world.mentors.includes('trainer'))beat.text='Закрепив стойку у колодца, ты садишься перевести дух. Жэнь показывает, как сменить мышечное напряжение ровным ритмом вдохов и выдохов. Когда бег мыслей затихает и наступает полная тишина, из заброшенного храма за деревней доносится тонкий вибрирующий звон, неслышимый для окружающих.';
     if(index===6){
@@ -100,9 +113,19 @@
       if(s.chapterOneRoute==='service'){beat.title='Дорога без потерь';beat.text='Жители деревни, помнящие твою помощь, выходят к мосту сплочённой группой и помогают провести повозку в брод в обход заставы. Увидев решимость людей, вымогатель не решается на столкновение и освобождает путь. Мэй передаёт дорожный знак и адрес городского представительства: взаимное доверие открыло дорогу дальше.';}
       if(s.chapterOneRoute==='diplomacy'){beat.title='Слово из городского архива';beat.text='Ты предъявляешь дорожную грамоту с архивной печатью библиотекаря Вэя, полученную за доставку письма. Увидев официальный знак городской канцелярии, надсмотрщик опускает перекладину и без споров пропускает повозку. Мэй передаёт адрес городского представительства: выполненное обещание открыло путь дальше.';}
     }
-    const ready=index===6?state=>!!firstResolution(state):original.ready;
-    beat.goal+=` Место: ${W.locations[location].name}.`;
-    beat.ready=state=>state.stage===0&&!state.world.journey&&state.world.location===location&&ready(state);
+    if(index===7){
+      beat.sectChoices=sectChoices;
+      if(s.world.admission){
+        const schoolName=W.admissions[s.world.admission]?.name||'';
+        beat.title='Первая глава завершена';
+        beat.text=`Ты принёс клятву ученика и получил жетон школы: ${schoolName}. Первая глава завершена. Теперь предстоит начать жизнь полноправного адепта.`;
+        beat.goal='Начать следующую главу во вкладке «Путь героя».';
+        beat.button='Клятва принесена';
+      }
+    }
+    const ready=index===6?state=>!!firstResolution(state):index===7?state=>state.stage===0&&!state.world.journey:original.ready;
+    beat.goal+=` Место: ${W.locations[beat.location||location].name}.`;
+    beat.ready=state=>state.stage===0&&!state.world.journey&&(index===7?true:state.world.location===location)&&ready(state);
     return beat;
   }
   const techniqueSource=(s,k)=>k==='breath'?(s.world.admissionRoutes.includes('rescue')?'Спасение Сэня в лесу':'Дыхательный ритм храмовых письмен'):techniques[k].source;
@@ -121,7 +144,7 @@
   const spend = (s, c) => Object.entries(c).forEach(([k, v]) => s.resources[k] -= v);
   const buildCost = (s, k) => Object.fromEntries(Object.entries(projects[k].cost).map(([r, v]) => [r, Math.ceil(v * 1.5 ** s.buildings[k])]));
   const breakthroughCost = s => ({ herbs: Math.ceil(10 * 1.45 ** s.realm), ...(s.realm >= 3 ? { relics: Math.ceil(s.realm / 2) } : {}), ...(s.realm >= 6 ? { pills: Math.ceil(s.realm * 2) } : {}) });
-  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && (s.stage===0?!!firstResolution(s):(s.wins>=stages[s.stage].wins||W.recognition(s)>=W.recognitionNeeded(s))) && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=story.length) && (s.stage!==1||!!s.world.admission);
+  const canAdvance = s => s.stage<7 && s.found && s.realm>=stages[s.stage].realm && (s.stage===0?!!firstResolution(s):(s.wins>=stages[s.stage].wins||W.recognition(s)>=W.recognitionNeeded(s))) && affordable(s,stages[s.stage].cost) && (s.stage>0||s.storyStep>=7) && (s.stage!==1||!!s.world.admission);
   const canFight=s=>!s.world.journey&&s.cooldown<=0&&battlePower(s)>=enemy(s).power&&(s.stage>0||(s.realm>=1&&s.storyStep===6&&s.wins===0&&s.world.location==='village'));
   function chapterIntro(s){
     const peaceful=s.stage>1&&W.recognition(s,s.stage-1)>=W.recognitionNeeded({stage:s.stage-1});
@@ -307,7 +330,8 @@
       const beat=storyBeat(s);if(!beat)return guidance(s,'advance','',language);
       if(s.world.journey)return say('Дождись прибытия. Затем вернись к сюжетной цели.','Wait until you arrive, then return to the story objective.');
       if(s.world.location!==beat.location)return say(`Открой «Путешествия» и отправься: ${W.locations[beat.location].name}. Прогресс цели сохранится.`,`Open Travel and go to ${beat.location==='ruins'?'the ruins':'the village'}. Your objective progress is kept.`);
-      if(beat.ready(s)&&(s.storyStep!==6||!key||firstRouteReady(s,key)))return say('Условия выполнены. Нажми сюжетную кнопку, чтобы получить награду и продолжить.','Requirements met. Press the story button to collect your reward and continue.');
+      if(s.storyStep===0)return say('Выбери действие у застрявшей повозки, чтобы продолжить путь.','Choose an action at the stuck wagon to continue your journey.');
+      if(beat.ready(s)&&(s.storyStep!==6||!key||firstRouteReady(s,key))&&(s.storyStep!==7))return say('Условия выполнены. Нажми сюжетную кнопку, чтобы получить награду и продолжить.','Requirements met. Press the story button to collect your reward and continue.');
       if(s.storyStep===1){
         if(s.employment.order)return guidance(s,'claim-order','',language)+' '+say(`Цель: 10 подметаний (${s.clicks.sweep}/10) ИЛИ 15 монет (${n(s.resources.gold)}/15).`,`Objective: 10 sweeps (${s.clicks.sweep}/10) OR 15 coins (${n(s.resources.gold)}/15).`);
         return say(`На доске подработок возьми уборку → нажми «Подмести двор» ещё ${remaining(10,s.clicks.sweep)} раз → получи оплату. Альтернатива: накопи ещё ${remaining(15,s.resources.gold)} монет.`,`Accept a cleaning contract → use Sweep ${remaining(10,s.clicks.sweep)} more times → collect payment. Alternative: earn ${remaining(15,s.resources.gold)} more coins.`);
@@ -321,6 +345,10 @@
         if(key==='service')return say(`Признание ${W.recognition(s,0)}/3. В путешествиях помогай людям и завершай продолжения поручений. Затем вернись в деревню.`,`Recognition ${W.recognition(s,0)}/3. Help people during travels and complete follow-up tasks, then return to the village.`);
         if(key==='diplomacy')return say('Найди встречу с письмом в деревне, возьми письмо и доставь Вэю в городе. Затем вернись с рекомендацией в деревню.','Find the village letter encounter, take the letter and deliver it to Wei in the city. Then return to the village with his recommendation.');
         return say(`Выбери любой путь: победа в «Испытаниях» (${s.wins}/1), помощь людям (${W.recognition(s,0)}/3 признания) или доставка письма Вэю в городе.`,`Choose any route: win a Trial (${s.wins}/1), help people (${W.recognition(s,0)}/3 recognition), or deliver Wei’s letter in the city.`);
+      }
+      if(s.storyStep===7){
+        if(s.world.admission)return say('Клятва принесена. Начни следующую главу во вкладке «Путь героя».','Oath taken. Begin the next chapter in the Hero’s Path tab.');
+        return say('Выбери одну из открытых сект и принеси клятву ученика.','Choose one of the open sects and take the disciple’s oath.');
       }
     }
     if(action==='breakthrough'){
@@ -422,8 +450,32 @@
       if(value==='scout')taskPractice(s,'scout');
     } else if (type === 'story') {
       const beat=storyBeat(s);if(!beat||!beat.ready(s))return false;
+      if(s.storyStep===0){
+        const choiceKey=value||'shoulder';
+        if(!prologueChoices[choiceKey])return false;
+        s.prologueAction=choiceKey;
+        const choice=prologueChoices[choiceKey];
+        if(choice.body)s.body=Math.min(10*(s.realm+1),s.body+choice.body*W.bonus(s).body*techniqueBonus(s,'body'));
+        if(choice.calm)s.calm=Math.min(100,s.calm+choice.calm);
+        for(const [k,v] of Object.entries(choice.reward))s.resources[k]+=v;
+      }
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
       if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
+      if(s.storyStep===7){
+        const sectKey=value||s.world.admission||(s.world.admissionRoutes.find(k=>sectChoices[k]?.ready(s))||'gates');
+        if(!sectChoices[sectKey]||!sectChoices[sectKey].ready(s))return false;
+        if(!s.world.admissionRoutes.includes(sectKey)&&sectKey!=='gates')s.world.admissionRoutes.push(sectKey);
+        s.world.admission=sectKey;
+        if(!s.world.admissionGiftAwarded){
+          const a=W.admissions[sectKey];
+          if(a){
+            for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;
+            if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);
+            s.world.admissionGiftAwarded=true;
+            log(s,`Ты вступил: ${a.name}. ${a.text}`);
+          }
+        }
+      }
       for(const [k,v] of Object.entries(beat.reward))s.resources[k]+=v;
       W.memory?.recordStory(s,s.storyStep);
       log(s,`История: ${beat.title}.`);s.storyStep++;
@@ -432,8 +484,13 @@
     else if (type === 'advance') {
       const next = stages[s.stage];
       if (!canAdvance(s)) return false;
+      if (s.stage === 0 && !s.world.admission) {
+        const sectKey = s.world.admissionRoutes.find(k => sectChoices[k]?.ready(s)) || 'gates';
+        s.world.admission = sectKey;
+        if (!s.world.admissionRoutes.includes(sectKey) && sectKey !== 'gates') s.world.admissionRoutes.push(sectKey);
+      }
       spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, chapterIntro(s));
-      if(s.stage===2){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);log(s,`Ты вступил: ${a.name}. ${a.text}`);}
+      if(s.stage===2&&!s.world.admissionGiftAwarded){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);s.world.admissionGiftAwarded=true;log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
       const c = breakthroughCost(s);
       if (!s.found || s.xp < needed(s) || !affordable(s, c)) return false;
@@ -563,7 +620,7 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay,place:'village'};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
@@ -571,6 +628,7 @@
     base.world=W.validate(input.world,input.stage);
     if(input.world?.people===undefined&&W.memory)base.world.people=W.memory.validate(undefined,input);
     if(input.playerName!==undefined&&input.playerName!==null){const name=N.normalize(input.playerName);if(!name)throw Error('Неверное имя героя');base.playerName=name;}
+    if(input.prologueAction!==undefined&&input.prologueAction!==null){if(!Object.hasOwn(prologueChoices,input.prologueAction))throw Error('Неверное начальное действие');base.prologueAction=input.prologueAction;}
     if(input.chapterOneRoute!==undefined&&input.chapterOneRoute!==null){if(!Object.hasOwn(firstRoutes,input.chapterOneRoute))throw Error('Неверный путь первой главы');base.chapterOneRoute=input.chapterOneRoute;}
     if(input.chapterOneTraining!==undefined&&input.chapterOneTraining!==null){if(!['body','technique'].includes(input.chapterOneTraining))throw Error('Неверная подготовка героя');base.chapterOneTraining=input.chapterOneTraining;}
     if(input.cultivation!==undefined){const c=input.cultivation;if(!c||!c.learned||typeof c.learned!=='object'||Array.isArray(c.learned))throw Error('Неверные техники');
@@ -621,6 +679,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

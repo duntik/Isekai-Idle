@@ -26,7 +26,7 @@
       if(hint)row(root.IsekaiLocale?.language==='en'?'Next step':'Следующий шаг','→',hint);
       if(s.stage===0) {
         const beat=E.storyBeat(s);
-        if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}; ${cost(beat.reward)}`,s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):btn('story','',beat.button,beat.ready(s)));
+        if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}${Object.keys(beat.reward||{}).length?`; ${cost(beat.reward)}`:''}`,s.storyStep===0?Object.entries(beat.prologueChoices).map(([k,c])=>btn('story',k,uiText(c.name,c.enName),beat.ready(s))).join(' '):s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?Object.entries(beat.sectChoices).map(([k,c])=>btn('story',k,uiText(c.name,c.enName),beat.ready(s)&&c.ready(s))).join(' '):btn('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission)));
         else row('Сюжет','Завершён','Доступна следующая глава');
         if(s.storyStep>0)for(const p of E.world.developmentPaths?.(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,`${p.progress}/${p.total}`,`${p.description} ${p.next}`,`<button data-tab="world">${uiText('Искать встречи','Look for encounters')}</button>`);
       }

@@ -54,7 +54,7 @@
     {id:'ruins:3',title:'Последний путь ученика',text:'Под обвалом лежит погибший ученик Облачного Предела. На жетоне имя: Цзинь. Можно бережно завернуть останки и вернуть их школе через представительство в городе. Это поступок благодарности, а не добыча.',choices:[choice('return-remains','Забрать останки для возвращения в секту','Оформить передачу',{admission:'remains'}),choice('respect','Почтить память и уйти','Завершить осмотр',{calm:1})]},
     {id:'ruins:4',title:'Карта приглашения',text:'В тайнике сохранилась карта с печатью Пустого Неба. На обороте указан адрес городского представительства. Карта позволяет подать заявку, но испытание силы всё равно придётся пройти.',choices:[choice('invitation','Сохранить карту приглашения','Сохранить допуск',{admission:'invitation'}),choice('leave-card','Оставить карту в тайнике','Пропустить документ',{calm:1})]}
   );
-  const canApply=(s,k)=>s.stage===1&&!s.world.journey&&s.world.location==='city'&&!!admissions[k]&&(k==='gates'||s.world.admissionRoutes.includes(k));
+  const canApply=(s,k)=>(s.stage===1||(s.stage===0&&(s.storyStep>=6||s.chapterOneRoute)))&&!s.world.journey&&s.world.location==='city'&&!!admissions[k]&&(k==='gates'||s.world.admissionRoutes.includes(k));
   encounters.village.push(
     {id:'village:3',title:'Плотник Дао',text:'Дао чинит дверь постоялого двора. Он просит придержать доски и обещает заплатить. Можно вместо работы расспросить его о заброшенном храме. Дао объяснит, где начинается тропа, и посоветует не трогать печати: ясный план успокаивает, но осмотреть храм придётся самому.',choices:[choice('carpenter-help','Помочь с дверью','Выполнить заявку',{reward:{gold:9}}),choice('carpenter-map','Расспросить о храме','Получить сведения',{calm:2})]},
     {id:'village:4',title:'Повторный урок Жэня',text:'Жэнь узнаёт тебя у колодца. «Стойку помнишь? Теперь держи дыхание ровным». Он предлагает спокойно повторить движение, без чудесного роста силы.',requires:s=>s.world.mentors.includes('trainer'),choices:[choice('trainer-review','Повторить урок','Повторить методику',{calm:2}),choice('trainer-rest','Отдохнуть рядом с наставником','Восстановить лимит',{restore:true})]}
@@ -118,7 +118,7 @@
   const eligible=(s,scene)=>!s.world.completed.includes(scene.id)&&(!scene.requires||scene.requires(s));
   function random(w){let x=w.seed;x^=x<<13;x^=x>>>17;x^=x<<5;w.seed=x>>>0;return w.seed/4294967296;}
   const physical=['gold','herbs','qi','relics','wood','ore','pills','supplies','cosmic'];
-  const fresh=()=>({location:'village',journey:null,encounter:null,people:M?.fresh()||{},map:{explored:[],sites:[]},visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],admissionRoutes:[],admission:null,director:{misses:{},decisions:{},paths:{},pending:{}},seed:Math.floor(Math.random()*4294967295)+1,recent:[],completed:[],deaths:0,encounterCooldown:0});
+  const fresh=()=>({location:'village',journey:null,encounter:null,people:M?.fresh()||{},map:{explored:[],sites:[]},visits:Object.fromEntries(Object.keys(locations).map(k=>[k,0])),mentors:[],contacts:[],admissionRoutes:[],admission:null,admissionGiftAwarded:false,director:{misses:{},decisions:{},paths:{},pending:{}},seed:Math.floor(Math.random()*4294967295)+1,recent:[],completed:[],deaths:0,encounterCooldown:0});
   const sceneText=(item,field,language='ru',state)=>{const value=language==='en'&&item.en?.[field]?item.en[field]:item[field]||'';return typeof value==='function'?value(state):value;};
   const recognition=(s,chapter=s.stage)=>Object.values(s.world.director.paths[chapter]||{}).reduce((sum,n)=>sum+n,0);
   const recognitionNeeded=s=>12+Math.max(0,s.stage-1)*8;
@@ -300,7 +300,8 @@
     const routes=input.admissionRoutes===undefined?[]:input.admissionRoutes;
     if(!Array.isArray(routes)||routes.some(k=>!admissions[k]||k==='gates')||new Set(routes).size!==routes.length)throw Error('Неверное поручительство');w.admissionRoutes=[...routes];
     const admission=input.admission===undefined?null:input.admission;
-    if(admission!==null&&(!admissions[admission]||stage===0||(admission!=='gates'&&!routes.includes(admission))))throw Error('Неверный допуск');w.admission=admission;
+    if(admission!==null&&(!admissions[admission]||(admission!=='gates'&&!routes.includes(admission))))throw Error('Неверный допуск');w.admission=admission;
+    w.admissionGiftAwarded=Boolean(input.admissionGiftAwarded);
     for(const k of ['deaths','encounterCooldown']){if(!Number.isFinite(input[k])||input[k]<0||(k==='deaths'?!Number.isSafeInteger(input[k]):input[k]>300))throw Error('Неверное путешествие');w[k]=input[k];}
     for(const k of Object.keys(locations)){const n=input.visits?.[k]??(Q.locations[k]?0:undefined);if(!Number.isSafeInteger(n)||n<0)throw Error('Неверные посещения');w.visits[k]=n;}
     if(!Array.isArray(input.mentors)||input.mentors.some(k=>!Object.hasOwn(mentorNames,k))||new Set(input.mentors).size!==input.mentors.length)throw Error('Неверный наставник');w.mentors=[...input.mentors];
