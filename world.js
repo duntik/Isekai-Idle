@@ -108,7 +108,7 @@
     choice('retreat','Вернуться по своим следам','Вернуться по своим следам',{skip:true,en:{label:'Return along your own tracks'}})
   ]});
   for(const[k,list]of Object.entries(Q.build()))encounters[k]=list;
-  for(const[sceneId,ids,place]of [['village:ren-balance',['carry'],'village-mill'],['village:lin-delivered',['herbs','rest'],'forest-garden'],['city:wei-return',['study','medicine'],'ruins-observatory']])for(const c of Object.values(encounters).flat().find(e=>e.id===sceneId).choices)if(ids.includes(c.id))c.opensPlace=place;
+  for(const[sceneId,ids,place]of [['village:ren-balance',['carry'],'village-mill'],['village:lin-delivered',['herbs','rest'],'forest-garden'],['city:wei-return',['study','medicine'],'ruins-observatory'],['city:2',['assist'],'city-apothecary'],['city:huo-clinic',['clinic-pill','clinic-pay'],'city-apothecary'],['mountains:0',['lesson','mine'],'mountains-cliff']])for(const c of Object.values(encounters).flat().find(e=>e.id===sceneId)?.choices||[])if(ids.includes(c.id))c.opensPlace=place;
   for(const[k,list]of Object.entries(S.build()))encounters[k].push(...list);
   for(const[k,list]of Object.entries(G.build()))encounters[k].push(...list);
   if(C)for(const[k,list]of Object.entries(C.build()))encounters[k].push(...list);
@@ -168,7 +168,7 @@
     if(!locations[k]||!knownLocations(s).includes(k))return say('Дорога ещё неизвестна.','This route is not yet known.');
     if(s.world.journey)return say('Сначала закончи текущий переход.','Finish the current journey first.');
     if(s.world.location===k)return say('Ты уже здесь.','You are already here.');
-    if(locations[k].parent&&s.world.location!==locations[k].parent)return say('Сначала вернись в ближайшую область: ','First return to the nearby area: ')+(language==='en'?({village:'Wellside Village',forest:'Whispering Roots Forest',ruins:'Abandoned Temple'}[locations[k].parent]):locations[locations[k].parent].name);
+    if(locations[k].parent&&s.world.location!==locations[k].parent)return say('Сначала вернись в ближайшую область: ','First return to the nearby area: ')+(language==='en'?({village:'Wellside Village',forest:'Whispering Roots Forest',ruins:'Abandoned Temple',city:'Silver Bridge City',mountains:'Cloud Sword Pass'}[locations[k].parent]):locations[locations[k].parent].name);
     if(k==='city'&&s.stage<1&&!s.world.contacts.includes('scholar')&&!s.world.admissionRoutes.length)return say('Страж не пускает безымянного оборванца за ворота. Получи у Мэй письмо для Вэя, поручительство наставника или приглашение секты; начинающих практиков также пропускают.','The guard refuses an unknown ragged stranger. Obtain Mei’s letter for Wei, a mentor’s recommendation or a sect invitation; novice practitioners are also admitted.');
     return '';
   }

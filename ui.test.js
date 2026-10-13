@@ -27,7 +27,7 @@ for (let stage = 0; stage < 8; stage++) {
   if(stage===1)state.employment.order={kind:'ledger',progress:180,pay:20};
   if(stage===1){state.cultivation.learned.stance={rank:1,progress:0};state.cultivation.active='stance';}
   if(stage===1){state.achievements.counts.techniqueUses=5;E.achievements.sync(state);}
-  if(stage===2)state.employment.order={kind:'sweep',progress:3,pay:8};
+  if(stage===2)state.employment.order={kind:'sweep',progress:3,pay:8,place:'city'};
   const elements = new Map(), handlers = {};
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', innerHTML: '', style: {}, replaceChildren(){}, append(){}, addEventListener(t,f){this[t]=f;} }); return elements.get(id); };
   let stored = JSON.stringify(state);
@@ -48,11 +48,23 @@ for (let stage = 0; stage < 8; stage++) {
     context.document.activeElement=oldButton;
     intervalRender();assert.equal(restoredButton,true);
     content.querySelectorAll=()=>[];content.contains=()=>false;context.document.activeElement=null;
+    const oldKeyed={open:true,dataset:{panel:'achievements'}},newKeyed={open:false,dataset:{panel:'achievements'}};
+    let keyedReads=0;
+    content.querySelectorAll=selector=>selector==='details[data-panel]'?[oldKeyed]:selector==='details'?[keyedReads++===0?oldKeyed:newKeyed]:[];
+    intervalRender();assert.equal(newKeyed.open,true,'Stable panel state survives a render');
+    const differentPanel={open:false,dataset:{panel:'reference'}};
+    keyedReads=0;content.querySelectorAll=selector=>selector==='details[data-panel]'?[oldKeyed]:selector==='details'?[keyedReads++===0?oldKeyed:differentPanel]:[];
+    intervalRender();assert.equal(differentPanel.open,false,'An unrelated panel must not inherit an open positional index');
+    content.querySelectorAll=()=>[];
   }
   assert(element('navigation').innerHTML.includes('data-tab="world"'));
-  assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent));
+  assert(element('hero-title').innerHTML.includes(E.heroHeading(state).accent),view+' '+stage+' '+element('hero-title').innerHTML);
   assert(element('chapter').textContent.includes(E.stages[stage].name.toUpperCase()));
   assert(element('content').innerHTML.includes(view==='data'?'Показатели и действия':'data-action="breakthrough"'));
+  const heroHTML=element('content').innerHTML;
+  assert(heroHTML.indexOf('data-hero-section="overview"')<heroHTML.indexOf('data-hero-section="actions"'));
+  assert(heroHTML.indexOf('data-hero-section="actions"')<heroHTML.indexOf('data-panel="'+(view==='visual'?'achievements':'hero-data-achievements')+'"'));
+  if(stage===2){assert(!heroHTML.includes('data-action="click" data-value="sweep"'));assert(heroHTML.includes('data-action="travel" data-value="city"'));assert(heroHTML.indexOf('data-action="claim-order"')<heroHTML.indexOf('data-hero-section="actions"'));}
   assert.equal(context.document.documentElement.dataset.interface,view);
   assert.equal(context.document.title,view==='data'?'Сводные данные':'Isekai Idle — новая жизнь');
   element('open-map').click();

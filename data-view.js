@@ -10,10 +10,11 @@
     const f = n=>n.toLocaleString(root.IsekaiLocale?.locale||'ru-RU',{maximumFractionDigits:2});
     const cost = c=>Object.entries(c).map(([k,v])=>`${labels[k]}: ${f(v)}`).join('; ');
     const btn = (action,value,label,enabled=true)=>`<button data-action="${action}" data-value="${value}" ${enabled&&(action!=='advance'||E.canAdvance(s))&&(action!=='activity'||E.canActivity(s,value))&&(action!=='fight'||E.canFight(s))?'':'disabled'}>${label}</button>`;
-    const rows=[];
+    const rows=[],entries=[];
     const row=(name,value,note='',operation='—')=>{
       const hints=[...operation.matchAll(/data-action="([^"]+)" data-value="([^"]*)"/g)].map(m=>E.guidance(s,m[1],m[2],root.IsekaiLocale?.language||'ru')).filter(Boolean);
       rows.push(`<tr><th scope="row">${name}</th><td>${value}</td><td>${note}${[...new Set(hints)].map(hint=>`<div class="action-hint">${hint}</div>`).join('')}</td><td>${operation}</td></tr>`);
+      entries.push({name,operation,html:rows[rows.length-1]});
     };
     const build=levels=>Object.entries(E.projects).filter(([,p])=>levels.includes(p.stage)&&p.stage<=s.stage).forEach(([k])=>row(projectLabels[k],s.buildings[k],cost(E.buildCost(s,k)),btn('build',k,'Добавить',E.affordable(s,E.buildCost(s,k)))));
     if(tab==='hero') {
@@ -29,7 +30,10 @@
         else row('Сюжет','Завершён','Доступна следующая глава');
         if(s.storyStep>0)for(const p of E.world.developmentPaths?.(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,`${p.progress}/${p.total}`,`${p.description} ${p.next}`,`<button data-tab="world">${uiText('Искать встречи','Look for encounters')}</button>`);
       }
-      row('Текущее место',E.world.locations[s.world.location].name,activityLabels[s.activity]);
+      const journey=s.world.journey;
+      row('Текущее место',E.world.locations[s.world.location].name,journey?`${uiText('В пути:','Travelling to:')} ${E.world.locations[journey.destination].name} · ${Math.ceil(journey.remaining)} ${uiText('сек','sec')}`:activityLabels[s.activity]);
+      const pendingScene=E.world.current(s);
+      if(pendingScene)row(uiText('Ожидает решения','Awaiting your decision'),E.world.sceneText(pendingScene,'title',root.IsekaiLocale?.language),uiText('Встреча ждёт твоего выбора; открой путешествия, чтобы продолжить.','An encounter awaits your choice; open Travel to continue.'),`<button data-tab="world">${uiText('Продолжить встречу','Continue encounter')}</button>`);
       row('Занятие',activityLabels[s.activity],(E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.')+' '+uiText('Ручные действия, бой и путешествие прерывают занятие. Выбери его снова, когда закончишь.','Manual actions, combat and travel interrupt your activity. Select it again when finished.'));
       row(uiText('Тренировочный распорядок','Training routine'),E.routineReady(s)?uiText('Доступен','Available'):'—',E.automationHint(s,root.IsekaiLocale?.language||'ru'));
       if(s.employment.order&&E.workMastered(s,s.employment.order.kind))row(uiText('Освоенная работа','Familiar work'),'—',E.guidance(s,'claim-order','',root.IsekaiLocale?.language||'ru'),btn('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')));
@@ -41,7 +45,7 @@
       {
         row('Выносливость',`${f(s.stamina)}/${E.staminaMax(s)}`,root.IsekaiLocale?.language==='en'?`Recovery +${f(E.staminaRecovery(s))}/sec; interval 0.6 sec`:`Восстановление +${f(E.staminaRecovery(s))}/сек; интервал 0,6 сек`);
         row('Спокойствие',`${f(s.calm)}/100`,'Растёт от медитации');
-        for(const [k,c] of Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)))row(c.name,s.clicks[k],`${c.desc}; выносливость −${c.stamina}; ${E.taskPracticeText(k,root.IsekaiLocale?.language||'ru')}`,btn('click',k,'Выполнить',E.canClick(s,k)));
+        for(const [k,c] of Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)&&(!['sweep','haul'].includes(k)||E.canWorkOrder(s))))row(c.name,s.clicks[k],`${c.desc}; выносливость −${c.stamina}; ${E.taskPracticeText(k,root.IsekaiLocale?.language||'ru')}`,btn('click',k,'Выполнить',E.canClick(s,k)));
       }
       for(const [k,a] of Object.entries(E.activities).filter(([k])=>E.activityVisible(s,k))) row(activityLabels[k],s.activity===k?(E.activityRunning(s)?'Активно':'Приостановлено'):'Ожидание',a.desc+' '+E.taskPracticeText(k,root.IsekaiLocale?.language||'ru')+' '+Object.entries(a.rates||{}).map(([r,v])=>`${labels[r]} +${f(v*60*E.speed(s))}/мин`).join('; ')||'Развитие героя',btn('activity',k,'Назначить',s.activity!==k));
       if(s.stage>=1) {
@@ -55,7 +59,7 @@
       row('Приём заявок',Object.keys(E.orders).some(k=>E.orderAvailable(s,k))?'Доступен':'Недоступен','У знакомого заказчика; работа и оплата только в месте принятого заказа');
       const order=s.employment.order;
       if(!order&&!Object.keys(E.orders).some(k=>E.orderAvailable(s,k)))row('Поручения','—','Сначала познакомься с заказчиком. Поручения появляются после встреч; принятый заказ нужно выполнять и сдавать в указанном месте.');
-      if(order){row('Активный заказ',`${E.orderName(s,order.kind,order.place||'village')}: ${f(order.progress)}/${E.orders[order.kind].target}`,`Монеты +${order.pay}`,btn('claim-order','','Получить',E.canClaimOrder(s)));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
+      if(order){const place=order.place||'village',away=s.world.location!==place;row('Активный заказ',`${E.orderName(s,order.kind,place)}: ${f(order.progress)}/${E.orders[order.kind].target}`,`${E.world.locations[place]?.name||place}; Монеты +${order.pay}. ${uiText('Выполняется и сдаётся здесь.','Work and payment take place here.')}`,btn('claim-order','','Получить',E.canClaimOrder(s))+(away&&!s.world.journey?btn('travel',place,uiText('Вернуться к заказу','Return to contract'),E.world.canTravel(s,place)):''));row('Отмена','Без оплаты','Текущий прогресс заказа сбросится',btn('cancel-order','','Отменить'));}
       for(const[k,o]of Object.entries(E.orders).filter(([k])=>!order&&E.orderAvailable(s,k)))row(E.orderName(s,k),`Монеты +${E.orderPay(s,k)}`,`${o.target} ${k==='ledger'?'сек фоновой работы':'операций'}; тело от ${o.body}`,btn('order',k,'Принять',E.canOrder(s,k)));
       for(const[k,t]of Object.entries(E.techniques)){const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;if(known)row(t.name,`${learned?.rank||0}/5`,`${E.techniqueSource(s,k)}. ${t.desc}${t.practiceBody?uiText(" Практика этой двигательной техники также укрепляет тело и расходует выносливость."," Practicing this movement technique also strengthens the body and uses stamina."):""} ${cost(E.techniqueCost(s,k))}; ${learned&&learned.rank<5?`${f(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:'Первичное освоение'}`,btn('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?btn('equip-technique',k,s.cultivation.active===k?'Активна':'Применить',s.cultivation.active!==k):''));}
       if(s.stage<7) {const gate=E.stages[s.stage];row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${gate.realm}; ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`победы ${s.wins}/${gate.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}; ${cost(gate.cost)}${s.stage===0?`; сюжет ${s.storyStep}/${E.story.length}`:''}`,btn('advance','','Перейти',E.canAdvance(s)));}
@@ -94,6 +98,27 @@
       if(s.stage>=2&&w.admission)row('Твоя секта',W.admissions[w.admission].name,'Сохранено в личном деле');
       if(s.stage===1||s.stage>=2&&w.admission)for(const k of s.stage===1?Object.keys(E.sects.schools):[w.admission]){const lang=root.IsekaiLocale?.language||'ru',a=E.sects.info(s,k,lang);row(a.name,a.role,a.teacher+' · '+a.perk+' '+a.rule+' '+E.sects.progress(s,k,lang));}
       row('Возвращения после гибели',w.deaths,'После гибели теряется 50% переносимых ресурсов; прокачка, знания, сюжет и владения сохраняются');
+      const lang=root.IsekaiLocale?.language||'ru',en=lang==='en';
+      for(const[id,f]of Object.entries(W.frontiers)){
+        if(w.location===f.base||w.visits[f.base]>0){
+          const explored=w.map.explored.includes(id),ready=f.ready(s);
+          const status=explored?uiText('Разведано','Explored'):ready?uiText('Готов к разведке','Ready to explore'):uiText('Требования не выполнены','Requirements not met');
+          const desc=ready?(explored?uiText('Тропа проверена. Осмотр доступен на карте.','Route inspected. Accessible on the map.'):uiText('Безопасный подход готов. Исследуй на карте.','Safe approach ready. Explore on the map.')):(en?f.reasonEn:f.reason);
+          row(uiText('Рубеж: ','Frontier: ')+(en?f.en:f.name),status,desc);
+        }
+      }
+      const j=E.atlas.journal(s,E,w.location,lang);
+      if(j.visited||j.facts.length||j.resources.length||j.people.length){
+        const details=[
+          j.people.length?`<strong>${uiText('Знакомые:','People:')}</strong> ${j.people.map(p=>`${p.name} (${p.role})`).join('; ')}`:'',
+          j.resources.length?`<strong>${uiText('Ресурсы:','Resources:')}</strong> ${j.resources.join(', ')}`:'',
+          j.facts.length?j.facts.join(' '):''
+        ].filter(Boolean).join('<br>');
+        row(uiText('Дневник: ','Journal: ')+W.locations[w.location].name,j.visited?uiText('Исследовано','Explored'):uiText('Не посещено','Not visited'),details||j.summary);
+      }
+      for(const r of E.atlas.rumors(s,lang)){
+        row(uiText('Слух: ','Rumour: ')+r.source,r.confirmed?uiText('Подтверждён ✓','Confirmed ✓'):uiText('Не проверен ?','Unverified ?'),`${r.text} (${W.locations[r.place]?.name||r.place})`);
+      }
     }
     if(tab==='sect') {
       if(s.world.admission){const lang=root.IsekaiLocale?.language||'ru',a=E.sects.info(s,s.world.admission,lang);row(a.name,a.role,a.rule+' '+a.perk+' '+E.sects.progress(s,s.world.admission,lang));}
@@ -121,7 +146,33 @@
     if(tab==='legacy') {row('Цикл',s.life,`Бонус душ +${s.souls*10}%`);row('Перерождение',`+${Math.max(1,Math.floor(s.realm/6))}`,'Требуется ступень 24; ресурсы и владения сбросятся',btn('rebirth','','Переродиться',s.realm>=24));}
     if(tab==='roadmap') for(let i=0;i<=Math.min(7,s.stage+1);i++) row(E.stages[i].name,i<s.stage?'Завершён':i===s.stage?'Активен':'Ожидание',['Древнее наследие','Техники и испытания','Жизнь ученика','Управление сектой','Управление городом','Мировые порталы','Звёздные колонии','Наследие души'][i]);
     if(tab==='roadmap'&&s.stage>0&&s.stage<7){row('Ближайшая цель',E.stages[s.stage+1].name,`Уровень ${s.realm}/${E.stages[s.stage].realm}; победы ${s.wins}/${E.stages[s.stage].wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}; ${cost(E.stages[s.stage].cost)}`,btn('advance','','Перейти',E.canAdvance(s)));for(const[k,n]of Object.entries(s.world.director.paths[s.stage]||{}))row(E.world.pathNames[k],n);}
-    return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · ${E.activityRunning(s)?'Активно':'Приостановлено'}: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div class="table-scroll" tabindex="0" role="region" aria-label="Показатели и действия"><table class="data-table"><caption>Показатели и действия</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th><th scope="col">Условия</th><th scope="col">Действие</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    const table=(items,caption)=>`<div class="table-scroll" tabindex="0" role="region" aria-label="${caption}"><table class="data-table"><caption>${caption}</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th><th scope="col">Условия</th><th scope="col">Действие</th></tr></thead><tbody>${items.join('')}</tbody></table></div>`;
+    let content=table(rows,'Показатели и действия');
+    if(tab==='hero') {
+      const lang=root.IsekaiLocale?.language||'ru',beat=s.stage===0&&E.storyBeat(s);
+      const achievementNames=new Set(E.achievements.list(s,lang).map(a=>a.name));
+      const vowNames=new Set(E.achievements.challenges(s,lang).map(a=>a.name));
+      const techniqueNames=new Set(Object.values(E.techniques).map(t=>t.name));
+      const groups={overview:[],contract:[],actions:[],development:[],techniques:[],achievements:[],vows:[]};
+      for(const e of entries){
+        let group='development';
+        if(['Текущее место','Занятие','Ближайшая цель','Следующий шаг','Next step','Сюжет',beat?.title,'Ожидает решения','Awaiting your decision'].includes(e.name))group='overview';
+        else if(['Активный заказ','Отмена','Приём заявок','Поручения','Освоенная работа','Familiar work'].includes(e.name)||/data-action="(?:order|claim-order|cancel-order)"/.test(e.operation))group='contract';
+        else if(vowNames.has(e.name)||['Необязательные обеты','Optional vows'].includes(e.name))group='vows';
+        else if(achievementNames.has(e.name))group='achievements';
+        else if(techniqueNames.has(e.name))group='techniques';
+        else if(/data-action="(?:click|activity|technique-action|achievement-action|breakthrough)"/.test(e.operation)||['Выносливость','Спокойствие'].includes(e.name))group='actions';
+        groups[group].push(e);
+      }
+      const rank={'Текущее место':0,'Занятие':1,'Ближайшая цель':2,'Следующий шаг':3,'Next step':3};
+      groups.overview.sort((a,b)=>(rank[a.name]??4)-(rank[b.name]??4));
+      const headings={overview:uiText('Сейчас и ближайшая цель','Current situation and next goal'),contract:uiText('Поручения и работа','Contracts and work'),actions:uiText('Доступные действия','Available actions'),development:uiText('Развитие и пути героя','Progression and personal paths'),techniques:uiText('Техники и их освоение','Techniques and learning'),achievements:uiText('Достижения','Achievements'),vows:uiText('Необязательные обеты','Optional vows')};
+      content=Object.entries(groups).filter(([,items])=>items.length).map(([key,items])=>{
+        const body=table(items.map(e=>e.html),headings[key]);
+        return ['overview','contract','actions'].includes(key)?`<section class="data-hero-section" data-hero-section="${key}">${body}</section>`:`<details class="data-hero-section" data-hero-section="${key}" data-panel="hero-data-${key}"><summary>${headings[key]}</summary>${body}</details>`;
+      }).join('');
+    }
+    return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · ${E.activityRunning(s)?'Активно':'Приостановлено'}: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div aria-label="Показатели и действия">${content}</div>`;
   }
   root.IsekaiDataView={labels,tabs,render};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.IsekaiDataView;

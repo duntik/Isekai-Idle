@@ -67,7 +67,7 @@ html[data-interface="data"] .action-hint{font:12px/1.5 Arial;color:#334a60;margi
 .map-roads line{stroke:#afbc8e55;stroke-width:2;stroke-dasharray:7 8}
 .map-fog-label{position:absolute;right:40px;bottom:40px;color:#61716c;font:22px Georgia;letter-spacing:3px;opacity:.45}
 .map-node{position:absolute;width:210px;padding:14px;border:1px solid #65816d;border-radius:10px;background:#18302d;box-shadow:0 8px 25px #0004;color:var(--text)}
-.map-node strong{display:block;font-size:13px;line-height:1.5}
+.map-node strong{display:block;font-size:13px;line-height:1.5}.map-resources{display:inline-block;margin-left:4px;font-size:11px;letter-spacing:1px;vertical-align:middle}
 .map-node>small{display:block;font-size:10px;color:var(--green);margin:6px 0}
 .map-node p{font-size:12px;line-height:1.6;margin:6px 0 12px;color:var(--muted)}
 .map-node summary{font-size:11px;padding:7px 0;color:var(--muted)}

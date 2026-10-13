@@ -1,9 +1,16 @@
 'use strict';
 const assert=require('node:assert/strict'),E=require('./engine.js'),W=E.world;
 function open(s,location,id){s.world.location=location;s.world.encounterCooldown=0;s.world.encounter={location,id,index:W.encounters[location].findIndex(e=>e.id===id)};}
-const routes=[['village-mill','village','village:ren-balance','carry','beam','tong'],['forest-garden','village','village:lin-delivered','herbs','seeds','sui'],['ruins-observatory','city','city:wei-return','study','mirror','qiao']];
+const routes=[
+  ['village-mill','village','village:ren-balance','carry','beam','tong'],
+  ['forest-garden','village','village:lin-delivered','herbs','seeds','sui'],
+  ['ruins-observatory','city','city:wei-return','study','mirror','qiao'],
+  ['city-apothecary','city','city:2','assist','distill','bo'],
+  ['mountains-cliff','mountains','mountains:0','lesson','breeze','yun']
+];
 for(const[place,origin,quest,choice,discovery,person]of routes){
-  const s=E.fresh();E.action(s,'story');s.body=3;s.calm=5;s.stamina=100;s.resources.herbs=20;s.world.mentors=['trainer','herbalist','scholar'];s.world.contacts=['scholar'];
+  const s=E.fresh();E.action(s,'story');s.body=3;s.calm=5;s.stamina=100;s.resources.herbs=20;s.resources.gold=20;s.resources.qi=20;s.world.mentors=['trainer','herbalist','scholar'];s.world.contacts=['scholar'];
+  if(origin==='mountains')s.stage=1;
   assert(!W.knownLocations(s).includes(place));assert(!W.map(s).nodes.some(n=>n.id===place));assert(!E.action(s,'travel',place));
   // Prerequisites belong to the earlier meetings in each existing quest chain.
   s.world.director.decisions['village:ren-load/lift']=1;s.world.director.decisions['forest:lin-clinic/prepare']=1;s.world.director.decisions['ruins:wei-compare/compare']=1;
