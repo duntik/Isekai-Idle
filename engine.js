@@ -99,9 +99,74 @@
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
   const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
   const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
+  function storyChronicle(s,index=s.storyStep){
+    if(index===0){
+      return s.prologueAction
+        ? 'Колесо вызволено из глины, и телега скрипит по сухому настилу. Ты едешь на облучке навстречу новой жизни в Долине Плывущих Облаков.'
+        : 'Повозка увязла задним колесом в размытой колее. Выбери способ помочь возчику, чтобы продолжить путь в долину.';
+    }
+    if(index===1){
+      if(s.clicks.sweep>=10||s.resources.gold>=15)
+        return 'Проезд к навесу свободен. Пыль осела, и телега встала под крышу до темноты. Мэй ставит у очага горячую похлёбку и чистую воду.';
+      if(s.clicks.sweep>=5||s.resources.gold>=8)
+        return 'Половина площадки расчищена. Возчики начинают перекатывать телегу под навес. Хозяйка Мэй одобрительно кивает из дверей кухни.';
+      if(s.clicks.sweep>=1)
+        return 'Тяжёлая бамбуковая метла скребёт по базальтовым булыжникам. Спазмированные каналы ноют от каждого взмаха, но первые дорожки уже очищены от грязи.';
+      return 'Двор завален щебнем и размытой глиной. Мэй ждёт расчистки проезда у навеса, а метла прислонена к стене.';
+    }
+    if(index===2){
+      if(s.chapterOneTraining==='technique'||(!s.chapterOneTraining&&s.body<2&&Object.keys(s.cultivation.learned).length))
+        return 'Вместо слепого напряжения ты выверяешь форму изученного приёма. Точная траектория заменяет грубую силу, и тело находит устойчивое равновесие.';
+      if(s.body>=2)
+        return 'Стойка у колодца обретает монолитную крепость. Дрожь в коленях утихла, и Жэнь скупо кивает: бренное тело заложило первый надёжный фундамент.';
+      if(s.body>=0.5)
+        return 'Жэнь поправляет постановку стоп: «Спину держи прямо, толкайся пятками, дыши ровно». Мышечная боль сменяется упругим теплом в бёдрах.';
+      return 'Ноги подкашиваются от непривычной нагрузки. Спазмированные каналы простреливает тупой болью, а дыхание сбивается уже на первых движениях.';
+    }
+    if(index===3){
+      if(s.calm>=5)
+        return 'Наступает полная внутренняя тишина. Сквозь безмолвие с холма за деревней отчётливо доносится вибрирующий звон древней храмовой печати.';
+      if(s.calm>=1.5)
+        return 'Следуя счёту дыхания Жэня, пульс замедляется. Суета отступает, а в центре левой ладони Небесная Жемчужина Яда отзывается мягким согревающим теплом.';
+      return 'Сидя на каменном парапете колодца, трудно унять мысли. Шум деревенского двора, ржание лошадей и скрип колёс заглушают внутреннюю тишину.';
+    }
+    if(index===4){
+      if(s.found||s.explored>=600)
+        return 'Холодная пластина чёрного нефрита в твоих руках! Небесная Жемчужина Яда вспыхивает багровым светом, пробуждая письмена Сутры Злого Неба.';
+      if(s.explored>=350)
+        return 'Под рухнувшим алтарём темнеет толстый слой холодного пепла. Пальцы нащупывают край скрытой каменной шкатулки; ладонь покалывает от скрытой силы.';
+      if(s.explored>=150)
+        return 'Разгребая вековой щебень, ты находишь расколотые стелы с древними символами. Воздух в глубине святилища холодеет и наливается духовным давлением.';
+      return 'Заросшая тропа ведёт на холм к святилищу. Каменные ступени раскрошились от времени, а входной портал завален упавшими балками и золой.';
+    }
+    if(index===5){
+      if(s.realm>=1)
+        return 'Заблокированные каналы разошлись с громоподобным треском! Плотный поток истинной ци циркулирует по телу, знаменуя восхождение на первую ступень.';
+      const neededXp=needed(s);
+      if(s.xp>=neededXp&&s.resources.herbs>=10)
+        return 'Капля чистейшей эссенции готова в ладони, а меридианы выстроены по схеме сутры. Всё готово для сокрушения заблокированных с рождения оков!';
+      if(s.xp>=neededXp)
+        return 'Понимание схемы меридианов достигло предела, но для безопасного прорыва не хватает свежих трав: Жемчужина ждёт сырья для очищения эссенции.';
+      if(s.resources.herbs>=10)
+        return 'Лечебные травы собраны у очага. Осталось углубить медитацию, чтобы мысленный взор до конца проследил все узловые точки божественного осколка.';
+      return 'Узор Сутры Злого Неба запечатлён в сознании, но каналам требуется очищающий настой трав и время медитации для полного понимания схемы.';
+    }
+    if(index===6){
+      return s.chapterOneRoute
+        ? 'Застава преодолена, и дорога свободна. Хозяйка Мэй передаёт дорожный знак и адрес городского представительства сект.'
+        : 'Вымогатель Белого Клыка перекрыл мост на выезде. Докажи право идти дальше боем, помощью жителям или городской рекомендацией Вэя.';
+    }
+    if(index===7){
+      return s.world.admission
+        ? 'Клятва принесена, и жетон ученика скрепляет твой статус адепта. Первая глава пути завершена — впереди жизнь в великой секте.'
+        : 'Перед каменными вратами Города Серебряного Моста шатры великих сект ждут твоего выбора. Принеси клятву ученика.';
+    }
+    return '';
+  }
   function storyBeat(s,index=s.storyStep){
     const original=story[index];if(!original)return null;
-    const location=index===4?'ruins':index===7?'city':'village',beat={...original,location};
+    const chronicle=storyChronicle(s,index);
+    const location=index===4?'ruins':index===7?'city':'village',beat={...original,location,chronicle,microText:chronicle};
     if(index===0){beat.prologueChoices=prologueChoices;}
     if(index===2&&(s.chapterOneTraining==='technique'||(!s.chapterOneTraining&&s.body<2&&Object.keys(s.cultivation.learned).length))){beat.title='Сила начинается со знания';beat.text='Вместо подъёма неподъёмных ящиков ты методично повторяешь движения изученного приёма. Точная траектория и распределение веса заменяют слепую силу: каждое повторение укрепляет баланс тела надёжнее бездумных нагрузок.';beat.button='Показать изученный приём';}
     if(index===3&&s.world.mentors.includes('trainer'))beat.text='Закрепив стойку у колодца, ты садишься перевести дух. Жэнь показывает, как сменить мышечное напряжение ровным ритмом вдохов и выдохов. Когда бег мыслей затихает и наступает полная тишина, Небесная Жемчужина Яда в ладони отзывается на резонанс: из заброшенного храма за деревней доносится тонкий вибрирующий звон, неслышимый для окружающих.';
@@ -679,6 +744,6 @@
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
