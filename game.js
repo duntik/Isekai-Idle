@@ -310,6 +310,77 @@
     if (!tracker && !actions) return '';
     return tracker + (actions ? `<div class="story-quick-actions">${actions}</div>` : '');
   }
+  function systemBoxHtml(s, beat) {
+    if (!beat) {
+      return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE')}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${uiText('«[Начать следующую главу и отправиться в секту]».', '“[Start the next chapter and set out for your sect]”.')}</p></div>${storyGoalTrackerHtml(s)}</div>`;
+    }
+
+    const step = s.storyStep;
+    if (step === 0) {
+      return `<div class="story-goal system-box system-mortal"><div class="system-prompt-header"><span class="system-prompt-glyph">✦</span> <span class="system-prompt-title">${uiText('ИНСТИНКТ ВЫЖИВАНИЯ', 'SURVIVAL INSTINCT')}</span></div><div class="system-prompt-text"><p>${uiText('Холод размытой глины и тупая боль в спазмированных каналах. Ты ещё не понимаешь, где очнулся, но инстинкт выживания требует выбраться из придорожного рва и опереться на тех, кто знает здешний тракт.', 'The chill of muddy clay and dull ache in crippled channels. You do not yet understand where you woke up, but raw survival instinct urges you to climb out of the roadside ditch and lean on those who know these roads.')}</p></div>${storyGoalTrackerHtml(s)}${Object.keys(beat.reward || {}).length ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+    }
+
+    let boxClass = 'system-synced';
+    let headerTitle = '';
+    let promptMsg = '';
+
+    if (step === 1) {
+      boxClass = 'system-awakening';
+      headerTitle = uiText('НЕБЕСНАЯ ЖЕМЧУЖИНА · ПЕРВОЕ ЭХО', 'SKY POISON PEARL · FIRST ECHO');
+      promptMsg = uiText(
+        '«[Внимание: обнаружен критический упадок сосуда. Рекомендация: очистить двор и получить горячую пищу]». Светящиеся изумрудные строки мерцают прямо в воздухе перед глазами, заставляя вздрогнуть от испуга. Это не мираж — жемчужина проецирует в сознание древнее руководство!',
+        '“[Alert: critical vessel depletion detected. Recommendation: clear courtyard and obtain hot sustenance]”. Luminous emerald lines flicker right before your eyes, making you flinch in shock. This is no hallucination — the pearl is projecting an ancient guidance into your consciousness!'
+      );
+    } else if (step === 2) {
+      boxClass = 'system-diagnostic';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИАГНОСТИКА СОСУДА', 'INSIGHT SYSTEM · VESSEL DIAGNOSTICS');
+      promptMsg = uiText(
+        '«[Предупреждение: глубокие каналы спазмированы от рождения. Мышечный каркас нестабилен. Директива: укрепить физическое тело до ранга 2.0]». Ты начинаешь разбираться в сигналах системы: она безжалостно диагностирует изъяны тела и указывает кратчайший способ выжить.',
+        '“[Warning: profound channels crippled from birth. Muscular foundation unstable. Directive: temper physical body to rank 2.0]”. You begin getting accustomed to the system’s signals: it ruthlessly diagnoses flaws of the vessel and indicates the fastest path to survival.'
+      );
+    } else if (step === 3) {
+      boxClass = 'system-synced';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · СИНХРОНИЗАЦИЯ', 'INSIGHT SYSTEM · SYNCHRONIZATION');
+      promptMsg = uiText(
+        '«[Калибровка завершена. Связь с сознанием устойчива. Директива: накопить 5.0 спокойствия для локализации древнего резонанса]». Голос системы больше не пугает. Ровное дыхание синхронизирует жемчужину с твоим разумом.',
+        '“[Calibration complete. Neural link stabilized. Directive: accumulate 5.0 tranquility to lock onto ancient resonance]”. The system’s voice no longer frightens you. Even breathing synchronizes the pearl with your mind.'
+      );
+    } else if (step === 4) {
+      boxClass = 'system-synced';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · СКАНИРОВАНИЕ РУИН', 'INSIGHT SYSTEM · RUINS SCAN');
+      promptMsg = uiText(
+        '«[Сканирование руин святилища: зафиксирован след древнего божественного наследия. Рекомендация: осмотреть каменные плиты разрушенного алтаря]».',
+        '“[Sanctuary ruins scan: ancient divine legacy signature detected. Recommendation: inspect stone slabs of the fallen altar]”.'
+      );
+    } else if (step === 5) {
+      boxClass = 'system-breakthrough';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · ПРОТОКОЛ ПРОРЫВА', 'INSIGHT SYSTEM · BREAKTHROUGH PROTOCOL');
+      promptMsg = uiText(
+        '«[Очищение Небесной Жемчужиной: устранение ядов из трав завершено со 100% чистотой. Протокол прорыва: разрушить спазмы меридианов и открыть глубокие каналы]».',
+        '“[Sky Poison Pearl purification: herb toxin elimination complete with 100% purity. Breakthrough protocol: shatter meridian blocks and open profound channels]”.'
+      );
+    } else if (step === 6) {
+      boxClass = 'system-tactical';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · ТАКТИЧЕСКИЙ АНАЛИЗ', 'INSIGHT SYSTEM · TACTICAL EVALUATION');
+      promptMsg = uiText(
+        '«[Тактическая оценка: боец Белого Клыка преграждает проход через мост. Варианты преодоления: силовое устранение во вкладке Испытания или использование влияния]».',
+        '“[Tactical assessment: White Fang fighter blocking bridge passage. Resolution vectors: direct combat in Trials tab or leveraging social influence]”.'
+      );
+    } else if (step === 7) {
+      boxClass = 'system-synced';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · ОЦЕНКА ВЕЛИКИХ СЕКТ', 'INSIGHT SYSTEM · GREAT SECT EVALUATION');
+      promptMsg = uiText(
+        '«[Оценка путей развития: 4 великие секты проводят набор у Серебряного Моста. Анализ совместимости: выберите наставничество, соответствующее вашему пути]».',
+        '“[Path evaluation: 4 great sects conducting recruitment at Silver Bridge. Affinity analysis: select a mentorship aligned with your chosen path]”.'
+      );
+    } else {
+      boxClass = 'system-synced';
+      headerTitle = uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE');
+      promptMsg = `«[${beat.goal}]».`;
+    }
+
+    return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${storyGoalTrackerHtml(s)}${Object.keys(beat.reward || {}).length ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+  }
   function render() {
     const newlyEarned=E.achievements.list(s,L?.language||'ru').filter(a=>a.earned&&!seenMilestones.has(a.id));
     if(newlyEarned.length){newlyEarned.forEach(a=>seenMilestones.add(a.id));toast(uiText('Достижение: ','Achievement: ')+newlyEarned.slice(0,3).map(a=>a.name).join(' · '));}
@@ -355,7 +426,7 @@
       if(s.stage===0) {
         const beat=E.storyBeat(s);
         const novelControls=`<div class="novel-controls"><button type="button" id="novel-font-btn" class="novel-control-btn" title="${uiText('Шрифт с засечками / без засечек','Serif / Sans font')}">${novelSerif?uiText('С засечками','Serif'):uiText('Без засечек','Sans')}</button><button type="button" id="novel-size-btn" class="novel-control-btn" title="${uiText('Размер текста','Text size')}">${novelLarge?uiText('Крупный','Large'):uiText('Обычный','Normal')}</button></div>`;
-        const storyHtml=beat?`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s)}<h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}<div class="story-goal"><strong>${uiText('Твоя цель','Your objective')}</strong><p>${beat.goal}</p>${storyGoalTrackerHtml(s)}${Object.keys(beat.reward||{}).length?`<small>${uiText('Награда: ','Reward: ')}${costs(beat.reward)}</small>`:''}</div>${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>Пройденные события</summary>${E.story.slice(0,s.storyStep).map((_,i)=>E.storyBeat(s,i)).map(b=>`<h3>${b.title}</h3><p>${b.text}</p>${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}`).join('')||'<p>Твоя история только начинается.</p>'}</details></article>`:`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p><div class="story-goal"><strong>${uiText('Твоя цель','Your objective')}</strong><p>${uiText('Начать следующую главу и отправиться в секту.','Start the next chapter and set out for your sect.')}</p>${storyGoalTrackerHtml(s)}</div></article>`;
+        const storyHtml=beat?`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s)}<h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>Пройденные события</summary>${E.story.slice(0,s.storyStep).map((_,i)=>E.storyBeat(s,i)).map(b=>`<h3>${b.title}</h3><p>${b.text}</p>${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}`).join('')||'<p>Твоя история только начинается.</p>'}</details></article>`:`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
         heroStory=storyHtml;
       }
       heroTraining=`<section class="clicker-panel"><div class="section-head"><h3>Маленькие шаги — твоя сила</h3><small>Выносливость ${fmt(s.stamina)} / ${E.staminaMax(s)}</small></div><progress value="${s.stamina}" max="${E.staminaMax(s)}" aria-label="Выносливость"></progress><p class="intro">+${fmt(E.staminaRecovery(s))} ${t('выносливости/сек.')} ${uiText("Активные действия прерывают фоновое занятие. После них выбери занятие заново.","Manual actions interrupt your background activity. Select an activity again afterwards.")} Спокойствие: ${fmt(s.calm)} / 100.</p><div class="cards">${Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)&&(!['sweep','haul'].includes(k)||E.canWorkOrder(s))).map(([k,c])=>card(c.name,c.desc+' '+E.taskPracticeText(k,L?.language||'ru'),button('click',k,'Выполнить',E.canClick(s,k)),`${c.stamina} выносливости · выполнено ${s.clicks[k]}`)).join('')}</div><p class="intro">Пауза между действиями — 0,6 сек. Тело и понимание сохраняют свои пределы; осмотр развалин доступен до находки.</p></section>`;

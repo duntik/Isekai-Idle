@@ -159,3 +159,28 @@ html:not([data-interface="data"]) .tab[data-tab="combat"].active:after{color:var
 html:not([data-interface="data"]) .combat-duel{border-top:2px solid var(--crimson-flame);box-shadow:0 0 24px var(--crimson-glow)}
 html:not([data-interface="data"]) button[data-action="fight"]:not(:disabled){background:linear-gradient(115deg,#a82a2a,#6b1818);border-color:#e24b4b;color:#fff0f0;box-shadow:0 3px 14px rgba(226,75,75,0.4)}
 html:not([data-interface="data"]) button[data-action="fight"]:hover:not(:disabled){background:linear-gradient(115deg,#bf3232,#821c1c);box-shadow:0 5px 20px rgba(226,75,75,0.6)}
+
+/* Light Novel System Themes & FX */
+html:not([data-interface="data"]) .system-box{border:1px solid rgba(80,140,110,0.35);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.3);transition:border-color .3s ease,box-shadow .3s ease}
+html:not([data-interface="data"]) .system-box.system-mortal{border:1px solid rgba(229,195,130,0.35);border-left:3px solid #e5c382;background:linear-gradient(135deg,rgba(32,28,20,0.85),rgba(16,23,26,0.9))}
+html:not([data-interface="data"]) .system-box.system-mortal .system-prompt-title{color:#e5c382}
+html:not([data-interface="data"]) .system-box.system-mortal .system-prompt-text p{color:#e2dbce;font-style:italic}
+
+html:not([data-interface="data"]) .system-box.system-awakening{border:1px solid #2edba2;border-left:3px solid #2edba2;background:linear-gradient(135deg,rgba(16,45,36,0.88),rgba(12,27,32,0.92));box-shadow:0 0 16px rgba(46,219,162,0.22),inset 0 0 12px rgba(46,219,162,0.08);animation:system-pulse-jade 3s ease-in-out infinite}
+html:not([data-interface="data"]) .system-box.system-awakening .system-prompt-title{color:#4efbc0;text-shadow:0 0 8px rgba(46,219,162,0.5)}
+
+html:not([data-interface="data"]) .system-box.system-diagnostic{border:1px solid rgba(245,158,11,0.5);border-left:3px solid #f59e0b;background:linear-gradient(135deg,rgba(38,30,16,0.85),rgba(14,25,29,0.9))}
+html:not([data-interface="data"]) .system-box.system-diagnostic .system-bracket{color:#f59e0b}
+html:not([data-interface="data"]) .system-box.system-diagnostic .system-prompt-title{color:#f59e0b}
+
+html:not([data-interface="data"]) .system-box.system-synced{border:1px solid rgba(46,219,162,0.4);border-left:3px solid #2edba2;background:linear-gradient(135deg,rgba(14,38,32,0.8),rgba(12,27,32,0.88));box-shadow:0 4px 14px rgba(0,0,0,0.3)}
+
+html:not([data-interface="data"]) .system-box.system-breakthrough{border:1px solid rgba(229,195,130,0.6);border-left:3px solid #e5c382;background:linear-gradient(135deg,rgba(38,34,18,0.88),rgba(18,42,34,0.88));box-shadow:0 0 18px rgba(229,195,130,0.22)}
+html:not([data-interface="data"]) .system-box.system-breakthrough .system-bracket{color:#e5c382}
+html:not([data-interface="data"]) .system-box.system-breakthrough .system-prompt-title{color:#f8dfa8}
+
+html:not([data-interface="data"]) .system-box.system-tactical{border:1px solid rgba(226,75,75,0.55);border-left:3px solid #e24b4b;background:linear-gradient(135deg,rgba(42,18,18,0.88),rgba(16,25,28,0.9));box-shadow:0 0 16px rgba(226,75,75,0.22)}
+html:not([data-interface="data"]) .system-box.system-tactical .system-bracket{color:#e24b4b}
+html:not([data-interface="data"]) .system-box.system-tactical .system-prompt-title{color:#ff7676}
+
+@keyframes system-pulse-jade{0%,100%{box-shadow:0 0 12px rgba(46,219,162,0.15),inset 0 0 8px rgba(46,219,162,0.05)}50%{box-shadow:0 0 20px rgba(46,219,162,0.35),inset 0 0 14px rgba(46,219,162,0.15)}}
