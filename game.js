@@ -41,7 +41,7 @@
       toggle.title = heroCollapsed ? uiText('Развернуть верхнюю панель', 'Expand top panel') : uiText('Свернуть верхнюю панель', 'Collapse top panel');
     }
     const isScrolled = typeof window !== 'undefined' && ((window.scrollY || 0) > 160 || (window.pageYOffset || 0) > 160);
-    if (miniHud) miniHud.hidden = (view === 'data') || (!heroCollapsed && !isScrolled);
+    if (miniHud) miniHud.hidden = (view === 'data') || !isScrolled;
   }
   if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('scroll', applyHeroCollapse, { passive: true });

@@ -139,9 +139,9 @@ html[data-interface="data"] .story-chronicle p{color:#334454}
 .hero-toggle:hover{background:rgba(30,55,50,0.8);border-color:var(--gold)}
 .hero.hero-collapsed{min-height:0 !important;padding:12px 18px !important;margin:12px 0 10px !important}
 .hero.hero-collapsed #hero-title,.hero.hero-collapsed #hero-description,.hero.hero-collapsed .portal{display:none !important}
-.hero.hero-collapsed .hero-tags{margin-top:4px !important;display:inline-flex}
 .hero.hero-collapsed #chapter{display:inline-block;margin-right:12px}
-.hero.hero-collapsed .hero-toggle{top:9px;right:14px;transform:rotate(180deg)}
+.hero.hero-collapsed .hero-tags{margin-top:4px !important;display:inline-flex}
+.hero.hero-collapsed .hero-toggle{top:9px;right:14px}
 
 /* Compact Resources (embedded when hero is collapsed or in mini-hud) */
 .hero-compact-resources{display:none;margin-top:8px;gap:6px;flex-wrap:wrap;align-items:center}
