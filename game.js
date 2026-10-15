@@ -22,6 +22,7 @@
   let heroCollapsed = getUiPref('isekai-hero-collapsed') === 'true';
   let novelSerif = getUiPref('isekai-novel-serif') === 'true';
   let novelLarge = getUiPref('isekai-novel-large') === 'true';
+  let novelViewStep = null;
   function applyHeroCollapse() {
     const hero = document.querySelector ? document.querySelector('.hero') : null;
     const toggle = $('hero-collapse-toggle');
@@ -88,7 +89,114 @@
     if (k === 'cosmic' && s.resources.worlds > 0) rate += s.resources.worlds * 0.01;
     return rate;
   }
-  function novelStepperHtml(st) {
+  function stepDecisionInfo(s, stepIdx) {
+    if (stepIdx === 0) {
+      const act = s.prologueAction;
+      const choice = E.prologueChoices[act];
+      if (choice) {
+        return {
+          title: uiText(choice.name, choice.enName),
+          desc: uiText(choice.desc, choice.enDesc),
+          detail: uiText('Результат: место на облучке повозки и безопасный путь в Долину Плывущих Облаков к Мэй.', 'Outcome: A seat beside the wagon driver and safe passage to Floating Cloud Valley.')
+        };
+      }
+      return {
+        title: uiText('Помощь повозке на тракте', 'Assisting the wagon on the highway'),
+        desc: uiText('Ты помог возчику вызволить застрявшую повозку из размытого рва на сухой настил.', 'You helped the driver free his stuck wagon from the washed-out ditch onto dry road.'),
+        detail: uiText('Результат: спасение от ночного холода и путь к постоялому двору Мэй.', 'Outcome: Rescued from the mountain cold, traveling to Lady Mei\'s inn.')
+      };
+    }
+    if (stepIdx === 1) {
+      return {
+        title: uiText('Уборка двора и пробуждение системы', 'Sweeping the yard & system awakening'),
+        desc: uiText('Ты расчистил площадку для повозки тяжёлой бамбуковой метлой. На пике истощения Небесная Жемчужина Яда активировала строки духовного интерфейса подсказок.', 'You cleared the yard with Lady Mei\'s bamboo broom. At the brink of exhaustion, the Sky Poison Pearl awakened your spiritual guidance interface.'),
+        detail: uiText('Результат: горячая похлёбка, ночлег у очага и инициализация системы.', 'Outcome: Warm stew, hearth shelter, and spiritual interface initialization.')
+      };
+    }
+    if (stepIdx === 2) {
+      const isTech = s.chapterOneTraining === 'technique' || (!s.chapterOneTraining && s.body < 2 && Object.keys(s.cultivation?.learned || {}).length);
+      if (isTech) {
+        return {
+          title: uiText('Путь знания: Изучение техники', 'Path of Knowledge: Technique Mastery'),
+          desc: uiText('Вместо слепого подъёма тяжестей ты применил точную траекторию и распределение веса изученной техники. Баланс заменил грубую силу.', 'Instead of brute hauling, you applied the precise balance and weight distribution of your learned technique.'),
+          detail: uiText('Результат: рост мастерства без лишнего надрыва заблокированных каналов.', 'Outcome: Mastery growth without overtaxing blocked meridians.')
+        };
+      }
+      return {
+        title: uiText('Путь закалки: Упорные упражнения', 'Path of Tempering: Physical Conditioning'),
+        desc: uiText('Ты тренировал истощённое тело глубокими приседаниями, пробежками и работой у колодца под наставничеством старика Жэня.', 'You tempered your body with squats, sprints, and wellside conditioning under Old Ren\'s guidance.'),
+        detail: uiText('Результат: укрепление сухожилий, рост запаса и восстановления выносливости.', 'Outcome: Hardened tendons and expanded stamina capacity.')
+      };
+    }
+    if (stepIdx === 3) {
+      return {
+        title: uiText('Тишина между вдохами: Ритм дыхания', 'Silence Between Breaths: Steady Respiration'),
+        desc: uiText('Обуздав суетливые мысли, ты восстановил дыхание у колодца. В глубокой тишине Жемчужина Яда уловила вибрирующий звон печати древнего святилища.', 'Stilling turbulent thoughts, you calmed your breath. In deep stillness, the Poison Pearl resonated with the ancient seal in the mountain ruins.'),
+        detail: uiText('Результат: достигнуто спокойствие разума, открыт путь к Развалинам храма.', 'Outcome: Deep mental calm achieved, revealing the trail to the Ancient Temple Ruins.')
+      };
+    }
+    if (stepIdx === 4) {
+      return {
+        title: uiText('Древний алтарь и Сутра Злого Неба', 'Ancient Altar & Evil God Sutra'),
+        desc: uiText('В полуразрушенном горном святилище ты очистил алтарь от скверны и нашёл священный осколок Сутры Злого Неба, а также собрал редкие целебные травы.', 'At the ruined sanctuary, you cleansed the corrupted altar, uncovering the Evil God Sutra and gathering rare healing herbs.'),
+        detail: uiText('Результат: обретена божественная техника «Путь Пустого Неба» и алхимические ингредиенты.', 'Outcome: Acquired the Evil God technique and purified alchemical ingredients.')
+      };
+    }
+    if (stepIdx === 5) {
+      return {
+        title: uiText('Сокрушение спазмов: Прорыв на 1-ю ступень', 'Shattering Blockages: Realm 1 Breakthrough'),
+        desc: uiText('Жемчужина Яда очистила травы в безупречный 100% эликсир. Мощная волна ци разорвала врождённые спазмы, открыв глубокие каналы.', 'The Poison Pearl refined the herbs into a 100% pure elixir. A surge of qi shattered congenital spasms, opening your profound channels.'),
+        detail: uiText('Результат: статус культиватора 1-й ступени (Начальная ступень ци) и взрывной прилив сил.', 'Outcome: Attained Realm 1 (Elementary Qi Cultivator) with surging inner power.')
+      };
+    }
+    if (stepIdx === 6) {
+      const route = s.chapterOneRoute;
+      if (route === 'combat') {
+        return {
+          title: uiText('Путь меча: Поединок на мосту', 'Path of Might: Duel at the Bridge'),
+          desc: uiText('Ты дал открытый бой главарю вымогателей Белого Клыка на мосту и сокрушил его новой силой открытых каналов.', 'You confronted the White Fang extortionist on the bridge, overpowering him with your unsealed channels.'),
+          detail: uiText('Результат: первая боевая победа, спасение повозки и право идти в город.', 'Outcome: First combat victory, saving the wagon and earning passage to the city.')
+        };
+      }
+      if (route === 'service') {
+        return {
+          title: uiText('Путь сплочения: Дорога без потерь', 'Path of Unity: Passage Without Loss'),
+          desc: uiText('Жители деревни сплочённо вышли к реке и помогли провести повозку в брод в обход заставы. Бандиты не посмели напасть на людей.', 'United villagers came to the river and helped ferry the wagon across the shallows, making the bandits back down without a fight.'),
+          detail: uiText('Результат: 3 признания людей, мирный проход обоза и рекомендательный знак хозяйки Мэй.', 'Outcome: 3 community recognitions, peaceful passage, and Mei\'s token.')
+        };
+      }
+      if (route === 'diplomacy') {
+        return {
+          title: uiText('Слово из архива: Дорожная грамота Вэя', 'Word from the Archive: Wei\'s Charter'),
+          desc: uiText('Ты предъявил официальную гербовую грамоту городского архивариуса Вэя, полученную за доставку письма. Застава открыла путь без споров.', 'You presented the official sealed charter from scholar Wei. The checkpoint guards opened the barrier without argument.'),
+          detail: uiText('Результат: беспрепятственный проезд через заставу силой городского авторитета.', 'Outcome: Uncontested passage through the roadblock backed by city authority.')
+        };
+      }
+      return {
+        title: uiText('Застава на выезде из долины', 'Outpost at the Valley Exit'),
+        desc: uiText('Решение конфликта с бандой Белого Клыка на мосту.', 'Resolving the confrontation at the White Fang bridge.'),
+        detail: ''
+      };
+    }
+    if (stepIdx === 7) {
+      const adm = s.world.admission;
+      const sect = E.sectChoices[adm];
+      if (sect) {
+        return {
+          title: uiText(`Клятва верности: ${sect.name}`, `Disciple Oath: ${sect.enName}`),
+          desc: uiText(`${sect.role}. ${sect.desc}`, `${sect.enRole}. ${sect.enDesc}`),
+          detail: uiText(`Стартовый дар школы: ${sect.gift}. Ты принят в адепты великой секты!`, `Sect gift: ${sect.enGift}. You are welcomed as a disciple!`)
+        };
+      }
+      return {
+        title: uiText('Великий набор у городских ворот', 'Grand Recruitment at City Gates'),
+        desc: uiText('Выбор одной из четырёх сект Долины Плывущих Облаков.', 'Choosing one of the four great sects of the valley.'),
+        detail: ''
+      };
+    }
+    return null;
+  }
+  function novelStepperHtml(st, activeStep = (novelViewStep !== null && novelViewStep <= st.storyStep ? novelViewStep : st.storyStep)) {
     if (st.stage !== 0) return '';
     const stepLabels = [
       uiText('Пролог', 'Prologue'),
@@ -103,8 +211,19 @@
     const steps = stepLabels.map((lbl, idx) => {
       const isPast = idx < st.storyStep;
       const isCurrent = idx === st.storyStep;
-      const cls = isPast ? 'step-done' : isCurrent ? 'step-active' : '';
+      const isViewing = idx === activeStep;
+      const cls = [
+        isPast ? 'step-done' : isCurrent ? 'step-active' : 'step-locked',
+        isViewing ? 'step-selected' : ''
+      ].filter(Boolean).join(' ');
       const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
+      const isClickable = idx <= st.storyStep;
+      if (isClickable) {
+        const titleHint = isCurrent
+          ? uiText('Текущая глава (активная)', 'Current chapter (active)')
+          : uiText(`Прочитать архив: Глава ${idx + 1} (${lbl})`, `Read archive: Chapter ${idx + 1} (${lbl})`);
+        return `<button type="button" class="novel-step ${cls}" data-novel-step="${idx}" title="${titleHint}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></button>`;
+      }
       return `<div class="novel-step ${cls}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></div>`;
     }).join('<div class="novel-step-line" aria-hidden="true"></div>');
     return `<nav class="novel-stepper" aria-label="${uiText('Шаги первой главы', 'First chapter steps')}">${steps}</nav>`;
@@ -319,14 +438,15 @@
     if (!tracker && !actions) return '';
     return tracker + (actions ? `<div class="story-quick-actions">${actions}</div>` : '');
   }
-  function systemBoxHtml(s, beat) {
+  function systemBoxHtml(s, beat, stepOverride = s.storyStep, isArchive = false) {
     if (!beat) {
       return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE')}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${uiText('«[Начать следующую главу и отправиться в секту]».', '“[Start the next chapter and set out for your sect]”.')}</p></div>${storyGoalTrackerHtml(s)}</div>`;
     }
 
-    const step = s.storyStep;
+    const step = stepOverride !== undefined ? stepOverride : s.storyStep;
     if (step === 0) {
-      return `<div class="story-goal system-box system-mortal"><div class="system-prompt-header"><span class="system-prompt-glyph">✦</span> <span class="system-prompt-title">${uiText('ИНСТИНКТ ВЫЖИВАНИЯ', 'SURVIVAL INSTINCT')}</span></div><div class="system-prompt-text"><p>${uiText('Холод размытой глины и тупая боль в спазмированных каналах. Ты ещё не понимаешь, где очнулся, но инстинкт выживания требует выбраться из придорожного рва и опереться на тех, кто знает здешний тракт.', 'The chill of muddy clay and dull ache in crippled channels. You do not yet understand where you woke up, but raw survival instinct urges you to climb out of the roadside ditch and lean on those who know these roads.')}</p></div>${storyGoalTrackerHtml(s)}${Object.keys(beat.reward || {}).length ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+      const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
+      return `<div class="story-goal system-box system-mortal"><div class="system-prompt-header"><span class="system-prompt-glyph">✦</span> <span class="system-prompt-title">${uiText('ИНСТИНКТ ВЫЖИВАНИЯ', 'SURVIVAL INSTINCT')}</span></div><div class="system-prompt-text"><p>${uiText('Холод размытой глины и тупая боль в спазмированных каналах. Ты ещё не понимаешь, где очнулся, но инстинкт выживания требует выбраться из придорожного рва и опереться на тех, кто знает здешний тракт.', 'The chill of muddy clay and dull ache in crippled channels. You do not yet understand where you woke up, but raw survival instinct urges you to climb out of the roadside ditch and lean on those who know these roads.')}</p></div>${trackerContent}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
     }
 
     let boxClass = 'system-synced';
@@ -388,7 +508,8 @@
       promptMsg = `«[${beat.goal}]».`;
     }
 
-    return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${storyGoalTrackerHtml(s)}${Object.keys(beat.reward || {}).length ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+    const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
+    return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${trackerContent}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
   }
   function render() {
     const newlyEarned=E.achievements.list(s,L?.language||'ru').filter(a=>a.earned&&!seenMilestones.has(a.id));
@@ -448,7 +569,46 @@
       if(s.stage===0) {
         const beat=E.storyBeat(s);
         const novelControls=`<div class="novel-controls"><button type="button" id="novel-font-btn" class="novel-control-btn" title="${uiText('Шрифт с засечками / без засечек','Serif / Sans font')}">${novelSerif?uiText('С засечками','Serif'):uiText('Без засечек','Sans')}</button><button type="button" id="novel-size-btn" class="novel-control-btn" title="${uiText('Размер текста','Text size')}">${novelLarge?uiText('Крупный','Large'):uiText('Обычный','Normal')}</button></div>`;
-        const storyHtml=beat?`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s)}<h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>Пройденные события</summary>${E.story.slice(0,s.storyStep).map((_,i)=>E.storyBeat(s,i)).map(b=>`<h3>${b.title}</h3><p>${b.text}</p>${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}`).join('')||'<p>Твоя история только начинается.</p>'}</details></article>`:`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
+        const isViewingArchive = novelViewStep !== null && novelViewStep < s.storyStep;
+        const activeStep = isViewingArchive ? novelViewStep : s.storyStep;
+        const activeBeat = isViewingArchive ? E.storyBeat(s, activeStep) : beat;
+        let storyHtml;
+        if (isViewingArchive && activeBeat) {
+          const dec = stepDecisionInfo(s, activeStep);
+          const decisionHtml = dec ? `
+          <div class="story-decision-card">
+            <div class="story-decision-header">
+              <span class="story-decision-icon">✦</span>
+              <span class="story-decision-badge">${uiText('СДЕЛАННЫЙ ВЫБОР', 'CHOICE MADE')}</span>
+              <strong class="story-decision-title">${dec.title}</strong>
+            </div>
+            <p class="story-decision-desc">${dec.desc}</p>
+            ${dec.detail ? `<p class="story-decision-detail">${dec.detail}</p>` : ''}
+          </div>` : '';
+
+          storyHtml = `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">
+            ${novelControls}
+            <div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${activeStep+1} · АРХИВ`,`AGAINST THE GODS · VOL. 1 · CH. ${activeStep+1} · ARCHIVE`)}</div>
+            ${novelStepperHtml(s, activeStep)}
+            <div class="story-archive-banner">
+              <div class="story-archive-badge"><span class="archive-icon">📜</span> <strong>${uiText('Архив прочитанной главы', 'Archived Chapter')}</strong> · ${uiText('Все сделанные выборы уже запечатлены в твоей судьбе.', 'Your choices have already been woven into destiny.')}</div>
+              <button type="button" class="story-archive-return-btn" data-novel-step="${s.storyStep}">${uiText('↩ К текущей главе', '↩ Return to current')}</button>
+            </div>
+            <h2>${activeBeat.title}</h2>
+            <p class="story-narrative">${activeBeat.text}</p>
+            ${decisionHtml}
+            ${activeBeat.chronicle ? `<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${activeBeat.chronicle}</p></div>` : ""}
+            ${systemBoxHtml(s, activeBeat, activeStep, true)}
+            <div class="story-archive-bottom-actions">
+              <button type="button" class="btn-primary story-archive-return-btn" data-novel-step="${s.storyStep}">
+                ${uiText(`↩ Вернуться к текущей главе (${s.storyStep+1} · ${beat?.title || ''})`, `↩ Return to current chapter (${s.storyStep+1} · ${beat?.title || ''})`)}
+              </button>
+            </div>
+            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details>
+          </article>`;
+        } else {
+          storyHtml = beat ? `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s, s.storyStep)}<h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat, s.storyStep, false)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details></article>` : `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
+        }
         heroStory=storyHtml;
       }
       heroTraining=`<section class="clicker-panel"><div class="section-head"><h3>Маленькие шаги — твоя сила</h3><small>Выносливость ${fmt(s.stamina)} / ${E.staminaMax(s)}</small></div><progress value="${s.stamina}" max="${E.staminaMax(s)}" aria-label="Выносливость"></progress><p class="intro">+${fmt(E.staminaRecovery(s))} ${t('выносливости/сек.')} ${uiText("Активные действия прерывают фоновое занятие. После них выбери занятие заново.","Manual actions interrupt your background activity. Select an activity again afterwards.")} Спокойствие: ${fmt(s.calm)} / 100.</p><div class="cards">${Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)&&(!['sweep','haul'].includes(k)||E.canWorkOrder(s))).map(([k,c])=>card(c.name,c.desc+' '+E.taskPracticeText(k,L?.language||'ru'),button('click',k,'Выполнить',E.canClick(s,k)),`${c.stamina} выносливости · выполнено ${s.clicks[k]}`)).join('')}</div><p class="intro">Пауза между действиями — 0,6 сек. Тело и понимание сохраняют свои пределы; осмотр развалин доступен до находки.</p></section>`;
@@ -617,6 +777,14 @@
     if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
     if(b.id==='close-breakthrough'){if($('breakthrough-modal'))$('breakthrough-modal').hidden=true;return;}
+    if(b.dataset?.novelStep !== undefined){
+      const step = parseInt(b.dataset.novelStep, 10);
+      if(!isNaN(step) && step >= 0 && step <= s.storyStep){
+        novelViewStep = (step === s.storyStep) ? null : step;
+        render();
+        return;
+      }
+    }
     if(b.dataset?.place&&b.classList?.contains?.('location-details-btn')){openLocationDialog(b.dataset.place);return;}
     if(b.id==='close-location-dialog'||b.id==='close-location-dialog-btn'){$('location-dialog')?.close?.();currentDialogPlace=null;return;}
     if(b.dataset?.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
@@ -653,6 +821,7 @@
       }
       const realmBefore = s.realm;
       if (E.action(s, act, val)) {
+        if (['story', 'advance'].includes(act)) novelViewStep = null;
         if (s.realm > realmBefore) {
           const modal = $('breakthrough-modal');
           if (modal && view !== 'data') {
@@ -694,6 +863,7 @@
     if (b.dataset.action) {
       if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); }
       if (E.action(s,b.dataset.action,b.dataset.value)) {
+        if (['story', 'advance'].includes(b.dataset.action)) novelViewStep = null;
         if(s.realm>realmBefore){
           const modal=$('breakthrough-modal');
           if(modal&&view!=='data'){

@@ -207,17 +207,37 @@ html[data-interface="data"] .breakthrough-modal{display:none !important}
 /* Novel Stepper & Reading Controls */
 .novel-stepper{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:10px 0 14px;padding:8px 10px;background:rgba(12,27,32,0.65);border:1px solid rgba(117,133,106,0.3);border-radius:8px;overflow-x:auto}
 .novel-step{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;color:var(--muted);min-width:38px;text-align:center;flex-shrink:0}
-.novel-step-icon{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #3d5650;background:#0e1e22;font-size:11.5px}
+button.novel-step{background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;box-shadow:none;color:inherit;transition:transform .15s ease}
+button.novel-step:hover{transform:translateY(-1px)}
+button.novel-step:hover .novel-step-icon{border-color:var(--gold);box-shadow:0 0 10px rgba(228,195,138,0.4)}
+.novel-step-icon{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #3d5650;background:#0e1e22;font-size:11.5px;transition:box-shadow .2s,border-color .2s}
 .novel-step.step-done .novel-step-icon{background:#234739;border-color:#5c9e78;color:#a5d1b6}
 .novel-step.step-done .novel-step-label{color:#a5d1b6}
 .novel-step.step-active .novel-step-icon{background:#3b361a;border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(228,195,138,0.5)}
 .novel-step.step-active .novel-step-label{color:var(--gold);font-weight:700}
+.novel-step.step-selected .novel-step-icon{outline:2px solid var(--spirit-jade);outline-offset:2px;box-shadow:0 0 12px rgba(46,219,162,0.5)}
+.novel-step.step-locked{opacity:0.45;cursor:default}
 .novel-step-line{flex:1 1 10px;height:1px;background:#31464a;min-width:6px}
 .novel-controls{position:absolute;top:16px;right:18px;display:flex;gap:6px}
 .novel-control-btn{background:rgba(16,33,42,0.6);border:1px solid rgba(181,155,98,0.3);border-radius:5px;color:#c4d0c6;font-size:11.5px;padding:3px 8px;cursor:pointer}
 .novel-control-btn:hover{background:#243e37;border-color:var(--gold);color:var(--gold)}
 .story-novel-panel.novel-serif .story-narrative{font-family:Prata,Georgia,serif;font-size:15px;line-height:2}
 .story-novel-panel.novel-large .story-narrative{font-size:16.5px;line-height:2.1}
+
+/* Story Archive View & Decision Card */
+.story-archive-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;margin-bottom:14px;background:rgba(18,36,32,0.85);border:1px solid rgba(165,209,182,0.4);border-radius:8px;font-size:12px;color:#d8e8dc}
+.story-archive-badge{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.story-archive-return-btn{font-size:11.5px;padding:6px 14px;background:rgba(228,195,138,0.18);border:1px solid var(--gold);color:var(--gold);border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;transition:background .15s,box-shadow .15s}
+.story-archive-return-btn:hover{background:rgba(228,195,138,0.35);box-shadow:0 0 10px rgba(228,195,138,0.3)}
+.story-archive-bottom-actions{margin-top:20px;display:flex;justify-content:flex-end}
+.story-decision-card{margin:16px 0;padding:14px 18px;background:linear-gradient(135deg,rgba(26,45,40,0.85),rgba(16,28,32,0.92));border:1px solid rgba(228,195,138,0.4);border-left:4px solid var(--gold);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+.story-decision-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.story-decision-icon{color:var(--gold);font-size:13px}
+.story-decision-badge{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);background:rgba(228,195,138,0.15);border:1px solid rgba(228,195,138,0.35);border-radius:4px;padding:2px 7px}
+.story-decision-title{color:#f5e5c9;font-size:13.5px}
+.story-decision-desc{font-size:13px;line-height:1.75;color:#d1ded8;margin:0 0 6px}
+.story-decision-detail{font-size:12px;line-height:1.6;color:var(--green);font-style:italic;margin:0}
+.system-archive-status{font-size:12px;color:var(--spirit-jade);font-weight:600;margin-top:8px}
 
 /* Story Goal Tracker & Quick Actions */
 .story-goal-tracker{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px;padding:10px 14px;background:rgba(12,27,32,0.7);border:1px solid rgba(117,133,106,0.3);border-radius:8px}
