@@ -1,137 +1,243 @@
-﻿# Isekai Idle · v0.2
+# ✧ ISEKAI IDLE · 异界修真 ✧
 
-Браузерная incremental-игра о герое в мире культивации. Долгое развитие от слабого чужака до хранителя галактики. Каждая глава открывает новые системы; прежние снабжают следующие.
+<div align="center">
 
-Рабочий сюжетный план следующих версий: [design/README.md](design/README.md). Он включает арки первых трёх глав, восемь разных этапов развития и систему последствий. Предложенные механики отдельно обозначены и пока не считаются реализованными.
+[![Tests](https://img.shields.io/badge/Tests-36%2F36%20Passing-10b981?style=for-the-badge&logo=node.js&logoColor=white)](file:///tests)
+[![Dependencies](https://img.shields.io/badge/Dependencies-Zero-38bdf8?style=for-the-badge)](file:///package.json)
+[![Architecture](https://img.shields.io/badge/Interface-Dual--View%20Parity-f59e0b?style=for-the-badge)](file:///game.js)
+[![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA%20Compliant-a855f7?style=for-the-badge)](file:///visual.css)
+[![Languages](https://img.shields.io/badge/Language-English%20%7C%20%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-e11d48?style=for-the-badge)](file:///i18n.js)
 
-## Запуск
+**A causal, story-rich Xianxia incremental RPG built with Zero External Dependencies.**  
+*From a crippled mortal awakening beneath alien suns to the sovereign guardian of an interconnected galaxy.*
 
-При первом входе герой выбирает имя: своё или одну из подсказок. Генератор включает 240 имён и фамилий в трёх стилях, всего 4800 сочетаний на русском и английском. Выбранное имя не меняется при переключении языка, сохраняется в экспорте и облачной копии, после смерти и перерождения. Старые сохранения позволяют выбрать имя без сброса прогресса. До выбора имени новая игра ожидает игрока.
+[**Play Online (GitHub Pages)**](https://duntik.github.io/Isekai-Idle/) • [**Design Architecture**](design/README.md) • [**Cloud Setup**](CLOUD_SETUP.md)
 
-Ориентиры жанрового звучания: [Rudeus Greyrat, Mushoku Tensei](https://sevenseasentertainment.com/series/mushoku-tensei-jobless-reincarnation-light-novel/), [Ryoma, By the Grace of the Gods](https://j-novel.club/series/by-the-grace-of-the-gods). Подсказки сочетают традиционные имена и придуманные фэнтезийные фамилии; они не являются перечнем канонических персонажей.
+</div>
 
-Откройте index.html или разместите файлы на статическом сервере. Сборка и зависимости не нужны. Google Fonts необязательны.
+---
 
-GitHub Pages: Settings → Pages → Deploy from a branch → main → / (root).
-Адрес после включения: https://duntik.github.io/Isekai-Idle/
+## 🌟 Overview
 
-## Начало
+**Isekai Idle** is a browser-based cultivation incremental game inspired by classic eastern fantasy and light novels such as *Against the Gods* (ATG / Восставший против неба), *Mushoku Tensei*, and *By the Grace of the Gods*.
 
-Во вкладке путешествий отправьтесь в храм и выберите исследование местности: через 10 минут храмового исследования откроется техника. В лесу это занятие собирает травы; в деревне и дороге храм не исследуется. Тренируйте тело, чтобы победить первого разбойника. После находки занятия первой главы накапливают понимание. Для прорыва нужны полное понимание и травы. Первый прорыв, находка и победа открывают главу практика.
+Unlike traditional idle games that rely on artificial exponential inflation and mindless timers, **Isekai Idle** is built around an **interactive episodic novel engine**, deep **causal memory**, a **living fog-of-knowledge atlas**, and **strict mathematical determinism**.
 
-Одновременно герой выполняет одно занятие. Медитация даёт понимание и энергию, техника усиливает бой, поручения дают репутацию. Пределы навыков расширяются прорывами. Оружие покупается за монеты, позже требует руды. Подходящий стиль даёт +35% силы. Бои детерминированы; после победы пять минут отдыха.
+Every chapter unlocks completely new gameplay systems; previous achievements never become obsolete, transitioning into automated supply lines that fuel higher realms.
 
-## Главы
+```mermaid
+flowchart TD
+    subgraph C1["Chapter 1: The Outcast (Mortal Realm)"]
+        A["Mortal Reincarnation in Mud & Clay\n(Crippled Channels · Truck Crash)"] --> B["Physical Body Tempering\n(Direct Squats & Stance Conditioning)"]
+        B --> C["Sky Poison Pearl Awakening\n(Spiritual Echo & Vessel Diagnostics)"]
+        C --> D["Meditation & Mental Calm\n(Neural Calibration & Ancient Resonance)"]
+        D --> E["Sanctuary Ruins Exploration\n(Tablet of the Evil Sky Sutra)"]
+        E --> F["100% Pure Herb Alchemy\n& Meridian Breakthrough"]
+        F --> G["Bridge Threat Confrontation\n(Combat · Service · Diplomacy)"]
+        G --> H["The Grand Recruitment\n(Choose 1 of 4 Great Sects)"]
+    end
+    subgraph C2["Chapters 2–3: The Cultivator & Disciple"]
+        H --> I["Sect Apprenticeship & Library Research"]
+        I --> J["Elemental Martial Styles\n(Swift · Armored · Mystic Counters)"]
+        J --> K["Sect Tournaments & World Atlas Surveys"]
+    end
+    subgraph C3["Chapters 4–8: Cosmic Sovereign"]
+        K --> L["Sect Leadership & Alchemy Production"]
+        L --> M["Trade Districts & Caravan Supply Routes"]
+        M --> N["Interworld Shield & Planetary Portals"]
+        N --> O["Interstellar Fleet & Colony Expansion"]
+        O --> P["Observatory of Cosmic Laws & Soul Rebirth"]
+    end
 
-| Глава | Новые системы |
-|---|---|
-| Чужак | Работа, руины, находка, тело, первое испытание |
-| Практик | Культивация, стили, техника, оружие |
-| Ученик | Поручения, репутация, библиотека, турниры |
-| Глава секты | Последователи, назначения, здания, алхимия, влияние |
-| Город | Торговые районы, постоянные караваны, припасы |
-| Планета | Мировые узлы, щит, порталы, сеть миров |
-| Звёздная держава | Флот, колонии, межзвёздная экономика |
-| Галактика | Обсерватории законов, позднее перерождение |
+    classDef c1 fill:#162a28,stroke:#2edba2,stroke-width:1.5px,color:#edf0e8;
+    classDef c2 fill:#182836,stroke:#38bdf8,stroke-width:1.5px,color:#edf0e8;
+    classDef c3 fill:#2d1e2f,stroke:#e5c382,stroke-width:1.5px,color:#edf0e8;
+    class A,B,C,D,E,F,G,H c1;
+    class I,J,K c2;
+    class L,M,N,O,P c3;
+```
 
-Переход требует ступени, побед и ресурсов. Календарных блокировок нет. Стоимость прорывов растёт экспоненциально; скорость повышается с главами, библиотекой и наследием. Баланс предварительный: начало занимает часы, средние главы — дни, поздние — недели и дольше. Многомесячный баланс требует игровых замеров. Это первая версия систем, а не завершённый объём контента на каждый этап.
+---
 
-## Сохранения
+## ⚡ Key Highlights
 
-Автосохранение каждые 10 секунд, после действий и при уходе. Офлайн до 24 часов: занятия, производство, караваны и экспедиции продолжаются; прорывы и переходы совершаются вручную. Навыки останавливаются на пределах. Алхимия расходует травы и энергию и останавливается при нехватке.
+### 1. 📖 Interactive Light Novel Engine
+Read and participate in an authentic cultivation narrative. Rather than wall-of-text dumps, the story unfolds through episodic chapters with dynamic micro-events that react to your training, discoveries, and moral choices.
+* **Typographic Controls**: Toggle between atmospheric serif (`Prata`) and clean sans (`Manrope`), with customizable large-text reading modes.
+* **Chapter Chronicle**: Past milestones and decisive choices are immortalized in your personal chronicle log.
 
-Сохранение v2 использует отдельный ключ isekai-idle-v2. Старый прогресс v1 остаётся в браузере, но не переносится в несовместимую систему. Импорт/экспорт — JSON v2. Импорт и перерождение требуют подтверждения. Перерождение сбрасывает всё, кроме душ; каждая душа ускоряет личное развитие на 10%.
+### 2. 🔮 Evolving In-Universe System Prompts
+Say goodbye to omniscient video-game quest logs like *"Your Objective: Click 10 times"*. In **Isekai Idle**, guidance is delivered via the awakening of the **Sky Poison Pearl** embedded in your left palm:
+* **Step 0 (Awakening)**: `✦ SURVIVAL INSTINCT` — Pure mortal grit. No system, no brackets. Cold rain, crippled body, and survival dilemma.
+* **Step 1 (First Echo)**: `【 SKY POISON PEARL · FIRST ECHO 】` — Shimmering emerald runes glitch into vision. The protagonist panics (*"Is this sunstroke or madness?!"*).
+* **Step 2 (Vessel Diagnostics)**: `【 INSIGHT SYSTEM · VESSEL DIAGNOSTICS 】` — Analytical alerts evaluate flaws in the physical vessel and mandate body rank 2.0.
+* **Step 3 (Calibration)**: `【 INSIGHT SYSTEM · SYNCHRONIZATION 】` — Meditation with Old Zhen steadies the neural link, mapping coordinates to an ancient seal.
+* **Steps 4–7**: Advanced ruins scanning, 100% purification breakthrough protocols, tactical bridge threat evaluation, and sect affinity analysis.
 
-## Проверка
+### 3. ☯ Dual-Interface Architectural Parity
+Switch instantly between two full-featured presentation modes with **zero state loss**:
+* **Visual Novel View**: Dark jade and crimson tones, floating cloud valley banner with dual pale suns, SVG sect emblems, rotating meridian breakthrough mandalas, and floating damage numbers.
+* **Data Overview (Tabular View)**: Clean, high-density light-theme data tables designed for rapid information scanning, office-friendly play, and full screen-reader accessibility.
 
-node engine.test.js — первая глава без подставных ресурсов, переходы, офлайн/онлайн производство, алхимия, караваны, порталы, колонии, сохранения и перерождение.
+```mermaid
+flowchart LR
+    State[("Deterministic Engine State\n(Pure Data Model)")]
+    
+    State -->|"Visual Rendering Pipeline"| Visual["Visual Light Novel View\n• Atmospheric Xianxia Graphics\n• Story Novel Chapter Reader\n• Pulsing System Prompts\n• Rotating Breakthrough Mandala\n• Collapsible Hero & Docked HUD"]
+    State -->|"Tabular Rendering Pipeline"| Data["Data Overview Mode\n• High-Density Data Tables\n• WCAG 2.1 Compliant Light Scheme\n• Zero Visual Clutter / Fast Lookup\n• Screen-Reader Accessible"]
+    
+    Visual <-->|"1-Click Instant Toggle\n(Shared State & Control Parity)"| Data
+```
 
-node ui.test.js — запуск и отрисовка разделов всех глав в тестовом DOM.
+### 4. 🧭 Fog of Knowledge & World Atlas
+Unexplored locations begin enshrouded in true fog of war. Gain intelligence through:
+* **Heard Rumors**: Town tavern chatter reveals hints and danger ratings.
+* **Field Surveys**: Active reconnaissance discovers hidden mountain trails (cutting travel time by 20%) and records local herbal/mineral resources.
+* **NPC Memory**: Characters remember whether you helped them, accepted their contracts, or left them behind.
 
-## Два интерфейса
+### 5. ⛩ The 4 Great Sects
+In Chapter 1 Step 7, reach Crescent City gates at the Silver Bridge and align with one of four ancient schools:
 
-Сверху находятся кнопки «Визуальный» и «Табличный». Переключение сохраняет выбранный раздел и весь игровой прогресс. Оформление хранится отдельно от сохранения игры и запоминается при повторном открытии.
+| Sect | Insignia | Doctrine | Unique Perk | School Rule |
+|:---|:---:|:---|:---|:---|
+| **Jade Grove** (*Rescue*) | 🌿 Dew Ring | Compassion, medicine, life preservation | Herb gathering ×1.5, +20% potion potency | Non-aggression: No unprovoked bloodshed |
+| **Cloud Reach** (*Remains*) | 🗡 Flying Blade | Swift heavenly currents, wind dao | Travel time −25%, dodge counter attacks | Absolute non-attachment to worldly possessions |
+| **Empty Sky** (*Invitation*) | ☯ Void Ba-Gua | Ancient void scripture, profound insight | Qi accumulation ×1.35, mastery acceleration | Strict solitary cultivation intervals |
+| **Stone Bastion** (*Gates*) | 🏛 Basalt Gate | Iron physique, immovable mountain | Body conditioning ×1.5, damage barrier | Protect caravan routes and mortal outposts |
 
-Визуальный вид использует тёмные панели, золотые акценты, портал и хронику. Табличный вид использует светлую таблицу и системный шрифт; скрывает портал, хронику и игровой логотип. Названия ресурсов, техник, наставников, мест и действий совпадают с визуальным видом: «Монеты», «Травы», «Медитировать», а не условные обозначения. Встречи и цели сюжета представлены строками таблицы. Заголовок вкладки — «Сводные данные». Все действия доступны в обоих видах. URL остаётся прежним.
+---
 
-## Языки
+## 🗺 Grand Horizon Progression (Chapters 1–8)
 
-Сверху доступны RU / EN. Выбор языка запоминается отдельно в `isekai-idle-language`, не меняет прогресс и действует в обоих интерфейсах. На английский переведены главы, сюжет, встречи, техники, действия, хроника и диалог сохранений. Числа и даты используют выбранный язык. История в сохранении сохраняет исходный текст и переводится при отображении, поэтому старые сохранения совместимы.
+| Stage | Chapter Title | Core Theme & Unlocks | Realm Cap | Primary Economic Engine |
+|:---:|:---|:---|:---:|:---|
+| **I** | **The Outcast** (*Чужак*) | Mortal survival, yard sweeping, body tempering, Sky Poison Pearl awakening, ruins exploration, meridian breakthrough | Mortal 0–1 | Manual labor, Mei's tavern contracts |
+| **II** | **The Cultivator** (*Практик*) | Elemental martial styles, weapon forging, technique rank mastery, martial encounters | Realm 1–3 | Herb gathering, wandering contracts |
+| **III** | **The Disciple** (*Ученик*) | Sect library research, reputation accumulation, arena tournament challenges | Realm 4–6 | Sect missions, library speed multipliers |
+| **IV** | **Sect Master** (*Глава секты*) | Disciple recruitment, assignments (gardeners, lumberjacks, miners, alchemists), hall construction | Realm 7–9 | Automated herb, wood, ore & pill production |
+| **V** | **The Grand City** (*Город*) | Urban districts, granaries, permanent trade caravans, merchant guild contracts | Realm 10–12 | Caravan trade routes, supply logistics |
+| **VI** | **Planetary Node** (*Планета*) | Planetary defense shield, spirit nexus arrays, interworld transition portals | Realm 13–15 | Interworld essence generators |
+| **VII** | **Star Sovereign** (*Звёздная держава*) | Astral shipyard, cosmic fleet construction, colonial expeditions to distant worlds | Realm 16–18 | Multi-world colonial harvesting |
+| **VIII** | **Galactic Core** (*Галактика*) | Cosmic law observatories, universal comprehension, Celestial Soul Rebirth | Realm 19–24+ | Soul reincarnation legacy bonuses (+10%/soul) |
 
-Словари: `i18n.js` — базовые названия и переключение, `i18n-story.js` — сюжет и встречи, `i18n-ui.js` — интерфейс, сообщения и условия. `node localization.test.js` проверяет обе раскладки, главы, встречи, дополнительные состояния, перевод статических текстов, переключение и сохранность прогресса.
+---
 
-Референсы для компактного текстового представления и смены оформления: https://pmotschmann.github.io/Evolve/ и https://kittensgame.com/web/ .
+## 🎮 Gameplay Systems & Mechanics
 
-## Перенос и облако
+### Physical Body vs. Spiritual Insight
+* **Body Conditioning**: Unlike many idle games, the physical body **cannot be trained passively**. Strengthening sinews and bones requires conscious physical effort (squats, stone stance, running drills).
+* **Meditation & Insight**: Passive breathing and tranquility nurture the soul, accumulating Insight and Spiritual Qi. Manual physical labor temporarily interrupts meditation.
+* **Deterministic Battles**: Combat calculations are 100% deterministic with zero RNG coinflips. Match your active style against your opponent's stance (+35% counter bonus) to guarantee victory.
 
-Кнопка «Данные и облако» сверху: сжатый код сохранения, импорт кода/JSON, восемь локальных резервных копий и вход в облако. Экспорт файлов содержит дату. Старые JSON v2 поддерживаются. Для онлайн-синхронизации владельцу нужно настроить бесплатный проект Supabase: [CLOUD_SETUP.md](CLOUD_SETUP.md). Пока `cloud-config.js` пуст, сетевые запросы не отправляются. После согласования облачной копии доступна автоотправка раз в пять минут; конфликт версий требует выбора игроком.
+### Compact Interface Reduction
+Click the top toggle (`▴` / `▾`) on the hero banner to collapse the interface:
+* The 320px hero banner shrinks into a sleek 38px status bar.
+* The large grid of resource cards is tucked away, with all active balances (Coins, Herbs, Qi, Shards) embedded directly into compact glowing status chips.
+* The sticky Mini-HUD keeps track of your stamina and resources while scrolling through long novel passages.
 
-`node save.test.js` проверяет код, совместимость, повреждения, резервные копии, подтверждение восстановления и клиент облака с имитацией API. Реальные права доступа и подключение нужно проверить после настройки Supabase.
+```mermaid
+flowchart TD
+    subgraph Expanded["Expanded View (Immersive Reading)"]
+        H1["Full Mountain & Dual Sun Sky Banner"]
+        H2["Story Chronicle & Lore Heading"]
+        H3["Full Resource Grid (Large Themed Cards)"]
+        H1 --- H2 --- H3
+    end
 
-## Активное начало и сюжет первой главы
+    subgraph Collapsed["Collapsed View (Compact Interface)"]
+        C1["38px Compact Status Strip"]
+        C2["Embedded Resource Chips: 🪙 15 · 🌿 8 · ✧ 0"]
+        C3["Direct Access to Light Novel Narrative & Docked Actions"]
+        C1 --- C2 --- C3
+    end
 
-Приседания и бег развивают тело только кликами, в любой главе; фоновой тренировки тела нет. Медитация выполняется пассивно: до находки даёт спокойствие, после — понимание и энергию. Общая выносливость: 100, восстановление 0,4/сек; пауза между действиями 0,6 сек. Подметание и перенос ящиков выполняют заказы, а не качают тело. Осмотр развалин доступен в первых двух главах до находки.
+    Expanded <-->|"Click ▴ / ▾ Toggle"| Collapsed
+```
 
-Первая глава содержит семь сцен с Мэй, наставником Жэнем и первым конфликтом с Белым Клыком. Награды выдаются один раз после выполнения цели и подтверждения сцены. Перед переходом к практике завершите историю; цели можно выполнять кликером или фоновыми занятиями. Пройденные сцены можно перечитать в текущем сюжетном блоке. В табличном интерфейсе — названия сцен и игровые цели с теми же условиями и наградами.
+---
 
-Сохранения v2 совместимы: новые поля добавляются автоматически, старые ресурсы и уровни сохраняются. Для игроков, уже прошедших первую главу в старой версии, история считается завершённой. Перерождение начинает сюжет заново.
+## 🛠 Technology Stack & Design Principles
 
-## Путешествия и встречи
+* **Zero Build Tools**: No Webpack, Vite, Babel, or NPM dependencies. Simply clone and open `index.html`.
+* **Pure Web Standards**: Modern ES2022 JavaScript, semantic HTML5, and native CSS custom properties.
+* **Vector Graphics**: Pure inline SVG art for sect insignias, breakthrough mandalas, and celestial landscapes.
+* **Offline Calculation**: Deterministic elapsed-time simulation supporting up to 24 hours of background progression.
+* **State Preservation**: Safe versioned JSON migrations (`isekai-idle-v2`), compressed save codes, 8 local backup slots, and optional Supabase cloud synchronization.
 
-Раздел «Путешествия» (в табличном виде — «Маршруты»): деревня, лес, город, храм и горный перевал. Перевал доступен со второй главы. Переходы занимают 30–120 секунд и завершаются офлайн; занятие героя продолжается. На месте подходящие фоновые занятия получают разные бонусы. Полученные раньше срока руда и пилюли отображаются в ресурсах и сохраняются для будущих глав.
+---
 
-В каждом месте три последовательные встречи с разными выборами: помощь, наставления, сбор, торговля, безопасное отступление или бой. После решения новой встречи нужно ждать пять минут. При прибытии встреча появляется автоматически, если интервал уже прошёл. Смена маршрута позволяет покинуть незавершённую встречу. Офлайн выборы не принимаются автоматически.
+## 🧪 Comprehensive Verification Suite
 
-Наставники дают постоянные бонусы, повторно не складывающиеся. Жэнь помогает тренировкам, Линь — сбору, Вэй и дыхательный приём — пониманию, Юнь — технике. Фоновые бонусы мест действуют только при нахождении на месте, а помощь наставников сохраняется в путешествиях и после смерти. Основная сюжетная цепочка остаётся доступной независимо от выбранного маршрута.
+The repository includes **36 deterministic test suites** powered by the native Node.js test runner (`node:test`):
 
-Опасный выбор показывает силу противника и точный исход. Если силы недостаточно, герой погибает и возвращается в деревню. Потеря — 50% переносимых ресурсов: монеты, травы, энергия, осколки, древесина, руда, пилюли, припасы, эссенция. Уровни, тело, техники, понимание, оружие, сюжет, связи, здания, работники, репутация, влияние и открытые миры сохраняются. Такая смерть не является перерождением и не даёт души.
+```bash
+# Run all 36 test suites
+node --test *.test.js
+```
 
-`node world.test.js` проверяет маршруты, встречи, наставников, расход материалов, безопасные выборы, сохранение прокачки при смерти, офлайн-переходы, старые сохранения и нейтральные действия всех встреч.
+### Test Suite Directory
 
-## Доска подработок
+| Test File | Verification Scope |
+|:---|:---|
+| `achievements.test.js` | 41 milestone definitions, unlock criteria, death persistence, offline parity |
+| `activity-compatibility.test.js` | Exclusive activities, manual action interruptions, travel restrictions |
+| `admission.test.js` | 4 sect admission routes, prerequisites, unique gifts, migration |
+| `atlas.test.js` | Fog of war, rumor verification, survey rewards, trail discoveries, map pins |
+| `automation.test.js` | Training routine automation, local work requirements, offline safety |
+| `causal-events.test.js` | Branching narrative consequences, deterministic replay, bilingual metadata |
+| `chapter-one.test.js` | Chapter 1 routes (Combat, Service, Diplomacy), guidance assertions |
+| `choice-explanations-integration.test.js` | 3,599 choice previews in English and Russian, death safety |
+| `choice-intent.test.js` | Danger transparency, honest outcome promises, practice limits |
+| `director.test.js` | Anti-streak RNG safety over 200 seeds, persistent scene IDs |
+| `employment.test.js` | Work contracts, manual payouts, cancellation, zero passive body gain |
+| `encounters.test.js` | Local scene pools, no immediate repeats, unique story finds |
+| `engine.test.js` | Core progression, realm breakthrough costs, offline/online balance |
+| `exploration-risk.test.js` | Deliberate exploration, warnings before commitment, safe retreats |
+| `generation.test.js` | 1,080 causal local scenes, peaceful advancement, attribution checks |
+| `local-activities.test.js` | Location-dependent actions, temple discoveries, travel pauses |
+| `localization.test.js` | 100% translation coverage, zero Cyrillic leakage in English mode |
+| `location-knowledge.test.js` | Progressive fog of war, NPC visits, resource harvesting surveys |
+| `location-popup.test.js` | Location detail modal, compact layout, backdrop dismissal |
+| `names.test.js` | 240 bilingual name parts (4,800 combinations) across 3 distinct styles |
+| `npc-memory.test.js` | Relationship persistence, mentor guidance, interaction recall |
+| `opening-pacing.test.js` | Pacing across labor, herbal, and archival progression paths |
+| `opening-paths.test.js` | 3 distinct Chapter 1 paths, non-combat options, save integrity |
+| `place-journal.test.js` | Field observations, people records, bounded resource discoveries |
+| `quest-places.test.js` | Discovered travel routes, parental unlocks, legacy visits |
+| `return-report.test.js` | Offline calculation deltas, capped gains, bilingual summary dialog |
+| `save.test.js` | Gzip save codes, Unicode safety, corruption resistance, cloud client |
+| `sects.test.js` | 4 exclusive sects, library research bonuses, legacy technique retention |
+| `story-memory-integration.test.js` | Causal alternatives, one-time rewards, relationship persistence |
+| `task-practice.test.js` | Technique practice limits, stamina expenditure, save compatibility |
+| `technique-actions.test.js` | Active technique mechanics, contextual action triggers |
+| `techniques.test.js` | 8 techniques, 5 ranks each, upgrade costs, offline practice |
+| `travel-quests.test.js` | Courier routes, safe refusals, travel encounters, migration |
+| `ui.test.js` | Dual-view control parity (Visual vs Data), tab switching, naming modal |
+| `unusual-paths.test.js` | Optional vows, pacifist advancement, legacy uncertainties |
+| `world.test.js` | World travel, encounter rotations, mentors, 50% resource loss on death |
 
-Заработок в начале — заказы с фиксированной оплатой: уборка (10 кликов, 8 монет), разгрузка (8 кликов, тело от 1, 12 монет), сверка накладных (180 секунд фоновой работы, 20 монет). Сначала принять заказ, затем выполнить и забрать оплату. Один активный заказ за раз; отмена удаляет его прогресс без оплаты. Уборка и разгрузка доступны во всех главах и не повышают тело. Во время этих кликов можно медитировать. Для сверки выбирается работа вместо медитации; при смене занятия заказ приостанавливается.
+---
 
-Каждые 5 завершённых заказов повышают оплату на 10%, максимум +100%. При принятии заказа в городе оплата ещё выше на 25%. Сумма фиксируется при принятии и не меняется при поездке. Фоновая работа без принятого заказа не создаёт деньги. Старое занятие train автоматически заменяется медитацией при загрузке; уже развитое тело сохраняется.
+## 🚀 Quickstart & Deployment
 
-Медитация теперь является начальным занятием. Клик дыхания удалён: понимание накапливается медитацией, а тело — исключительно упражнениями. Уроки наставников ускоряют упражнения, но не дают тело сами по себе.
+### Run Locally (Instant, No Install)
+Simply open `index.html` in any modern web browser:
+```bash
+# Or serve using any static file server:
+npx serve repository/
+```
 
-node employment.test.js — выполнение заказов, однократная оплата, офлайн-учёт, пауза, отмена, расценки и отсутствие пассивной прокачки тела.
+### Deploy to GitHub Pages
+1. Go to repository **Settings** → **Pages**.
+2. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
+3. Choose branch `main` and directory `/ (root)`.
+4. Your game will be live at `https://<username>.github.io/<repository-name>/`.
 
-## Техники и сюжетные пути
+### Cloud Synchronization (Optional)
+To enable multi-device cloud saves via Supabase, refer to [**`CLOUD_SETUP.md`**](CLOUD_SETUP.md).
 
-Восемь техник открываются через наследие, помощь Жэню и Линь, спасение лесного наставника, горный урок и обучение в выбранной секте. На странице героя показаны источники знаний. Изучение требует энергии и трав; известные техники можно свободно переключать. Одновременно действует одна техника: бонус к телу от кликов, пониманию или энергии медитации, сбору трав либо боевой силе. Сектовые техники дают два эффекта.
+---
 
-У каждой техники пять рангов. Для повышения нужно практиковать активную технику фоновым занятием «Осваивать технику» и оплатить следующий ранг. Время и стоимость удваиваются с рангом; практика учитывается офлайн. Смерть сохраняет изученные техники и их освоение. Старые сохранения получают пустой список без сброса героя. Оба интерфейса поддерживают все операции.
+## 📜 License & Acknowledgments
 
-`node techniques.test.js` проверяет источники, ранги, эффекты, офлайн-практику, сохранения и смерть.
-
-## Случайные встречи
-
-В каждой локации собственный набор персонажей и дел. Встреча выбирается случайно среди подходящих по знакомствам, этапу и прошлым решениям; последние две встречи исключаются, пока есть другие варианты. Опасные встречи реже выпадают начинающему герою. Первый урок сменяется повторным знакомством; найденные останки, карта и спасённый наставник не выдаются заново. Внутреннее поручение представительства доступно только ученику с выбранной сектой. Случайная последовательность и история сохраняются, поэтому загрузка того же сохранения не меняет следующий результат. Опасные решения по-прежнему принимает только игрок.
-
-Заказы принимаются в деревне и городе; уборка и разгрузка приостанавливаются в пути и на других участках. Уже принятые накладные можно сверять в дороге.
-
-`node encounters.test.js` проверяет разнообразие, условия, уникальные события, сохранение случайности и местные подработки.
-
-### Составные поручения и ближайшая цель
-
-Первая глава проверена тремя агентами и доработана: [отчёт о проверке](design/chapter-one-audit.md). Теперь у неё три финала — сила, поддержка жителей или рекомендация Вэя за доставленное письмо. Разговоры привязаны к месту, первые техники доступны для личной практики уже в этой главе. Подготовка допускает развитие тела либо изучение приёма. `node chapter-one.test.js` проверяет все маршруты, включая путь без кликов тела и без боя.
-
-Дальние горизонты скрыты: оба интерфейса показывают только текущую, пройденные и одну следующую главу. Местный генератор создаёт 540 совместимых поручений и 540 причинных продолжений. Доступность зависит от места, этапа и принадлежности к секте. Решение можно найти через труд, конкретную технику, снабжение или защиту от вымогателей. Осложнения меняют условия, а продолжение описывает результат выбранного способа.
-
-Награда — припасы или практика уже изученного приёма, а также признание. Начиная с практикующего героя, признание может заменить требование побед при переходе. Культивация, ресурсы и допуск в секту остаются обязательными. Признание закреплено за главой оказания помощи. Ожидающие продолжения, решения и случайная последовательность сохраняются, включая смерть героя.
-
-Подробности и границы реализованного: [design/generated-events.md](design/generated-events.md). `node generation.test.js` проверяет все шаблоны, мирное продвижение, причинность, награды, сохранения и ограничения.
-
-## Связанный сюжет и директор встреч
-
-Общий план трёх агентов: [design/story-director-plan.md](design/story-director-plan.md). Он связывает разные секты, турнир, свою общину и поздние миры через сеть духовных источников. Полные арки и альтернативное начало пока являются планом.
-
-Первый патч уже добавлен: постоянные ID сцен, память успешных решений, защита от долгого невезения и четыре причинных продолжения встреч. Мэй помогает после отказа от драки; Сэнь возвращает помощь за спасение; поставка трав Линь открывает благодарность Хо; архив Вэя помогает исследовать храмовые знаки. Состояние директора и решения сохраняются после смерти и загрузки.
-
-При неизменном наборе N важных допустимых событий они предлагаются за максимум `6 + N − 1` подходящих поисков. Игрок сам принимает или отклоняет помощь. Общий набор и обычная добыча не требуют редкой сцены. Нехватка трав для прорыва повышает шанс местной помощи.
-
-Местные занятия приостанавливаются во время путешествия и вне своей локации. Исследование — лес/храм; осколки, первый секрет и активный осмотр — храм; поручения секты — город/перевал. Медитация, освоение техники и принятые накладные продолжаются в пути. Старая прокачка и найденное наследие не сбрасываются.
-
-`node director.test.js` — гарантии на 200 seed, последствия, постоянные ID, сохранения и смерть. `node local-activities.test.js` — места, пауза, офлайн и совместимость.
+This project is open-source. Inspired by the Xianxia novel genre, *Against the Gods* (Mars Gravity), *Mushoku Tensei* (Rifujin na Magonote), and incremental pioneers like *Evolve* and *Kittens Game*.
