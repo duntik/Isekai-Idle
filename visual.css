@@ -1,13 +1,13 @@
 /* Visual theme only. The quiet table interface keeps its own palette and layout. */
 html:not([data-interface="data"]) .hero-overview{display:flex;align-items:center;gap:10px;border:1px solid #78957a55;border-radius:8px;background:linear-gradient(90deg,#1c342b,#13282b);margin-bottom:14px;padding:8px 14px}
 html:not([data-interface="data"]) .hero-overview-inner{display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap}
-html:not([data-interface="data"]) .hero-overview-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);background:#253d34;border:1px solid #436654;border-radius:4px;padding:2px 8px;flex-shrink:0}
+html:not([data-interface="data"]) .hero-overview-badge{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);background:#253d34;border:1px solid #436654;border-radius:4px;padding:2px 8px;flex-shrink:0}
 html:not([data-interface="data"]) .hero-overview-goal{color:#d8e2d4;font-size:12.5px;margin:0;line-height:1.5;flex:1}
 html:not([data-interface="data"]) .hero-current-order,html:not([data-interface="data"]) .hero-meeting{padding:20px;border:1px solid #bba57566;border-radius:12px;margin-bottom:18px;background:#243830}.active-order h3{margin:8px 0}.active-order p{font-size:12px;line-height:1.7}.active-order .actions{margin-top:14px}.hero-meeting p{font-size:12px}
 .hero-fold{margin:12px 0;border:1px solid var(--line);border-radius:8px}.hero-fold>summary{padding:15px 18px;cursor:pointer;font-size:13px;font-weight:600}.hero-fold-body{padding:0 18px 18px}.hero-fold-body .workers{margin-top:0;padding-top:10px}.hero-fold-body .story-panel{margin-bottom:0}.hero-fold[open]>summary{border-bottom:1px solid var(--line);margin-bottom:14px}
 html[data-interface="data"] .data-hero-section{margin:12px 0}html[data-interface="data"] details.data-hero-section{border:1px solid #ccd1d6;border-radius:2px}html[data-interface="data"] .data-hero-section>summary{padding:10px 12px;cursor:pointer;font-size:12px;font-weight:600;background:#f3f5f6}html[data-interface="data"] .data-hero-section .data-table{margin:0}html[data-interface="data"] .data-hero-section caption{text-align:left;padding:8px 12px}
 @media(max-width:600px){.hero-fold-body{padding:0 12px 12px}}
-html:not([data-interface="data"]){--bg:#0c171c;--panel:#15272c;--line:#304348;--text:#edf0e8;--muted:#a6b6b5;--gold:#e4c38a;--green:#a5d1b6}
+html:not([data-interface="data"]){--bg:#0c171c;--panel:#15272c;--line:#304348;--text:#edf0e8;--muted:#a6b6b5;--gold:#e4c38a;--green:#a5d1b6;--crimson-flame:#e24b4b;--crimson-glow:rgba(226,75,75,0.35);--crimson-bg:rgba(168,42,42,0.18);--spirit-jade:#2edba2;--celestial-gold:#e5c382}
 html:not([data-interface="data"]) body{background:radial-gradient(ellipse at 90% 0,#24483e66,transparent 45%),#0c171c}
 html:not([data-interface="data"]) header{height:auto;min-height:78px;padding:16px max(4%,calc((100vw - 1440px)/2));gap:24px;background:#0b161bdd;border-bottom:1px solid #d9bb7926}
 html:not([data-interface="data"]) .brand{font-size:18px;letter-spacing:3px;white-space:nowrap}
@@ -15,7 +15,7 @@ html:not([data-interface="data"]) .world-brand{color:var(--gold);font-weight:800
 html:not([data-interface="data"]) .header-meta{gap:10px}
 html:not([data-interface="data"]) #player-name{color:#cbd8cc;font-size:12px}
 html:not([data-interface="data"]) .view-switch{background:#07121666;border-color:#314348;border-radius:8px}
-html:not([data-interface="data"]) .view-switch button{background:transparent;border:0;box-shadow:none;font-size:11px;padding:7px 10px;font-weight:500}
+html:not([data-interface="data"]) .view-switch button{background:transparent;border:0;box-shadow:none;font-size:11.5px;padding:7px 10px;font-weight:500}
 html:not([data-interface="data"]) .view-switch button[aria-pressed="true"]{background:#31473e;color:#f0d7aa;box-shadow:0 1px 4px #0003}
 html:not([data-interface="data"]) main{max-width:1440px;padding:0 4%}
 html:not([data-interface="data"]) .hero{overflow:hidden;isolation:isolate;margin:24px 0 18px;padding:28px 32px;min-height:228px;border:1px solid #a4b39436;border-radius:16px;background:#142b2f url('assets/mountain-sky.svg') center right/cover no-repeat;box-shadow:0 14px 40px #0002}
@@ -27,11 +27,11 @@ html:not([data-interface="data"]) .hero p{max-width:620px;font-size:13px;color:#
 html:not([data-interface="data"]) .hero-tags{gap:8px;margin-top:16px}
 html:not([data-interface="data"]) .hero-tags span{padding:5px 10px;border:1px solid #c0d1b62b;border-radius:5px;background:#0c1e2280;color:#cddcc9}
 html:not([data-interface="data"]) .portal{display:none}
-html:not([data-interface="data"]) .eyebrow{font-size:10px;letter-spacing:1.8px;color:#d8bd8a}
+html:not([data-interface="data"]) .eyebrow{font-size:11.5px;letter-spacing:1.8px;color:#d8bd8a}
 html:not([data-interface="data"]) .resources{gap:10px;margin-bottom:22px;grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
 html:not([data-interface="data"]) .resource{position:relative;background:linear-gradient(130deg,#1c3236,#13252a);border:1px solid #31464a;border-radius:10px;padding:13px 16px;box-shadow:0 5px 15px #0001}
 html:not([data-interface="data"]) .resource:after{content:'';position:absolute;top:14px;right:14px;width:5px;height:5px;background:#bca778;border-radius:50%;box-shadow:0 0 12px #d9b87a33}
-html:not([data-interface="data"]) .resource .label{color:#acbebc;font-size:11px;letter-spacing:.2px}
+html:not([data-interface="data"]) .resource .label{color:#acbebc;font-size:11.5px;letter-spacing:.2px}
 html:not([data-interface="data"]) .resource .value{font-size:24px;font-weight:600;color:#f1e3c9;margin:6px 0 0;font-variant-numeric:tabular-nums}
 html:not([data-interface="data"]) .layout{gap:24px;grid-template-columns:160px minmax(0,1fr) 210px;border-top:0;padding-top:0;align-items:start}
 html:not([data-interface="data"]) .layout>aside:first-child{padding-top:8px}
@@ -41,10 +41,10 @@ html:not([data-interface="data"]) .tab:hover{background:#192d31;color:var(--text
 html:not([data-interface="data"]) .tab.active{background:linear-gradient(100deg,#2a4037,#1a2d2e);border:1px solid #8c9b6b55;color:#f1d4a0}
 html:not([data-interface="data"]) .tab.active:after{content:'\203a';margin-left:auto;color:#d5ba83}
 html:not([data-interface="data"]) .aside-note{padding:24px 8px;font-size:12px;color:#9eb5af}
-html:not([data-interface="data"]) .import-button{font-size:11px}
+html:not([data-interface="data"]) .import-button{font-size:11.5px}
 html:not([data-interface="data"]) .next-step{position:relative;border:1px solid #6b977655;border-radius:10px;background:linear-gradient(110deg,#254438,#1a3230);padding:16px 20px 16px 46px;box-shadow:0 6px 18px #0001}
 html:not([data-interface="data"]) .next-step:before{content:'\2726';position:absolute;left:17px;top:18px;color:#c2d9a6;font-size:18px}
-html:not([data-interface="data"]) .next-step h3{font-size:11px;letter-spacing:.6px;color:#bfd7ab;margin:0 0 5px}
+html:not([data-interface="data"]) .next-step h3{font-size:11.5px;letter-spacing:.6px;color:#bfd7ab;margin:0 0 5px}
 html:not([data-interface="data"]) .next-step p{font-size:13px;color:#e1ece0;line-height:1.75}
 html:not([data-interface="data"]) .story-panel{position:relative;background:linear-gradient(135deg,#293b34,#182b2f 65%);border:1px solid #b59b6260;border-top:2px solid #c6aa73;border-radius:12px;padding:24px;box-shadow:0 8px 24px #0002}
 html:not([data-interface="data"]) .story-panel h2{font-size:25px;color:#f0dec0;margin:12px 0;line-height:1.45}
@@ -55,17 +55,17 @@ html:not([data-interface="data"]) .story-goal strong{letter-spacing:.4px;color:#
 html:not([data-interface="data"]) .story-panel details{border-top:1px solid #b9b88926;padding-top:6px;margin-top:18px}
 html:not([data-interface="data"]) .progress-box,html:not([data-interface="data"]) .rebirth{background:linear-gradient(125deg,#21363a,#14272c);border:1px solid #46605888;border-radius:12px;padding:20px}
 html:not([data-interface="data"]) .progress-box h3{color:#dfd6b9;font-size:14px}
-html:not([data-interface="data"]) progress{height:7px;display:block;overflow:hidden;border-radius:10px}
-html:not([data-interface="data"]) progress::-webkit-progress-bar{background:#07171b;box-shadow:inset 0 1px 3px #0005}
-html:not([data-interface="data"]) progress::-webkit-progress-value{background:linear-gradient(90deg,#9c9260,#e0c78d);border-radius:10px}
-html:not([data-interface="data"]) progress::-moz-progress-bar{background:linear-gradient(90deg,#9c9260,#e0c78d);border-radius:10px}
+html:not([data-interface="data"]) progress{height:7px;display:block;overflow:hidden;border-radius:10px;background:#091014;border:1px solid #304348;box-shadow:inset 0 1px 3px rgba(0,0,0,0.7)}
+html:not([data-interface="data"]) progress::-webkit-progress-bar{background:#091014}
+html:not([data-interface="data"]) progress::-webkit-progress-value{background:linear-gradient(90deg,#9c9260,#e0c78d,#f5deaa);background-size:200% 100%;animation:qi-shimmer 3s ease infinite;border-radius:10px}
+html:not([data-interface="data"]) progress::-moz-progress-bar{background:linear-gradient(90deg,#9c9260,#e0c78d,#f5deaa);background-size:200% 100%;animation:qi-shimmer 3s ease infinite;border-radius:10px}
 html:not([data-interface="data"]) .clicker-panel{background:#12262b;border:1px solid #34514b;border-radius:12px;padding:20px;margin:22px 0}
 html:not([data-interface="data"]) .clicker-panel>.section-head h3{font-size:15px;color:#d6e2d0}
-html:not([data-interface="data"]) .clicker-panel progress::-webkit-progress-value{background:linear-gradient(90deg,#5c927a,#acd3ad)}
-html:not([data-interface="data"]) .clicker-panel progress::-moz-progress-bar{background:linear-gradient(90deg,#5c927a,#acd3ad)}
+html:not([data-interface="data"]) .clicker-panel progress::-webkit-progress-value{background:linear-gradient(90deg,#5c927a,#2edba2,#acd3ad);background-size:200% 100%;animation:qi-shimmer 3s ease infinite}
+html:not([data-interface="data"]) .clicker-panel progress::-moz-progress-bar{background:linear-gradient(90deg,#5c927a,#2edba2,#acd3ad);background-size:200% 100%;animation:qi-shimmer 3s ease infinite}
 html:not([data-interface="data"]) .cards{gap:14px}
-html:not([data-interface="data"]) .card{background:linear-gradient(145deg,#21373b,#172a30);border:1px solid #38504e;border-radius:10px;padding:18px;box-shadow:0 4px 12px #0001;transition:border-color .15s,background .15s}
-html:not([data-interface="data"]) .card:hover{border-color:#74917a;background:linear-gradient(145deg,#273f41,#1a3034)}
+html:not([data-interface="data"]) .card{background:linear-gradient(145deg,#21373b,#172a30);border:1px solid #38504e;border-radius:10px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 4px 14px rgba(0,0,0,0.25);transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
+html:not([data-interface="data"]) .card:hover{border-color:#74917a;background:linear-gradient(145deg,#273f41,#1a3034);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 8px 24px rgba(0,0,0,0.35)}
 html:not([data-interface="data"]) .card h3{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;margin:0;color:#e7e9d8;line-height:1.5}
 html:not([data-interface="data"]) .card h3:before{content:'\25c7';display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid #85926a44;border-radius:8px;background:#132628;color:#d6bd83;font-size:18px}
 html:not([data-interface="data"]) .card:has([data-action="click"]) h3:before{content:'\2191';color:#b7d7b4}
@@ -73,30 +73,30 @@ html:not([data-interface="data"]) .card:has([data-action="travel"]) h3:before{co
 html:not([data-interface="data"]) .card:has([data-action="order"]) h3:before{content:'\2261'}
 html:not([data-interface="data"]) .card:has([data-action="learn-technique"]) h3:before{content:'\2727'}
 html:not([data-interface="data"]) .card p{font-size:12px;color:#b5c5bf;line-height:1.8;margin:12px 0 16px}
-html:not([data-interface="data"]) .cost{font-size:11px;line-height:1.6;color:#d2bd92;background:#101f2466;border-radius:5px;padding:7px 9px;margin-bottom:12px}
+html:not([data-interface="data"]) .cost{font-size:11.5px;line-height:1.6;color:#d2bd92;background:#101f2466;border-radius:5px;padding:7px 9px;margin-bottom:12px}
 html:not([data-interface="data"]) button{background:linear-gradient(#2c4545,#223839);border:1px solid #526b5c;color:#e6eadc;border-radius:7px;padding:10px 14px;font-size:12px;font-weight:600;line-height:1.5;box-shadow:0 2px 4px #0002;transition:background .15s,border-color .15s,box-shadow .15s}
 html:not([data-interface="data"]) button:hover:not(:disabled){background:linear-gradient(#38594e,#2c4943);border-color:#98b38e;box-shadow:0 3px 12px #08171066}
 html:not([data-interface="data"]) button:active:not(:disabled){box-shadow:inset 0 2px 6px #0003}
 html:not([data-interface="data"]) button:disabled{opacity:1;background:#1a2b30;color:#839692;border-color:#33484a;box-shadow:none}
 html:not([data-interface="data"]) button[data-action="story"]:not(:disabled),html:not([data-interface="data"]) button[data-action="breakthrough"]:not(:disabled),html:not([data-interface="data"]) button[data-action="claim-order"]:not(:disabled),html:not([data-interface="data"]) button[data-action="advance"]:not(:disabled){background:linear-gradient(115deg,#e4c58c,#bda36e);border-color:#ebce98;color:#202b25;box-shadow:0 3px 14px #d6b7731c}
-html:not([data-interface="data"]) .action-hint,html:not([data-interface="data"]) .card .action-hint{color:#aebfb1;font-size:11px;line-height:1.75;padding-left:9px;border-left:2px solid #63867555;margin:4px 0 8px}
+html:not([data-interface="data"]) .action-hint,html:not([data-interface="data"]) .card .action-hint{color:#aebfb1;font-size:11.5px;line-height:1.75;padding-left:9px;border-left:2px solid #63867555;margin:4px 0 8px}
 html:not([data-interface="data"]) .workers{border-top:1px solid #81977333;margin-top:28px;padding-top:22px}
 html:not([data-interface="data"]) .workers>h3{font-size:16px;font-weight:600;color:#d9dfcb;margin:0 0 12px}
 html:not([data-interface="data"]) .intro{color:#aabdb8;line-height:1.8;font-size:12px}
 html:not([data-interface="data"]) .rebirth .eyebrow{color:#ddc38e}
 html:not([data-interface="data"]) .journal{border:1px solid #324947;border-radius:12px;padding:18px;background:linear-gradient(145deg,#172b2d,#102127);margin:0}
 html:not([data-interface="data"]) .journal h3{font-family:Prata,Georgia,serif;font-weight:400;font-size:16px;color:#d8ddca;line-height:1.6;margin:10px 0}
-html:not([data-interface="data"]) .event{font-size:11px;color:#adc0b8;border-bottom-color:#748b7226;padding:14px 0;line-height:1.8}
+html:not([data-interface="data"]) .event{font-size:11.5px;color:#adc0b8;border-bottom-color:#748b7226;padding:14px 0;line-height:1.8}
 html:not([data-interface="data"]) .event:first-child{color:#e3e7d5}
 html:not([data-interface="data"]) .event small{color:#c7af7e;letter-spacing:1px;margin-bottom:5px}
-html:not([data-interface="data"]) .tip{color:#91aaa2;border-top:1px solid #70876a33;padding-top:16px;font-size:10px}
+html:not([data-interface="data"]) .tip{color:#91aaa2;border-top:1px solid #70876a33;padding-top:16px;font-size:11.5px}
 html:not([data-interface="data"]) .identity-panel{background:linear-gradient(140deg,#213d37,#15272f);border:1px solid #9d97635e;box-shadow:0 25px 80px #0003}
 html:not([data-interface="data"]) footer{border-color:#8d986f26;color:#8aa49d;letter-spacing:1.3px}
 @media(min-width:1201px){html:not([data-interface="data"]) .layout>aside:first-child{position:sticky;top:20px}}
 @media(max-width:1200px){html:not([data-interface="data"]) .layout{grid-template-columns:150px minmax(0,1fr)}html:not([data-interface="data"]) .journal{grid-column:2}html:not([data-interface="data"]) .hero{padding:24px;min-height:210px}}
 @media(max-width:850px){html:not([data-interface="data"]) header{flex-wrap:wrap;padding:14px 4%;gap:12px}html:not([data-interface="data"]) .header-meta{justify-content:flex-start}html:not([data-interface="data"]) .hero h1{font-size:30px}html:not([data-interface="data"]) .hero>div:first-child{max-width:85%}}
 @media(max-width:768px){html:not([data-interface="data"]) .layout{display:block}html:not([data-interface="data"]) #navigation{display:flex;flex-wrap:wrap;gap:6px;margin-top:0}html:not([data-interface="data"]) .layout>aside:first-child{padding-top:0;margin-bottom:18px}html:not([data-interface="data"]) .layout>aside:first-child>.eyebrow{display:none}html:not([data-interface="data"]) .tab{font-size:12px;padding:9px 12px}html:not([data-interface="data"]) .journal{margin-top:22px}}
-@media(max-width:600px){html:not([data-interface="data"]) .hero{margin-top:16px;padding:22px 18px;min-height:0;background-position:65% center}html:not([data-interface="data"]) .hero>div:first-child{max-width:100%}html:not([data-interface="data"]) .hero:before{background:linear-gradient(90deg,#112127f2,#112127c0)}html:not([data-interface="data"]) .hero h1{font-size:27px}html:not([data-interface="data"]) .hero:after{display:none}html:not([data-interface="data"]) .hero-tags span{font-size:10px;padding:4px 8px}html:not([data-interface="data"]) .resources{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}html:not([data-interface="data"]) .resource{padding:12px}html:not([data-interface="data"]) .resource .value{font-size:22px}html:not([data-interface="data"]) .story-panel{padding:18px}html:not([data-interface="data"]) .story-panel h2{font-size:23px}html:not([data-interface="data"]) .clicker-panel{padding:14px}html:not([data-interface="data"]) .card{padding:16px}html:not([data-interface="data"]) .cards{gap:10px}html:not([data-interface="data"]) button{min-height:44px}html:not([data-interface="data"]) .view-switch button{min-height:36px}html:not([data-interface="data"]) .header-meta{gap:8px}html:not([data-interface="data"]) .next-step{padding:14px 14px 14px 40px}html:not([data-interface="data"]) .next-step:before{left:13px}html:not([data-interface="data"]) .card p{font-size:13px}}
+@media(max-width:600px){html:not([data-interface="data"]) .hero{margin-top:16px;padding:22px 18px;min-height:0;background-position:82% center}html:not([data-interface="data"]) .hero>div:first-child{max-width:100%}html:not([data-interface="data"]) .hero:before{background:linear-gradient(90deg,rgba(17,33,39,0.92) 0%,rgba(17,33,39,0.65) 60%,rgba(17,33,39,0.3) 100%)}html:not([data-interface="data"]) .hero h1{font-size:27px}html:not([data-interface="data"]) .hero:after{display:none}html:not([data-interface="data"]) .hero-tags span{font-size:11.5px;padding:4px 8px}html:not([data-interface="data"]) .resources{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}html:not([data-interface="data"]) .resource{padding:12px}html:not([data-interface="data"]) .resource .value{font-size:22px}html:not([data-interface="data"]) .story-panel{padding:18px}html:not([data-interface="data"]) .story-panel h2{font-size:23px}html:not([data-interface="data"]) .clicker-panel{padding:14px}html:not([data-interface="data"]) .card{padding:16px}html:not([data-interface="data"]) .cards{gap:10px}html:not([data-interface="data"]) button{min-height:44px}html:not([data-interface="data"]) .view-switch button{min-height:36px}html:not([data-interface="data"]) .header-meta{gap:8px}html:not([data-interface="data"]) .next-step{padding:14px 14px 14px 40px}html:not([data-interface="data"]) .next-step:before{left:13px}html:not([data-interface="data"]) .card p{font-size:13px}}
 @media(prefers-reduced-motion:reduce){html:not([data-interface="data"]) button,html:not([data-interface="data"]) .card{transition:none}}
 html:not([data-interface="data"]) .development-paths,html:not([data-interface="data"]) .technique-actions{margin:22px 0;padding:20px;border:1px solid #aec89333;border-radius:14px;background:linear-gradient(120deg,#24433966,#13282d88)}
 html:not([data-interface="data"]) .path-next{display:block;margin-top:12px;padding-top:10px;border-top:1px solid #aec89322;color:#d4dfbf;font-size:12px}
@@ -115,3 +115,47 @@ html:not([data-interface="data"]) .story-goal-tracker{background:#0a191d99;borde
 html:not([data-interface="data"]) .story-goal-progress-row progress::-webkit-progress-value{background:linear-gradient(90deg,#5c927a,#e0c78d)}
 html:not([data-interface="data"]) .story-goal-progress-row progress::-moz-progress-bar{background:linear-gradient(90deg,#5c927a,#e0c78d)}
 html:not([data-interface="data"]) .quick-action-btn.golden-btn:not(:disabled){background:linear-gradient(115deg,#e4c58c,#bda36e);border-color:#ebce98;color:#202b25;box-shadow:0 3px 14px #d6b77344}
+
+/* Navigation Glyphs */
+html:not([data-interface="data"]) .tab-glyph{font-size:13px;margin-right:7px;display:inline-block;opacity:0.85;color:var(--gold)}
+html:not([data-interface="data"]) .tab:hover .tab-glyph,
+html:not([data-interface="data"]) .tab.active .tab-glyph{opacity:1}
+
+/* Resource Cards & Icons */
+html:not([data-interface="data"]) .resource-icon{font-size:16px;margin-right:6px;display:inline-block;vertical-align:middle;filter:drop-shadow(0 0 4px rgba(255,255,255,0.2))}
+html:not([data-interface="data"]) .resource.resource-gold{border-top:2px solid #e5c382}
+html:not([data-interface="data"]) .resource.resource-body{border-top:2px solid #2edba2}
+html:not([data-interface="data"]) .resource.resource-stamina{border-top:2px solid #5ca0d3}
+html:not([data-interface="data"]) .resource.resource-xp{border-top:2px solid #e080e0}
+
+/* Sect Cards & Emblems */
+html:not([data-interface="data"]) .sect-card-emblem{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;margin-bottom:12px;padding:6px;transition:transform .2s ease,box-shadow .2s ease}
+html:not([data-interface="data"]) .sect-card-emblem svg{width:100%;height:100%;display:block}
+html:not([data-interface="data"]) .card:hover .sect-card-emblem{transform:scale(1.08)}
+
+/* Sect 1: Jade Grove / Rescue (Spirit Jade & Verdant Grove) */
+html:not([data-interface="data"]) .card.sect-card-rescue{border-top:2px solid #2edba2;background:linear-gradient(145deg,#163028,#12252a)}
+html:not([data-interface="data"]) .card.sect-card-rescue .sect-card-emblem{background:rgba(46,219,162,0.12);border:1px solid rgba(46,219,162,0.35);box-shadow:0 0 16px rgba(46,219,162,0.2)}
+html:not([data-interface="data"]) .card.sect-card-rescue:hover{border-color:#2edba2;box-shadow:0 6px 20px rgba(46,219,162,0.22)}
+
+/* Sect 2: Cloud Reach / Remains (Ethereal Mist & Cerulean Sky) */
+html:not([data-interface="data"]) .card.sect-card-remains{border-top:2px solid #5ca0d3;background:linear-gradient(145deg,#152b36,#10222a)}
+html:not([data-interface="data"]) .card.sect-card-remains .sect-card-emblem{background:rgba(92,160,211,0.12);border:1px solid rgba(92,160,211,0.35);box-shadow:0 0 16px rgba(92,160,211,0.2)}
+html:not([data-interface="data"]) .card.sect-card-remains:hover{border-color:#5ca0d3;box-shadow:0 6px 20px rgba(92,160,211,0.22)}
+
+/* Sect 3: Empty Sky / Invitation (Astral Gold & Celestial Void) */
+html:not([data-interface="data"]) .card.sect-card-invitation{border-top:2px solid #e5c382;background:linear-gradient(145deg,#243026,#162524)}
+html:not([data-interface="data"]) .card.sect-card-invitation .sect-card-emblem{background:rgba(229,195,130,0.12);border:1px solid rgba(229,195,130,0.35);box-shadow:0 0 16px rgba(229,195,130,0.2)}
+html:not([data-interface="data"]) .card.sect-card-invitation:hover{border-color:#e5c382;box-shadow:0 6px 20px rgba(229,195,130,0.22)}
+
+/* Sect 4: Stone Bastion / Gates (Primal Earth & Amber Iron) */
+html:not([data-interface="data"]) .card.sect-card-gates{border-top:2px solid #d4955a;background:linear-gradient(145deg,#272821,#172124)}
+html:not([data-interface="data"]) .card.sect-card-gates .sect-card-emblem{background:rgba(212,149,90,0.12);border:1px solid rgba(212,149,90,0.35);box-shadow:0 0 16px rgba(212,149,90,0.2)}
+html:not([data-interface="data"]) .card.sect-card-gates:hover{border-color:#d4955a;box-shadow:0 6px 20px rgba(212,149,90,0.22)}
+
+/* Combat Tab & Duel Accents */
+html:not([data-interface="data"]) .tab[data-tab="combat"].active{border-bottom:2px solid var(--crimson-flame);border-left:0;background:linear-gradient(100deg,rgba(226,75,75,0.18),rgba(26,45,46,0.9))}
+html:not([data-interface="data"]) .tab[data-tab="combat"].active:after{color:var(--crimson-flame)}
+html:not([data-interface="data"]) .combat-duel{border-top:2px solid var(--crimson-flame);box-shadow:0 0 24px var(--crimson-glow)}
+html:not([data-interface="data"]) button[data-action="fight"]:not(:disabled){background:linear-gradient(115deg,#a82a2a,#6b1818);border-color:#e24b4b;color:#fff0f0;box-shadow:0 3px 14px rgba(226,75,75,0.4)}
+html:not([data-interface="data"]) button[data-action="fight"]:hover:not(:disabled){background:linear-gradient(115deg,#bf3232,#821c1c);box-shadow:0 5px 20px rgba(226,75,75,0.6)}

@@ -1,23 +1,122 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 460" fill="none">
   <defs>
-    <linearGradient id="sky" x2="0" y2="460" gradientUnits="userSpaceOnUse"><stop stop-color="#11262e"/><stop offset="1" stop-color="#294843"/></linearGradient>
-    <radialGradient id="halo"><stop stop-color="#d8c697" stop-opacity=".23"/><stop offset="1" stop-color="#d8c697" stop-opacity="0"/></radialGradient>
-    <linearGradient id="mist"><stop stop-color="#afc7b8" stop-opacity="0"/><stop offset=".5" stop-color="#afc7b8" stop-opacity=".12"/><stop offset="1" stop-color="#afc7b8" stop-opacity="0"/></linearGradient>
+    <!-- Sky gradient: twilight across Floating Cloud Valley -->
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="460" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b1b21"/>
+      <stop offset="45%" stop-color="#142c2f"/>
+      <stop offset="85%" stop-color="#23423b"/>
+      <stop offset="100%" stop-color="#2d4d44"/>
+    </linearGradient>
+
+    <!-- Canonical ATG Twin Pale Suns: Primary (golden-jade aura) -->
+    <radialGradient id="sun1-aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff8e7" stop-opacity=".95"/>
+      <stop offset="25%" stop-color="#f3dfa8" stop-opacity=".65"/>
+      <stop offset="55%" stop-color="#7cd6b5" stop-opacity=".3"/>
+      <stop offset="80%" stop-color="#2edba2" stop-opacity=".12"/>
+      <stop offset="100%" stop-color="#2edba2" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Canonical ATG Twin Pale Suns: Secondary (mist aura) -->
+    <radialGradient id="sun2-aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#edf6f3" stop-opacity=".85"/>
+      <stop offset="35%" stop-color="#c1e3dc" stop-opacity=".5"/>
+      <stop offset="70%" stop-color="#80bcb0" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="#23423b" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Ethereal cloud terrace ribbons drifting between mountain peaks -->
+    <linearGradient id="terrace-high" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c2e6dc" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#dbf2ea" stop-opacity=".28"/>
+      <stop offset="50%" stop-color="#eefaf5" stop-opacity=".45"/>
+      <stop offset="78%" stop-color="#dbf2ea" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#c2e6dc" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="terrace-mid" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a4d8cb" stop-opacity="0"/>
+      <stop offset="25%" stop-color="#c8ece2" stop-opacity=".32"/>
+      <stop offset="60%" stop-color="#e0f5ee" stop-opacity=".42"/>
+      <stop offset="85%" stop-color="#c8ece2" stop-opacity=".22"/>
+      <stop offset="100%" stop-color="#a4d8cb" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="terrace-low" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#afded1" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#c6ebdf" stop-opacity=".38"/>
+      <stop offset="65%" stop-color="#d9f3eb" stop-opacity=".32"/>
+      <stop offset="100%" stop-color="#afded1" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Soft valley mist base -->
+    <linearGradient id="valleymist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cbe5dc" stop-opacity=".22"/>
+      <stop offset="100%" stop-color="#cbe5dc" stop-opacity="0"/>
+    </linearGradient>
   </defs>
+
+  <!-- Sky Dome -->
   <path fill="url(#sky)" d="M0 0h1600v460H0z"/>
-  <ellipse cx="1190" cy="145" rx="290" ry="220" fill="url(#halo)"/>
-  <circle cx="1190" cy="126" r="58" fill="#e2d2a4" fill-opacity=".78"/>
-  <circle cx="1169" cy="113" r="55" fill="#243b3d"/>
-  <g fill="#e0cc99" opacity=".55"><circle cx="880" cy="50" r="1.3"/><circle cx="1030" cy="95" r="1"/><circle cx="1340" cy="54" r="1.4"/><circle cx="1420" cy="120" r="1"/><circle cx="960" cy="156" r="1"/><circle cx="1265" cy="28" r="1"/><circle cx="1510" cy="65" r="1.3"/></g>
-  <path d="m600 330 140-110 53 50 100-142 105 112 80-68 127 152 119-133 71 47 100-120 105 155v187H600z" fill="#4b6860" opacity=".34"/>
-  <path d="m670 385 132-115 65 69 132-136 103 111 85-55 80 87 142-115 82 84 109-65v210H670z" fill="#284740"/>
-  <path d="m870 397 106-71 80 27 138-72 54 58 138-39 98 60 116-51v151H870z" fill="#173530"/>
-  <path d="M0 380c370-70 430 65 790 5s501-10 810 15v60H0z" fill="#112a29"/>
-  <path d="M650 365h950v40H650z" fill="url(#mist)"/>
-  <path d="M820 320h780v17H820z" fill="url(#mist)"/>
-  <g fill="#0b2324">
-    <path d="M1345 272h62v9h-62zM1352 280h48v39h-48zM1340 274l35-19 38 19zM1345 300l31-14 31 14zM1356 314h40v24h-40zM1332 339h91v8h-91z"/>
-    <path d="M1373 240h4v20h-4zM1501 345l-8-60-7 21 4 40zM1493 286l-24 22 22-9 25 8zM1478 304l-25 21 39-11 30 11-18-21z"/>
+
+  <!-- Celestial Stars/Sparks in Cultivation Sky -->
+  <g fill="#e4d29f" opacity=".6">
+    <circle cx="820" cy="42" r="1.3"/>
+    <circle cx="940" cy="78" r="1"/>
+    <circle cx="1060" cy="38" r="1.4"/>
+    <circle cx="1140" cy="65" r="1"/>
+    <circle cx="1360" cy="44" r="1.2"/>
+    <circle cx="1450" cy="88" r="1"/>
+    <circle cx="1520" cy="52" r="1.4"/>
+    <circle cx="1005" cy="115" r="1"/>
   </g>
-  <path d="M1060 431c70-32 86-42 107-41s49 24 97 9" stroke="#bac5a1" stroke-opacity=".17" stroke-width="2"/>
+
+  <!-- CANONICAL ATG TWIN SUNS (Долина Плывущих Облаков) -->
+  <!-- Primary Sun (Golden-Jade Aura at cx=1190 cy=120 r=56) -->
+  <ellipse cx="1190" cy="120" rx="260" ry="210" fill="url(#sun1-aura)"/>
+  <circle cx="1190" cy="120" r="76" stroke="#2edba2" stroke-width="1.5" stroke-dasharray="6 4" stroke-opacity=".3" fill="none"/>
+  <circle cx="1190" cy="120" r="64" stroke="#e5c382" stroke-width="2" stroke-opacity=".45" fill="none"/>
+  <circle cx="1190" cy="120" r="56" fill="#fcf4db" fill-opacity=".92"/>
+
+  <!-- Secondary Sun (Mist Aura at cx=1280 cy=155 r=32) -->
+  <ellipse cx="1280" cy="155" rx="140" ry="115" fill="url(#sun2-aura)"/>
+  <circle cx="1280" cy="155" r="42" stroke="#b0ded3" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity=".35" fill="none"/>
+  <circle cx="1280" cy="155" r="32" fill="#e3f0ec" fill-opacity=".84"/>
+
+  <!-- Mountain Peak Silhouettes - Farthest Layer (Distant Peaks) -->
+  <path d="M520 340 L680 200 L760 260 L870 145 L980 255 L1080 185 L1210 330 L1340 195 L1430 255 L1520 160 L1600 240 V460 H520 Z" fill="#3c5b53" opacity=".35"/>
+
+  <!-- Ethereal Cloud Terrace 1 (Drifting between High Peaks) -->
+  <path d="M640 252 C760 230, 880 265, 1020 238 C1160 212, 1270 252, 1420 232 C1510 220, 1570 238, 1600 234 C1600 254, 1540 266, 1430 256 C1280 274, 1160 242, 1030 264 C890 286, 760 262, 640 252 Z" fill="url(#terrace-high)"/>
+
+  <!-- Mountain Peak Silhouettes - Mid Layer (Azure Crags) -->
+  <path d="M590 380 L720 255 L800 320 L930 185 L1040 290 L1130 230 L1230 320 L1370 205 L1470 280 L1600 215 V460 H590 Z" fill="#264740" opacity=".7"/>
+
+  <!-- Ethereal Cloud Terrace 2 (Flowing across Middle Mountain Terraces) -->
+  <path d="M560 318 C710 294, 840 328, 990 304 C1140 280, 1260 324, 1420 296 C1520 280, 1575 306, 1600 300 C1600 324, 1530 336, 1410 324 C1240 348, 1110 312, 970 334 C820 356, 680 328, 560 318 Z" fill="url(#terrace-mid)"/>
+
+  <!-- Mountain Peak Silhouettes - Near Foreground Ridge -->
+  <path d="M760 405 L890 305 L990 345 L1140 260 L1230 325 L1370 268 L1490 335 L1600 278 V460 H760 Z" fill="#183631"/>
+
+  <!-- Ethereal Cloud Terrace 3 (Cascading Terraces above Valley Floor) -->
+  <path d="M620 374 C770 354, 910 382, 1070 362 C1210 342, 1330 376, 1485 356 C1560 348, 1590 362, 1600 358 C1600 382, 1535 390, 1445 380 C1300 400, 1180 374, 1040 392 C880 410, 740 384, 620 374 Z" fill="url(#terrace-low)"/>
+
+  <!-- Valley Base Ridge & Foot-Hills -->
+  <path d="M0 380 C360 315, 480 410, 840 368 C1140 336, 1380 396, 1600 382 V460 H0 Z" fill="#102726"/>
+
+  <!-- Ethereal Valley Mist Blankets -->
+  <path d="M600 365 H1600 V415 H600 Z" fill="url(#valleymist)"/>
+  <path d="M780 400 H1600 V435 H780 Z" fill="url(#valleymist)" opacity=".7"/>
+
+  <!-- Ancient Cultivation Pavilion & Pines -->
+  <g fill="#0b2020">
+    <!-- Pavilion / Pagoda -->
+    <path d="M1345 272h62v9h-62zM1352 280h48v39h-48zM1340 274l35-19 38 19zM1345 300l31-14 31 14zM1356 314h40v24h-40zM1332 339h91v8h-91z"/>
+    <path d="M1373 240h4v20h-4z"/>
+    <!-- Cloud Valley Cliff Pines -->
+    <path d="M1501 345l-8-60-7 21 4 40zM1493 286l-24 22 22-9 25 8zM1478 304l-25 21 39-11 30 11-18-21z"/>
+  </g>
+
+  <!-- Spirit Qi Pathway Line -->
+  <path d="M1060 431c70-32 86-42 107-41s49 24 97 9" stroke="#9ed4be" stroke-opacity=".25" stroke-width="2"/>
 </svg>
