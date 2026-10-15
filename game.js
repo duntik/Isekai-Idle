@@ -97,20 +97,20 @@
         return {
           title: uiText(choice.name, choice.enName),
           desc: uiText(choice.desc, choice.enDesc),
-          detail: uiText('Результат: место на облучке повозки и безопасный путь в Долину Плывущих Облаков к Мэй.', 'Outcome: A seat beside the wagon driver and safe passage to Floating Cloud Valley.')
+          detail: uiText('Результат: место на облучке повозки дяди Ба и разговор о постоялом дворе хозяйки Мэй.', 'Outcome: A seat beside Uncle Ba and talk of Hostess Mei’s crossroads inn.')
         };
       }
       return {
         title: uiText('Помощь повозке на тракте', 'Assisting the wagon on the highway'),
-        desc: uiText('Ты помог возчику вызволить застрявшую повозку из размытого рва на сухой настил.', 'You helped the driver free his stuck wagon from the washed-out ditch onto dry road.'),
+        desc: uiText('Ты помог дяде Ба вызволить застрявшую повозку из размытого рва на сухой настил.', 'You helped Uncle Ba free his stuck wagon from the washed-out ditch onto dry road.'),
         detail: uiText('Результат: спасение от ночного холода и путь к постоялому двору Мэй.', 'Outcome: Rescued from the mountain cold, traveling to Lady Mei\'s inn.')
       };
     }
     if (stepIdx === 1) {
       return {
         title: uiText('Уборка двора и пробуждение системы', 'Sweeping the yard & system awakening'),
-        desc: uiText('Ты расчистил площадку для повозки тяжёлой бамбуковой метлой. На пике истощения Небесная Жемчужина Яда активировала строки духовного интерфейса подсказок.', 'You cleared the yard with Lady Mei\'s bamboo broom. At the brink of exhaustion, the Sky Poison Pearl awakened your spiritual guidance interface.'),
-        detail: uiText('Результат: горячая похлёбка, ночлег у очага и инициализация системы.', 'Outcome: Warm stew, hearth shelter, and spiritual interface initialization.')
+        desc: uiText('Дядя Ба привёз тебя к хозяйке Мэй. Ты расчистил площадку для повозки от селя тяжёлой бамбуковой метлой. На пике истощения Небесная Жемчужина Яда активировала духовный интерфейс подсказок.', 'Uncle Ba brought you to Hostess Mei. You cleared the yard with her bamboo broom. At the brink of exhaustion, the Sky Poison Pearl awakened your spiritual guidance interface.'),
+        detail: uiText('Результат: доверие Мэй, горячая похлёбка, ночлег у очага и инициализация системы.', 'Outcome: Mei’s trust, hot stew, hearth shelter, and spiritual interface initialization.')
       };
     }
     if (stepIdx === 2) {
@@ -155,13 +155,13 @@
         return {
           title: uiText('Путь меча: Поединок на мосту', 'Path of Might: Duel at the Bridge'),
           desc: uiText('Ты дал открытый бой главарю вымогателей Белого Клыка на мосту и сокрушил его новой силой открытых каналов.', 'You confronted the White Fang extortionist on the bridge, overpowering him with your unsealed channels.'),
-          detail: uiText('Результат: первая боевая победа, спасение повозки и право идти в город.', 'Outcome: First combat victory, saving the wagon and earning passage to the city.')
+          detail: uiText('Результат: первая боевая победа, спасение повозки дяди Ба и право идти в город.', 'Outcome: First combat victory, saving Uncle Ba’s wagon and earning passage to the city.')
         };
       }
       if (route === 'service') {
         return {
           title: uiText('Путь сплочения: Дорога без потерь', 'Path of Unity: Passage Without Loss'),
-          desc: uiText('Жители деревни сплочённо вышли к реке и помогли провести повозку в брод в обход заставы. Бандиты не посмели напасть на людей.', 'United villagers came to the river and helped ferry the wagon across the shallows, making the bandits back down without a fight.'),
+          desc: uiText('Жители деревни сплочённо вышли к реке и помогли провести повозку дяди Ба в брод в обход заставы. Бандиты не посмели напасть на людей.', 'United villagers came to the river and helped ferry Uncle Ba’s wagon across the shallows, making the bandits back down without a fight.'),
           detail: uiText('Результат: 3 признания людей, мирный проход обоза и рекомендательный знак хозяйки Мэй.', 'Outcome: 3 community recognitions, peaceful passage, and Mei\'s token.')
         };
       }
