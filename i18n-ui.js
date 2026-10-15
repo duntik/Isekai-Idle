@@ -106,5 +106,7 @@
     ,['«[Тактическая оценка: боец Белого Клыка преграждает проход через мост. Варианты преодоления: силовое устранение во вкладке Испытания или использование влияния]».','“[Tactical assessment: White Fang fighter blocking bridge passage. Resolution vectors: direct combat in Trials tab or leveraging social influence]”.']
     ,['«[Оценка путей развития: 4 великие секты проводят набор у Серебряного Моста. Анализ совместимости: выберите наставничество, соответствующее вашему пути]».','“[Path evaluation: 4 great sects conducting recruitment at Silver Bridge. Affinity analysis: select a mentorship aligned with your chosen path]”.']
     ,['«[Начать следующую главу и отправиться в секту]».','“[Start the next chapter and set out for your sect]”.']
+    ,['Развернуть верхнюю панель','Expand top panel']
+    ,['Свернуть верхнюю панель','Collapse top panel']
   ]);
 })(globalThis);

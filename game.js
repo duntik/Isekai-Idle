@@ -26,10 +26,19 @@
     const hero = document.querySelector ? document.querySelector('.hero') : null;
     const toggle = $('hero-collapse-toggle');
     const miniHud = $('mini-hud');
+    const resources = $('resources');
     if (hero?.classList) hero.classList.toggle('hero-collapsed', heroCollapsed);
+    if (resources?.classList) {
+      if (view !== 'data' && heroCollapsed) {
+        resources.classList.add('resources-collapsed');
+      } else {
+        resources.classList.remove('resources-collapsed');
+      }
+    }
     if (toggle) {
       toggle.setAttribute?.('aria-expanded', String(!heroCollapsed));
       toggle.textContent = heroCollapsed ? '▾' : '▴';
+      toggle.title = heroCollapsed ? uiText('Развернуть верхнюю панель', 'Expand top panel') : uiText('Свернуть верхнюю панель', 'Collapse top panel');
     }
     const isScrolled = typeof window !== 'undefined' && ((window.scrollY || 0) > 160 || (window.pageYOffset || 0) > 160);
     if (miniHud) miniHud.hidden = (view === 'data') || (!heroCollapsed && !isScrolled);
@@ -414,6 +423,19 @@
       }
       return `<div class="resource resource-${k}"><div class="label"><span class="resource-icon resource-icon-${k}">${resourceGlyphs[k] || '✦'}</span> ${E.names[k]}</div><div class="value">${fmt(s.resources[k])}</div>${rateHtml}</div>`;
     }).join('');
+    const compactResHtml = visible.map(k => {
+      const rate = resourceRate(k);
+      let rateHtml = '';
+      if (rate > 0) {
+        const rateText = rate >= 0.1
+          ? `+${rate.toLocaleString(L?.locale || 'ru-RU', { maximumFractionDigits: 1 })}${uiText('/сек', '/s')}`
+          : `+${(rate * 60).toLocaleString(L?.locale || 'ru-RU', { maximumFractionDigits: 1 })}${uiText('/мин', '/m')}`;
+        rateHtml = ` <small class="compact-res-rate">${rateText}</small>`;
+      }
+      return `<span class="compact-res compact-res-${k}" title="${E.names[k]}: ${fmt(s.resources[k])}"><span class="compact-res-icon" aria-hidden="true">${resourceGlyphs[k] || '✦'}</span> <span class="compact-res-val">${fmt(s.resources[k])}</span>${rateHtml}</span>`;
+    }).join(' ');
+    if ($('hero-compact-resources')) $('hero-compact-resources').innerHTML = compactResHtml;
+    if ($('hud-resources')) $('hud-resources').innerHTML = compactResHtml;
     const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['world', 'Путешествия', 0], ['sect', 'Секта', 2], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
     $('navigation').innerHTML = tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''} tab-${id}" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : `<span class="tab-glyph">${tabGlyphs[id] || '✦'}</span> <span class="tab-label">${title}</span>` + tabBadgeHtml(id)}</button>`).join('');
     let html = '';
@@ -467,7 +489,7 @@
     $('content').innerHTML = h(returnSummaryView()+(view === 'data' ? IsekaiDataView.render(s, tab, E) : html));
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
-    for(const id of ['resources','navigation'])$(id).innerHTML=h($(id).innerHTML);
+    for(const id of ['resources','navigation','hero-compact-resources','hud-resources'])if($(id))$(id).innerHTML=h($(id).innerHTML);
     if($('mini-hud')&&view!=='data'){
       const place=E.world.locations[s.world.location]?.name||s.world.location;
       const journey=s.world.journey?(uiText('В пути: ','Travelling: ')+t(E.world.locations[s.world.journey.destination]?.name||'')+` · ${Math.ceil(s.world.journey.remaining)} `+uiText('сек.','s')):t(place);

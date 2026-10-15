@@ -184,3 +184,15 @@ html:not([data-interface="data"]) .system-box.system-tactical .system-bracket{co
 html:not([data-interface="data"]) .system-box.system-tactical .system-prompt-title{color:#ff7676}
 
 @keyframes system-pulse-jade{0%,100%{box-shadow:0 0 12px rgba(46,219,162,0.15),inset 0 0 8px rgba(46,219,162,0.05)}50%{box-shadow:0 0 20px rgba(46,219,162,0.35),inset 0 0 14px rgba(46,219,162,0.15)}}
+
+/* Compact Resource Chips */
+html:not([data-interface="data"]) .compact-res{background:linear-gradient(135deg,rgba(22,42,46,0.92),rgba(14,28,32,0.96));border:1px solid rgba(80,130,115,0.45);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 6px rgba(0,0,0,0.25);transition:transform .15s ease,border-color .15s ease}
+html:not([data-interface="data"]) .compact-res:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.35)}
+html:not([data-interface="data"]) .compact-res.compact-res-gold{border-top:2px solid var(--gold)}
+html:not([data-interface="data"]) .compact-res.compact-res-herbs{border-top:2px solid var(--spirit-jade)}
+html:not([data-interface="data"]) .compact-res.compact-res-qi{border-top:2px solid #38bdf8}
+html:not([data-interface="data"]) .compact-res.compact-res-relics{border-top:2px solid #c084fc}
+html:not([data-interface="data"]) .compact-res.compact-res-reputation{border-top:2px solid #f472b6}
+html:not([data-interface="data"]) .compact-res.compact-res-wood{border-top:2px solid #a3e635}
+html:not([data-interface="data"]) .compact-res.compact-res-ore{border-top:2px solid #fb923c}
+html:not([data-interface="data"]) .compact-res.compact-res-pills{border-top:2px solid #e879f9}
