@@ -138,7 +138,7 @@
       button: 'Вступить в секту'
     }
   ];
-  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, fed: false, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
     sky:{name:'Сутра Злого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
     ink:{name:'След туши',source:'Урок библиотекаря Вэя',desc:'Понимание +8% за ранг. Позволяет читать повреждённые надписи в храме.',effect:'xp',available:s=>s.world.mentors.includes('scholar')},
@@ -339,7 +339,7 @@
   }
   const activityRunning=s=>canActivity(s,s.activity);
   const staminaMax=s=>100+Math.min(100,Math.floor(s.body*2));
-  const staminaRecovery=s=>.4+Math.min(.2,s.body*.002);
+  const staminaRecovery=s=>(s.storyStep===1&&!s.fed&&s.body<2)?(s.stamina<2?.05:0):(.4+Math.min(.2,s.body*.002));
   const taskGains={sweep:{body:.012,calm:.01},haul:{body:.035},scout:{calm:.005},ledger:{calm:.005,xp:.005},explore:{calm:.001,xp:.001},physical:{body:.15},focus:{calm:.3,xp:.3},combat:{body:.1,mastery:.1}};
   function taskPractice(s,kind,amount=1){
     const gains=taskGains[kind];if(!gains||amount<=0)return;
@@ -579,6 +579,14 @@
         if(choice.body)s.body=Math.min(10*(s.realm+1),s.body+choice.body*W.bonus(s).body*techniqueBonus(s,'body'));
         if(choice.calm)s.calm=Math.min(100,s.calm+choice.calm);
         for(const [k,v] of Object.entries(choice.reward))s.resources[k]+=v;
+        s.fed=false;
+        log(s,'Прибытие на постоялый двор Мэй. Тело продрогло и истощено от голода; Мэй предлагает миску горячей похлёбки за расчистку двора.');
+      }
+      if(s.storyStep===1){
+        s.fed=true;
+        s.stamina=staminaMax(s);
+        log(s,'Госпожа Мэй подаёт дымящуюся мясную похлёбку и рис. Голод утолён, выносливость полностью восстановлена!');
+        log(s,'【Система Прозрения】 Очищение меридианов +1%. Истощение снято, циркуляция выносливости разблокирована (+0.4/сек).');
       }
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
       if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
@@ -741,7 +749,8 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining'].includes(k)) base[k] = input[k];
+    base.fed = input.fed !== undefined ? !!input.fed : (base.storyStep > 1);
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay,place:'village'};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}

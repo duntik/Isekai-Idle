@@ -383,7 +383,12 @@
 
     if (step === 1) {
       const sweeps = s.clicks?.sweep || 0;
-      tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="10" value="${Math.min(10, sweeps)}" aria-label="${uiText('Подметания','Sweeps')}"></progress><span>${uiText('Подметания: ','Sweeps: ')}${sweeps}/10</span></div></div>`;
+      const stamLeft = Math.floor(s.stamina || 0);
+      const isStarving = !s.fed && s.body < 2;
+      const hungerWarning = isStarving
+        ? `<div class="story-hunger-note">⚠ ${uiText('Истощение от холода и голода: выносливость не восстанавливается! Осталось: ','Starving and freezing: stamina will not recover! Remaining: ')}<strong>${stamLeft}</strong> / 100 ${uiText('(хватит на уборку до похлёбки)','(barely enough to sweep until food)')}</div>`
+        : `<div class="story-hunger-note fed">✓ ${uiText('Похлёбка Мэй съедена: силы восстановлены, регенерация активна (+0.4/сек)','Mei’s stew eaten: stamina restored, recovery active (+0.4/s)')}</div>`;
+      tracker = `<div class="story-goal-tracker">${hungerWarning}<div class="story-goal-progress-row"><progress max="10" value="${Math.min(10, sweeps)}" aria-label="${uiText('Подметания','Sweeps')}"></progress><span>${uiText('Подметания: ','Sweeps: ')}${sweeps}/10</span></div></div>`;
       if (!s.employment.order) {
         actions = `<button type="button" class="quick-action-btn" data-quick-action="order" data-quick-value="sweep" ${E.canOrder(s, 'sweep') ? '' : 'disabled'}>${uiText('✦ Взять уборку двора у Мэй','✦ Accept courtyard sweeping from Mei')}</button>`;
       } else {
@@ -456,7 +461,8 @@
     const step = stepOverride !== undefined ? stepOverride : s.storyStep;
     if (step === 0) {
       const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
-      return `<div class="story-goal system-box system-mortal"><div class="system-prompt-header"><span class="system-prompt-glyph">✦</span> <span class="system-prompt-title">${uiText('ИНСТИНКТ ВЫЖИВАНИЯ', 'SURVIVAL INSTINCT')}</span></div><div class="system-prompt-text"><p>${uiText('Холод размытой глины и тупая боль в спазмированных каналах. Ты ещё не понимаешь, где очнулся, но инстинкт выживания требует выбраться из придорожного рва и опереться на тех, кто знает здешний тракт.', 'The chill of muddy clay and dull ache in crippled channels. You do not yet understand where you woke up, but raw survival instinct urges you to climb out of the roadside ditch and lean on those who know these roads.')}</p></div>${trackerContent}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+      const step0Rewards = `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">🌿 ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${uiText('Дорожные сухари возчика и место на облучке повозки', 'Carter’s trail rations and a seat on the wagon box')}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${uiText('Пробуждение Небесной Жемчужины Яда · Слияние с сосудом: 0.1%', 'Sky Poison Pearl awakened · Vessel fusion: 0.1%')}</span></div></div>`;
+      return `<div class="story-goal system-box system-mortal"><div class="system-prompt-header"><span class="system-prompt-glyph">✦</span> <span class="system-prompt-title">${uiText('ИНСТИНКТ ВЫЖИВАНИЯ', 'SURVIVAL INSTINCT')}</span></div><div class="system-prompt-text"><p>${uiText('Холод размытой глины и тупая боль в спазмированных каналах. Ты ещё не понимаешь, где очнулся, но инстинкт выживания требует выбраться из придорожного рва и опереться на тех, кто знает здешний тракт.', 'The chill of muddy clay and dull ache in crippled channels. You do not yet understand where you woke up, but raw survival instinct urges you to climb out of the roadside ditch and lean on those who know these roads.')}</p></div>${trackerContent}${step0Rewards}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
     }
 
     let boxClass = 'system-synced';
@@ -519,7 +525,43 @@
     }
 
     const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
-    return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${trackerContent}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+    const rewardProfiles = {
+      0: {
+        world: uiText('Дорожные сухари возчика и место на облучке повозки', 'Carter’s trail rations and a seat on the wagon box'),
+        system: uiText('Пробуждение Небесной Жемчужины Яда · Слияние с сосудом: 0.1%', 'Sky Poison Pearl awakened · Vessel fusion: 0.1%')
+      },
+      1: {
+        world: uiText('Дымящаяся мясная похлёбка Мэй и рис (восстановление сил) + 10 монет', 'Lady Mei’s steaming meat stew & rice (full stamina recovery) + 10 coins'),
+        system: uiText('Очищение меридианов +1%, снятие истощения, циркуляция сил разблокирована (+0.4/сек)', 'Profound channels cleansed +1%, starvation removed, stamina circulation unlocked (+0.4/s)')
+      },
+      2: {
+        world: uiText('Лекарственная растирка Жэня для ноющих мышц и сухожилий (5 трав)', 'Old Ren’s medicinal muscle & sinew liniment (5 herbs)'),
+        system: uiText('Укрепление мышечного каркаса +0.1, предел выносливости расширен', 'Muscular framework tempered +0.1, stamina threshold expanded')
+      },
+      3: {
+        world: uiText('Успокаивающий горный травяной сбор и родниковая вода (3 травы)', 'Soothing valley herb brew & mountain spring water (3 herbs)'),
+        system: uiText('Духовное чутьё +1, координаты святилища Злого Бога зафиксированы на карте', 'Spiritual sense +1, Evil God sanctuary coordinates locked on map')
+      },
+      4: {
+        world: uiText('Осколок алтаря из чёрного нефрита с древними символами (1 реликвия)', 'Black jade altar shard engraved with ancient symbols (1 shard)'),
+        system: uiText('Сутра Злого Неба активирована · Разблокирована 100% алхимическая очистка трав без токсинов', 'Evil Sky Sutra activated · 100% toxin-free herbal alchemy purification unlocked')
+      },
+      5: {
+        world: uiText('Очищенная эссенция горных трав стопроцентной чистоты (10 трав)', '100% pure refined essence of mountain herbs (10 herbs)'),
+        system: uiText('Великий прорыв! 54 спазмированных канала сокрушены · Ступень Начальной Ци достигнута', 'Grand Breakthrough! 54 crippled channels shattered · Elementary Profound Realm reached')
+      },
+      6: {
+        world: uiText('Дорожные припасы и кошель от дяди Ба и госпожи Мэй (25 монет)', 'Travel provisions and road purse from Uncle Ba & Lady Mei (25 coins)'),
+        system: uiText('Первое боевое крещение · Признание Долины Плывущих Облаков, открыт путь в город', 'First baptism of battle · Floating Cloud Valley recognition, path to city opened')
+      },
+      7: {
+        world: uiText('Жетон ученика великой секты и начальное содержание адепта', 'Great Sect disciple token and starting adept allowance'),
+        system: uiText('Статус официального ученика утверждён · Том 1 завершён, открыт Том 2: Путь Секты', 'Official disciple status confirmed · Volume 1 complete, Volume 2 Sect Path unlocked')
+      }
+    };
+    const profile = rewardProfiles[step] || null;
+    const rewardsBlock = profile ? `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">🌿 ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${profile.world}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${profile.system}</span></div></div>` : '';
+    return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
   }
   function render() {
     const newlyEarned=E.achievements.list(s,L?.language||'ru').filter(a=>a.earned&&!seenMilestones.has(a.id));
