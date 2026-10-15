@@ -17,6 +17,111 @@
   let view = 'visual';
   const heroPanels=new Map();
   try { if (localStorage.getItem('isekai-idle-interface') === 'data') view = 'data'; } catch {}
+  const getUiPref = k => { try { if (typeof window !== 'undefined' && window.location) return localStorage.getItem(k); } catch {} return null; };
+  const setUiPref = (k, v) => { try { if (typeof window !== 'undefined' && window.location) localStorage.setItem(k, v); } catch {} };
+  let heroCollapsed = getUiPref('isekai-hero-collapsed') === 'true';
+  let novelSerif = getUiPref('isekai-novel-serif') === 'true';
+  let novelLarge = getUiPref('isekai-novel-large') === 'true';
+  function applyHeroCollapse() {
+    const hero = document.querySelector ? document.querySelector('.hero') : null;
+    const toggle = $('hero-collapse-toggle');
+    const miniHud = $('mini-hud');
+    if (hero?.classList) hero.classList.toggle('hero-collapsed', heroCollapsed);
+    if (toggle) {
+      toggle.setAttribute?.('aria-expanded', String(!heroCollapsed));
+      toggle.textContent = heroCollapsed ? '▾' : '▴';
+    }
+    if (miniHud) miniHud.hidden = (view === 'data') || !heroCollapsed;
+  }
+  function spawnFloating(text, cls, x, y) {
+    if (view === 'data') return;
+    const layer = $('floating-layer');
+    if (!layer || typeof document.createElement !== 'function') return;
+    const el = document.createElement('div');
+    el.className = `floating-num ${cls || ''}`;
+    el.textContent = text;
+    const jx = (Math.random() - 0.5) * 20;
+    if (el.style) {
+      el.style.left = `${Math.max(10, (x || 200) + jx)}px`;
+      el.style.top = `${Math.max(10, (y || 200) - 15)}px`;
+    }
+    layer.appendChild?.(el);
+    setTimeout(() => el.remove?.(), 850);
+  }
+  function resourceRate(k) {
+    let rate = 0;
+    if (E.activityRunning(s)) {
+      const a = E.activities[s.activity] || {};
+      const mult = E.speed(s);
+      const wb = E.world.bonus(s);
+      const v = a.rates?.[k] || 0;
+      if (v > 0) {
+        if ((k !== 'qi' || s.found) && (s.activity !== 'explore' || k !== 'relics' || s.world.location === 'ruins')) {
+          const bonus = (k === 'gold' && s.activity === 'work') ? (wb.gold || 1) :
+            (['herbs', 'relics'].includes(k) && s.activity === 'explore') ? (wb[k] || 1) : 1;
+          const techBonus = (s.activity === 'meditate' && k === 'qi') ? E.techniqueBonus(s, 'qi') :
+            (s.activity === 'explore' && k === 'herbs') ? E.techniqueBonus(s, 'herbs') : 1;
+          rate += v * mult * bonus * techBonus;
+        }
+      }
+    }
+    if (s.stage >= 3) {
+      if (k === 'herbs') rate += (s.workers.herb * 0.04 + s.buildings.garden * 0.06);
+      if (k === 'wood') rate += s.workers.lumber * 0.1;
+      if (k === 'ore') rate += s.workers.miner * 0.06;
+      if (k === 'pills' && s.resources.herbs >= 5 && s.resources.qi >= 10) rate += s.workers.alchemist * 0.005;
+      if (k === 'influence') rate += s.workers.disciple * 0.015;
+    }
+    if (k === 'cosmic' && s.resources.worlds > 0) rate += s.resources.worlds * 0.01;
+    return rate;
+  }
+  function novelStepperHtml(st) {
+    if (st.stage !== 0) return '';
+    const stepLabels = [
+      uiText('Пролог', 'Prologue'),
+      uiText('Двор', 'Yard'),
+      uiText('Закалка', 'Body'),
+      uiText('Медитация', 'Meditation'),
+      uiText('Святилище', 'Ruins'),
+      uiText('Прорыв', 'Breakthrough'),
+      uiText('Застава', 'Roadblock'),
+      uiText('Секта', 'Sect')
+    ];
+    const steps = stepLabels.map((lbl, idx) => {
+      const isPast = idx < st.storyStep;
+      const isCurrent = idx === st.storyStep;
+      const cls = isPast ? 'step-done' : isCurrent ? 'step-active' : '';
+      const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
+      return `<div class="novel-step ${cls}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></div>`;
+    }).join('<div class="novel-step-line" aria-hidden="true"></div>');
+    return `<nav class="novel-stepper" aria-label="${uiText('Шаги первой главы', 'First chapter steps')}">${steps}</nav>`;
+  }
+  function tabBadgeHtml(id) {
+    if (view === 'data') return '';
+    if (id === 'hero') {
+      const btReady = s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
+      const stReady = s.stage === 0 && E.storyBeat(s)?.ready(s);
+      if (btReady || stReady) return ` <span class="tab-badge badge-gold" title="${uiText('Готово действие', 'Action ready')}">●</span>`;
+    }
+    if (id === 'combat') {
+      if (s.cooldown === 0 && E.battlePower(s) >= E.enemy(s).power) {
+        return ` <span class="tab-badge badge-red" title="${uiText('Доступен бой', 'Battle ready')}">⚔</span>`;
+      }
+    }
+    if (id === 'world') {
+      if (s.world.encounter) {
+        return ` <span class="tab-badge badge-blue" title="${uiText('Событие', 'Encounter ready')}">!</span>`;
+      }
+    }
+    return '';
+  }
+  function applyNovelTypography() {
+    const panels = document.querySelectorAll ? document.querySelectorAll('.story-novel-panel') : [];
+    panels.forEach?.(p => {
+      p.classList?.toggle('novel-serif', novelSerif);
+      p.classList?.toggle('novel-large', novelLarge);
+    });
+  }
   function applyView() {
     document.documentElement.dataset.interface = view;
     document.title = t(view === 'data' ? 'Сводные данные' : 'Isekai Idle — новая жизнь');
@@ -142,9 +247,19 @@
     $('life').textContent = `✧ ${E.realmName(s.realm)}`; $('souls').textContent = `⚔ Сила ${fmt(E.power(s))}`; $('day').textContent = `◷ День ${Math.floor(s.age / 3600) + 1}`;
     const available = ['gold', 'herbs', ...(s.found ? ['qi', 'relics'] : []), ...(s.stage >= 2 ? ['reputation'] : []), ...(s.stage >= 3 ? ['wood', 'ore', 'pills', 'influence'] : []), ...(s.stage >= 4 ? ['supplies'] : []), ...(s.stage >= 5 ? ['cosmic', 'worlds'] : [])];
     const visible = [...new Set([...available,...Object.keys(E.names).filter(k=>s.resources[k]>0)])];
-    $('resources').innerHTML = view === 'data' ? `<div class="table-scroll" tabindex="0" role="region" aria-label="Текущие показатели"><table class="data-table resource-table"><caption>Текущие показатели</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th></tr></thead><tbody>${visible.map(k => `<tr><th scope="row">${IsekaiDataView.labels[k]}</th><td>${fmt(s.resources[k])}</td></tr>`).join('')}</tbody></table></div>` : visible.map(k => `<div class="resource"><div class="label">${E.names[k]}</div><div class="value">${fmt(s.resources[k])}</div></div>`).join('');
+    $('resources').innerHTML = view === 'data' ? `<div class="table-scroll" tabindex="0" role="region" aria-label="Текущие показатели"><table class="data-table resource-table"><caption>Текущие показатели</caption><thead><tr><th scope="col">Показатель</th><th scope="col">Значение</th></tr></thead><tbody>${visible.map(k => `<tr><th scope="row">${IsekaiDataView.labels[k]}</th><td>${fmt(s.resources[k])}</td></tr>`).join('')}</tbody></table></div>` : visible.map(k => {
+      const rate = resourceRate(k);
+      let rateHtml = '';
+      if (rate > 0) {
+        const rateText = rate >= 0.1
+          ? `+${rate.toLocaleString(L?.locale || 'ru-RU', { maximumFractionDigits: 1 })}${uiText('/сек', '/s')}`
+          : `+${(rate * 60).toLocaleString(L?.locale || 'ru-RU', { maximumFractionDigits: 1 })}${uiText('/мин', '/m')}`;
+        rateHtml = `<div class="resource-rate rate-pos">${rateText}</div>`;
+      }
+      return `<div class="resource"><div class="label">${E.names[k]}</div><div class="value">${fmt(s.resources[k])}</div>${rateHtml}</div>`;
+    }).join('');
     const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['world', 'Путешествия', 0], ['sect', 'Секта', 2], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
-    $('navigation').innerHTML = tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''}" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : title}</button>`).join('');
+    $('navigation').innerHTML = tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''}" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : title + tabBadgeHtml(id)}</button>`).join('');
     let html = '';
     if (tab === 'hero') {
       const need = E.needed(s), bc = E.breakthroughCost(s);
@@ -154,8 +269,9 @@
       if (s.stage < 7) nextChapterHtml = `<div class="rebirth"><div class="eyebrow">БЛИЖАЙШАЯ ЦЕЛЬ · ${E.stages[s.stage + 1].name}</div><p>Ступень ${s.realm} / ${next.realm} · ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}</p><p>Требуется: ${costs(next.cost)}${!s.found ? ' · найти древнюю технику' : ''}</p>${button('advance', '', 'Начать следующую главу', E.canAdvance(s))}</div>`;
       if(s.stage===0) {
         const beat=E.storyBeat(s);
-        const storyHtml=beat?`<article class="story-panel story-novel-panel"><div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div><h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}<div class="story-goal"><strong>Твоя цель</strong><p>${beat.goal}</p>${Object.keys(beat.reward||{}).length?`<small>Награда: ${costs(beat.reward)}</small>`:''}</div>${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`));}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>Пройденные события</summary>${E.story.slice(0,s.storyStep).map((_,i)=>E.storyBeat(s,i)).map(b=>`<h3>${b.title}</h3><p>${b.text}</p>${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}`).join('')||'<p>Твоя история только начинается.</p>'}</details></article>`:`<article class="story-panel story-novel-panel"><div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p></article>`;
-      heroStory=storyHtml;
+        const novelControls=`<div class="novel-controls"><button type="button" id="novel-font-btn" class="novel-control-btn" title="${uiText('Шрифт с засечками / без засечек','Serif / Sans font')}">${novelSerif?uiText('С засечками','Serif'):uiText('Без засечек','Sans')}</button><button type="button" id="novel-size-btn" class="novel-control-btn" title="${uiText('Размер текста','Text size')}">${novelLarge?uiText('Крупный','Large'):uiText('Обычный','Normal')}</button></div>`;
+        const storyHtml=beat?`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s)}<h2>${beat.title}</h2><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}<div class="story-goal"><strong>Твоя цель</strong><p>${beat.goal}</p>${Object.keys(beat.reward||{}).length?`<small>Награда: ${costs(beat.reward)}</small>`:''}</div>${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`));}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>Пройденные события</summary>${E.story.slice(0,s.storyStep).map((_,i)=>E.storyBeat(s,i)).map(b=>`<h3>${b.title}</h3><p>${b.text}</p>${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}`).join('')||'<p>Твоя история только начинается.</p>'}</details></article>`:`<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">${novelControls}<div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2><p>${E.storyBeat(s,6).text}</p></article>`;
+        heroStory=storyHtml;
       }
       heroTraining=`<section class="clicker-panel"><div class="section-head"><h3>Маленькие шаги — твоя сила</h3><small>Выносливость ${fmt(s.stamina)} / ${E.staminaMax(s)}</small></div><progress value="${s.stamina}" max="${E.staminaMax(s)}" aria-label="Выносливость"></progress><p class="intro">+${fmt(E.staminaRecovery(s))} ${t('выносливости/сек.')} ${uiText("Активные действия прерывают фоновое занятие. После них выбери занятие заново.","Manual actions interrupt your background activity. Select an activity again afterwards.")} Спокойствие: ${fmt(s.calm)} / 100.</p><div class="cards">${Object.entries(E.clicks).filter(([k])=>E.clickVisible(s,k)&&(!['sweep','haul'].includes(k)||E.canWorkOrder(s))).map(([k,c])=>card(c.name,c.desc+' '+E.taskPracticeText(k,L?.language||'ru'),button('click',k,'Выполнить',E.canClick(s,k)),`${c.stamina} выносливости · выполнено ${s.clicks[k]}`)).join('')}</div><p class="intro">Пауза между действиями — 0,6 сек. Тело и понимание сохраняют свои пределы; осмотр развалин доступен до находки.</p></section>`;
     }
@@ -199,6 +315,21 @@
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
     for(const id of ['resources','navigation'])$(id).innerHTML=h($(id).innerHTML);
+    if($('mini-hud')&&view!=='data'){
+      const place=E.world.locations[s.world.location]?.name||s.world.location;
+      const journey=s.world.journey?(uiText('В пути: ','Travelling: ')+t(E.world.locations[s.world.journey.destination]?.name||'')+` · ${Math.ceil(s.world.journey.remaining)} `+uiText('сек.','s')):t(place);
+      if($('hud-realm'))$('hud-realm').textContent=`✧ ${E.realmName(s.realm)}`;
+      if($('hud-location'))$('hud-location').textContent=journey;
+      if($('hud-activity'))$('hud-activity').textContent=`● ${t(E.activities[s.activity]?.name||'')}`;
+      if($('hud-stamina-lbl'))$('hud-stamina-lbl').textContent=uiText('Выносливость','Stamina');
+      if($('hud-stamina-val'))$('hud-stamina-val').textContent=`${fmt(s.stamina)} / ${E.staminaMax(s)}`;
+      if($('hud-stamina-fill')?.style){
+        const pct=Math.max(0,Math.min(100,(s.stamina/E.staminaMax(s))*100));
+        $('hud-stamina-fill').style.width=`${pct}%`;
+      }
+    }
+    applyHeroCollapse();
+    applyNovelTypography();
     if(quotes){
       const quote=quotes.get(s,Date.now(),L?.language||'ru');
       const text='«'+quote.text+'»',source='— '+quote.source;
@@ -307,6 +438,10 @@
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();const placesBefore=E.world.knownLocations(s).length;
+    if(b.id==='hero-collapse-toggle'){heroCollapsed=!heroCollapsed;setUiPref('isekai-hero-collapsed',String(heroCollapsed));applyHeroCollapse();return;}
+    if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
+    if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
+    if(b.id==='close-breakthrough'){if($('breakthrough-modal'))$('breakthrough-modal').hidden=true;return;}
     if(b.dataset?.place&&b.classList?.contains?.('location-details-btn')){openLocationDialog(b.dataset.place);return;}
     if(b.id==='close-location-dialog'||b.id==='close-location-dialog-btn'){$('location-dialog')?.close?.();currentDialogPlace=null;return;}
     if(b.dataset?.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
@@ -320,12 +455,49 @@
     if (b.dataset.tab) tab = b.dataset.tab;
     if(['travel','map-inspect'].includes(b.dataset.action)&&b.closest?.('#world-map-dialog')){tab='world';if(b.dataset.action==='travel'&&E.world.canTravel(s,b.dataset.value))$('world-map-dialog').close();}
     if(b.dataset.action==='travel'&&b.closest?.('#location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}
-    if (b.dataset.action) { if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); } if (E.action(s,b.dataset.action,b.dataset.value)) {save();if(b.dataset.action==='atlas-survey')toast(uiText('Окрестности осмотрены. Сведения и припасы обновлены.','Surroundings surveyed. Information and supplies updated.'));if(b.dataset.action==='map-inspect'){toast(s.events[0]?.text||'Условия пока не выполнены');if(s.world.encounter)$('world-map-dialog').close?.();}} else toast(b.dataset.action==='travel'?E.world.travelReason(s,b.dataset.value,L?.language||'ru')||'Условия пока не выполнены':'Условия пока не выполнены'); }
+    if(b.dataset.action==='click'){
+      const clickKey=b.dataset.value,clickDef=E.clicks[clickKey];
+      if(clickDef&&E.canClick(s,clickKey)){
+        const rect=b.getBoundingClientRect?b.getBoundingClientRect():{left:240,top:320,width:80};
+        const cx=rect.left+rect.width/2,cy=rect.top;
+        spawnFloating(`−${clickDef.stamina} ${uiText('Выносл.','Stam.')}`,'floating-stamina',cx,cy);
+        if(['squat','labor','sweep','haul'].includes(clickKey)){
+          setTimeout(()=>spawnFloating(`+0.05 ${uiText('Тело','Body')}`,'floating-body',cx,cy-18),120);
+        }else if(['posture','breathe'].includes(clickKey)){
+          setTimeout(()=>spawnFloating(`+0.5 ${uiText('Спокойствие','Calm')}`,'floating-xp',cx,cy-18),120);
+        }else if(clickKey==='search'){
+          setTimeout(()=>spawnFloating(`+1 ${uiText('Осмотр','Search')}`,'floating-gold',cx,cy-18),120);
+        }
+      }else if(clickDef&&s.stamina<clickDef.stamina){
+        b.classList?.add?.('shake-warning');
+        setTimeout(()=>b.classList?.remove?.('shake-warning'),400);
+        const rect=b.getBoundingClientRect?b.getBoundingClientRect():{left:240,top:320,width:80};
+        spawnFloating(uiText('Мало выносливости!','Low stamina!'),'floating-stamina',rect.left+rect.width/2,rect.top);
+      }
+    }
+    const realmBefore=s.realm;
+    if (b.dataset.action) {
+      if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); }
+      if (E.action(s,b.dataset.action,b.dataset.value)) {
+        if(s.realm>realmBefore){
+          const modal=$('breakthrough-modal');
+          if(modal&&view!=='data'){
+            if($('breakthrough-realm'))$('breakthrough-realm').textContent=`✧ ${E.realmName(s.realm)} · ${uiText('Сила','Power')} ${fmt(E.power(s))} ⚔`;
+            modal.hidden=false;
+          }
+        }
+        save();
+        if(b.dataset.action==='atlas-survey')toast(uiText('Окрестности осмотрены. Сведения и припасы обновлены.','Surroundings surveyed. Information and supplies updated.'));
+        if(b.dataset.action==='map-inspect'){toast(s.events[0]?.text||'Условия пока не выполнены');if(s.world.encounter)$('world-map-dialog').close?.();}
+      } else toast(b.dataset.action==='travel'?E.world.travelReason(s,b.dataset.value,L?.language||'ru')||'Условия пока не выполнены':'Условия пока не выполнены');
+    }
     if(b.dataset.action==='choice'&&E.world.knownLocations(s).length>placesBefore&&s.events[0]?.text.startsWith('Открыта дорога:'))toast(s.events[0].text);
     if (b.id === 'save') save(true);
     if (b.id === 'export') { const value = typeof IsekaiSaveCode !== 'undefined' ? IsekaiSaveCode.envelope(s) : s; const url = URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = `${view === 'data' ? 'data-snapshot' : 'isekai-idle'}-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','world','roadmap'].includes(tab)) tab = 'hero'; render();
   });
+  $('close-breakthrough')?.addEventListener?.('click',()=>{$('breakthrough-modal')&&($('breakthrough-modal').hidden=true);});
+  $('breakthrough-modal')?.addEventListener?.('click',e=>{if(e.target?.classList?.contains?.('breakthrough-backdrop')||e.target?.id==='close-breakthrough'){$('breakthrough-modal')&&($('breakthrough-modal').hidden=true);}});
   $('close-location-dialog')?.addEventListener('click',()=>{$('location-dialog')?.close?.();currentDialogPlace=null;});
   $('location-dialog')?.addEventListener('click',e=>{if(e.target===$('location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}});
   $('open-map').addEventListener('click',()=>{
@@ -350,6 +522,35 @@
     e.preventDefault();
     if(!E.action(s,'name',$('player-name-input').value)){$('identity-error').textContent=t('Введи имя от 2 до 40 символов без необычных знаков.');return;}
     $('identity-error').textContent='';save();render();
+  });
+  document.addEventListener('keydown', e => {
+    if (!e || !e.key) return;
+    const tag = document.activeElement?.tagName;
+    if (['INPUT','TEXTAREA','SELECT'].includes(tag) || document.activeElement?.isContentEditable) return;
+    if (e.key === 'Escape') {
+      if ($('breakthrough-modal') && !$('breakthrough-modal').hidden) { $('breakthrough-modal').hidden = true; return; }
+      if ($('location-dialog')?.open) { $('location-dialog')?.close?.(); currentDialogPlace = null; return; }
+      if ($('world-map-dialog')?.open) { $('world-map-dialog')?.close?.(); return; }
+      if ($('save-dialog')?.open) { $('save-dialog')?.close?.(); return; }
+    }
+    if (e.key === ' ' || e.code === 'Space') {
+      const clickBtn = document.querySelector ? document.querySelector('#content button[data-action="click"]:not([disabled])') : null;
+      if (clickBtn) { e.preventDefault?.(); clickBtn.click?.(); }
+      return;
+    }
+    if (e.key === '1') { tab = 'hero'; render(); return; }
+    if (e.key === '2') { tab = 'combat'; render(); return; }
+    if (e.key === '3') { tab = 'world'; render(); return; }
+    if (e.key === '4' && s.stage >= 2) { tab = 'sect'; render(); return; }
+    if ((e.key === 'm' || e.key === 'M' || e.key === 'ь' || e.key === 'Ь') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if ($('world-map-dialog')?.open) { $('world-map-dialog').close?.(); }
+      else { renderMap(); $('world-map-dialog')?.showModal?.(); centerMap(); }
+      return;
+    }
+    if ((e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      save(true);
+      return;
+    }
   });
   if (!s.events.length) E.log(s,E.stages[0].intro);
   tick();

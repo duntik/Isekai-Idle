@@ -53,5 +53,13 @@
     ,['На месте действует бонус локации к подходящему занятию. Погибнув, ты возвращаешься в деревню и теряешь 50% монет, трав, энергии, осколков и других переносимых ресурсов. Прокачка, сюжет, знакомства, здания, репутация, влияние и миры сохраняются.','At your destination, its bonus applies to the matching activity. Death returns you to the village and removes 50% of coins, herbs, energy, shards and other carried resources. Your development, story, acquaintances, buildings, reputation, influence and worlds remain.']
     ,['Отмена удаляет только прогресс текущего заказа. Кнопки уборки и разгрузки находятся в блоке активных действий.','Cancelling only removes the current contract’s progress. Cleaning and unloading buttons are in the active actions section.']
     ,['Сейчас:','Location:'],['Активно:','Active:']
+    ,['Свернуть / развернуть','Toggle hero banner'],['Быстрый статус','Quick status']
+    ,['ПРОРЫВ МЕРИДИАНОВ!','MERIDIAN BREAKTHROUGH!'],['Спазмированные каналы сокрушены! Истинная ци свободно циркулирует по телу.','The blocked channels have been shattered! True qi now circulates freely.']
+    ,['Продолжить путь','Continue path']
+    ,['Шаги первой главы','First chapter steps'],['Пролог','Prologue'],['Двор','Yard'],['Закалка','Body'],['Медитация','Meditation'],['Святилище','Ruins'],['Прорыв','Breakthrough'],['Застава','Roadblock'],['Секта','Sect']
+    ,['Шрифт с засечками / без засечек','Serif / Sans font'],['Шрифт','Font'],['Размер текста','Text size'],['Размер','Size']
+    ,['/сек','/s'],['/мин','/m'],['Подметание','Sweep'],['Перенос','Carry'],['Осмотр','Search'],['Выносл.','Stam.']
+    ,['Готово действие','Action ready'],['Доступен бой','Battle ready'],['Событие','Encounter ready'],['Достижение','Achievement ready']
+    ,['С засечками','Serif'],['Без засечек','Sans'],['Крупный','Large'],['Обычный','Normal'],['Мало выносливости!','Low stamina!'],['Сила духа возросла','Spiritual power ascended']
   ]);
 })(globalThis);

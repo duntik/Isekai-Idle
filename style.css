@@ -133,3 +133,81 @@ html[data-interface="data"] .story-novel-panel{background:#ffffff;border-left:4p
 html[data-interface="data"] .story-chronicle{background:#f4f6f8;border:1px solid #d2d8dc;border-left:3px solid #4a6572}
 html[data-interface="data"] .story-chronicle-badge{color:#2e4a62}
 html[data-interface="data"] .story-chronicle p{color:#334454}
+
+/* Collapsible Hero */
+.hero-toggle{position:absolute;top:14px;right:14px;background:rgba(16,33,42,0.7);border:1px solid rgba(228,195,138,0.35);color:var(--gold);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:12px;z-index:3;transition:transform .2s,background .15s}
+.hero-toggle:hover{background:rgba(30,55,50,0.8);border-color:var(--gold)}
+.hero.hero-collapsed{min-height:0 !important;padding:12px 18px !important;margin:12px 0 10px !important}
+.hero.hero-collapsed #hero-title,.hero.hero-collapsed #hero-description,.hero.hero-collapsed .portal{display:none !important}
+.hero.hero-collapsed .hero-tags{margin-top:4px !important;display:inline-flex}
+.hero.hero-collapsed #chapter{display:inline-block;margin-right:12px}
+.hero.hero-collapsed .hero-toggle{top:9px;right:14px;transform:rotate(180deg)}
+
+/* Sticky Mini-HUD */
+.mini-hud{position:sticky;top:0;z-index:25;background:rgba(11,22,27,0.92);backdrop-filter:blur(8px);border:1px solid rgba(48,67,72,0.8);border-radius:8px;padding:6px 14px;margin:0 0 14px;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+.mini-hud-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:11.5px}
+.hud-item{display:inline-flex;align-items:center;gap:6px;color:#cddcc9}
+.hud-realm{color:var(--gold);font-weight:700}
+.hud-location{color:#a5d1b6}
+.hud-activity{color:#d2bd92}
+.hud-stamina{display:inline-flex;align-items:center;gap:8px}
+.hud-stamina-label{color:var(--muted);font-size:10.5px}
+.hud-bar-track{width:75px;height:6px;background:#07171b;border-radius:10px;overflow:hidden;border:1px solid rgba(165,209,182,0.25)}
+.hud-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,#5c927a,#acd3ad);border-radius:10px;transition:width .25s ease}
+html[data-interface="data"] .mini-hud{display:none !important}
+
+/* Floating numbers & button feedback */
+.floating-layer{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.floating-num{position:absolute;font-size:13px;font-weight:700;pointer-events:none;animation:float-and-fade .85s cubic-bezier(.22,1,.36,1) forwards;text-shadow:0 2px 6px rgba(0,0,0,0.85);white-space:nowrap}
+.floating-gold{color:#f5d485}
+.floating-body{color:#a5d1b6}
+.floating-stamina{color:#8ec5fc}
+.floating-xp{color:#e4c38a}
+@keyframes float-and-fade{0%{opacity:1;transform:translate(-50%,0) scale(.9)}20%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-48px) scale(1)}}
+@keyframes stamina-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.shake-warning{animation:stamina-shake .35s ease;border-color:#e06d53 !important}
+
+/* Breakthrough Ceremony */
+.breakthrough-modal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px}
+.breakthrough-modal[hidden]{display:none !important}
+.breakthrough-backdrop{position:absolute;inset:0;background:rgba(4,10,14,0.85);backdrop-filter:blur(6px);animation:fade-in .3s ease}
+.breakthrough-content{position:relative;z-index:2;background:linear-gradient(135deg,#1f3b33,#12252a);border:2px solid var(--gold);border-radius:16px;padding:32px 28px;max-width:440px;width:100%;text-align:center;box-shadow:0 0 50px rgba(228,195,138,0.35);animation:scale-up .4s cubic-bezier(.2,1,.3,1)}
+.breakthrough-glow{font-size:24px;color:var(--gold);margin-bottom:8px;text-shadow:0 0 16px rgba(228,195,138,0.7)}
+.breakthrough-content h2{font-size:20px;letter-spacing:2px;color:var(--gold);margin:0 0 8px}
+.breakthrough-content h3{font-size:26px;color:#f0dec0;margin:6px 0 14px}
+.breakthrough-content p{font-size:13px;line-height:1.75;color:#cddcc9;margin:0 0 20px}
+.breakthrough-close-btn{background:linear-gradient(115deg,#e4c58c,#bda36e);border:1px solid #ebce98;color:#202b25;font-weight:700;font-size:13px;padding:11px 24px;border-radius:8px;cursor:pointer}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+@keyframes scale-up{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+html[data-interface="data"] .breakthrough-modal{display:none !important}
+
+/* Resource Rates */
+.resource-rate{font-size:10.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.resource-rate.rate-pos{color:#8fd4a5;font-weight:600}
+
+/* Novel Stepper & Reading Controls */
+.novel-stepper{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:10px 0 14px;padding:8px 10px;background:rgba(12,27,32,0.65);border:1px solid rgba(117,133,106,0.3);border-radius:8px;overflow-x:auto}
+.novel-step{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);min-width:38px;text-align:center;flex-shrink:0}
+.novel-step-icon{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #3d5650;background:#0e1e22;font-size:11px}
+.novel-step.step-done .novel-step-icon{background:#234739;border-color:#5c9e78;color:#a5d1b6}
+.novel-step.step-done .novel-step-label{color:#a5d1b6}
+.novel-step.step-active .novel-step-icon{background:#3b361a;border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(228,195,138,0.5)}
+.novel-step.step-active .novel-step-label{color:var(--gold);font-weight:700}
+.novel-step-line{flex:1 1 10px;height:1px;background:#31464a;min-width:6px}
+.novel-controls{position:absolute;top:16px;right:18px;display:flex;gap:6px}
+.novel-control-btn{background:rgba(16,33,42,0.6);border:1px solid rgba(181,155,98,0.3);border-radius:5px;color:#c4d0c6;font-size:10.5px;padding:3px 8px;cursor:pointer}
+.novel-control-btn:hover{background:#243e37;border-color:var(--gold);color:var(--gold)}
+.story-novel-panel.novel-serif .story-narrative{font-family:Prata,Georgia,serif;font-size:15px;line-height:2}
+.story-novel-panel.novel-large .story-narrative{font-size:16.5px;line-height:2.1}
+
+/* Tab Badges & Mobile Bottom Dock */
+.tab-badge{display:inline-block;margin-left:6px;font-size:9.5px;padding:1px 5px;border-radius:10px;vertical-align:middle;line-height:1.2}
+.badge-gold{background:#d5b06033;color:var(--gold);border:1px solid #d5b06066}
+.badge-red{background:#8c292933;color:#f08585;border:1px solid #8c292966}
+.badge-blue{background:#29598c33;color:#8dc4f5;border:1px solid #29598c66}
+.badge-green{background:#298c4733;color:#8df5a9;border:1px solid #298c4766}
+@media(max-width:750px){
+  html:not([data-interface="data"]) body{padding-bottom:65px}
+  html:not([data-interface="data"]) #navigation{position:fixed;bottom:0;left:0;right:0;z-index:90;background:rgba(11,22,27,0.95);backdrop-filter:blur(12px);border-top:1px solid #304348;display:flex;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));margin:0;box-shadow:0 -4px 20px rgba(0,0,0,0.5)}
+  html:not([data-interface="data"]) .tab{padding:8px 10px;font-size:11px}
+}
