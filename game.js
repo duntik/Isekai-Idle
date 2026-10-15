@@ -907,10 +907,65 @@
   $('map-note-form').addEventListener('submit',e=>{e.preventDefault();if(E.action(s,'atlas-note',{id:noteSelection,text:$('map-note-text').value})){save();toast(uiText('Заметка сохранена.','Note saved.'));renderMap();}});
   $('map-fit').addEventListener('click',()=>{const m=E.world.map(s),v=$('map-viewport');zoomMap(Math.min((v.clientWidth||800)/m.width,(v.clientHeight||500)/m.height));v.scrollLeft=0;v.scrollTop=0;});
   $('map-viewport').addEventListener('wheel',e=>{e.preventDefault();const r=$('map-viewport').getBoundingClientRect();zoomMap(mapZoom*(e.deltaY<0?1.12:1/1.12),[e.clientX-r.left,e.clientY-r.top]);},{passive:false});
-  let mapDrag;
-  $('map-viewport').addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button,details,.map-node'))return;const v=$('map-viewport');mapDrag={x:e.clientX,y:e.clientY,left:v.scrollLeft,top:v.scrollTop};v.setPointerCapture?.(e.pointerId);});
-  $('map-viewport').addEventListener('pointermove',e=>{if(!mapDrag)return;const v=$('map-viewport');v.scrollLeft=mapDrag.left+mapDrag.x-e.clientX;v.scrollTop=mapDrag.top+mapDrag.y-e.clientY;});
-  for(const event of ['pointerup','pointercancel','lostpointercapture'])$('map-viewport').addEventListener(event,()=>{mapDrag=null;});
+  let mapDrag = null, mapWasDragging = false;
+  const mapViewport = $('map-viewport');
+  if (mapViewport) {
+    mapViewport.addEventListener?.('dragstart', e => e?.preventDefault?.());
+    mapViewport.addEventListener?.('pointerdown', e => {
+      if ((e.button !== 0 && e.button !== 1) || e.target?.closest?.('button, input, select, textarea, summary, a, label')) return;
+      e.preventDefault?.();
+      mapDrag = {
+        pointerId: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        left: mapViewport.scrollLeft || 0,
+        top: mapViewport.scrollTop || 0,
+        moved: false
+      };
+      try { mapViewport.setPointerCapture?.(e.pointerId); } catch {}
+    });
+    const onMapPointerMove = e => {
+      if (!mapDrag) return;
+      if (mapDrag.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== mapDrag.pointerId) return;
+      const dx = e.clientX - mapDrag.x, dy = e.clientY - mapDrag.y;
+      if (!mapDrag.moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+        mapDrag.moved = true;
+        mapViewport.classList?.add?.('is-dragging');
+      }
+      if (mapDrag.moved) {
+        mapViewport.scrollLeft = mapDrag.left - dx;
+        mapViewport.scrollTop = mapDrag.top - dy;
+      }
+    };
+    const onMapPointerEnd = e => {
+      if (!mapDrag) return;
+      if (mapDrag.pointerId !== undefined && e && e.pointerId !== undefined && e.pointerId !== mapDrag.pointerId) return;
+      if (mapDrag.pointerId !== undefined) {
+        try { mapViewport.releasePointerCapture?.(mapDrag.pointerId); } catch {}
+      }
+      if (mapDrag.moved) {
+        mapWasDragging = true;
+        setTimeout(() => { mapWasDragging = false; }, 80);
+      }
+      mapViewport.classList?.remove?.('is-dragging');
+      mapDrag = null;
+    };
+    mapViewport.addEventListener?.('pointermove', onMapPointerMove);
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      mapViewport.addEventListener?.(ev, onMapPointerEnd);
+    }
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('pointermove', onMapPointerMove);
+      window.addEventListener('pointerup', onMapPointerEnd);
+      window.addEventListener('pointercancel', onMapPointerEnd);
+    }
+    mapViewport.addEventListener?.('click', e => {
+      if (mapWasDragging) {
+        e.stopPropagation?.();
+        e.preventDefault?.();
+      }
+    }, true);
+  }
   $('close-map').addEventListener('click',()=>$('world-map-dialog').close?.());
   $('import').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { if (file.size > 1000000) throw Error(); const text=await file.text();const loaded = typeof IsekaiSaveCode !== 'undefined' ? await IsekaiSaveCode.decode(text,E) : E.validate(JSON.parse(text)); if(saves) saves.replace(loaded,'Импорт файла'); else if (confirm(t('Заменить текущий прогресс?'))) { s = loaded; tick(); tab = 'hero'; save(); render(); } } catch { toast('Не удалось прочитать сохранение v2'); } e.target.value = ''; });
   $('identity-form').addEventListener('submit',e=>{
