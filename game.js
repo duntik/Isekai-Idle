@@ -686,9 +686,153 @@
       html+=fold('reference',uiText('Распорядок и правила занятий','Routine and activity rules'),heroRoutine);
 
     }
+    function combatArenaView(s, foe) {
+      const c = s.combat;
+      const Combat = typeof IsekaiCombat !== 'undefined' ? IsekaiCombat : E.combat;
+      const lang = L?.language || 'ru';
+      const en = lang === 'en';
+      const counter = { swift: uiText('Быстрый шаг', 'Swift Step'), armored: uiText('Пробивающий удар', 'Piercing Strike'), mystic: uiText('Духовный заслон', 'Spirit Ward') };
+      const archetypes = { swift: uiText('Быстрый клинок', 'Swift Blade'), armored: uiText('Тяжёлый доспех', 'Heavy Armor'), mystic: uiText('Мистический барьер', 'Mystic Barrier') };
+      const counterMatches = (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[c.foeType] === s.style);
+
+      const pPhp = Math.max(0, Math.min(100, Math.round((c.playerHp / c.playerMaxHp) * 100)));
+      const pPpoise = Math.max(0, Math.min(100, Math.round((c.playerPoise / c.playerMaxPoise) * 100)));
+      const pPstam = Math.max(0, Math.min(100, Math.round((c.playerStamina / c.playerMaxStamina) * 100)));
+
+      const ePhp = Math.max(0, Math.min(100, Math.round((c.enemyHp / c.enemyMaxHp) * 100)));
+      const ePpoise = Math.max(0, Math.min(100, Math.round((c.enemyPoise / c.enemyMaxPoise) * 100)));
+
+      const intentDef = Combat?.intents?.[c.enemyIntent];
+      const intentTitle = c.enemyStunned
+        ? uiText('Стойка пробита!', 'Guard broken!')
+        : (intentDef ? (en ? intentDef.en : intentDef.ru) : c.enemyIntent);
+      const intentDesc = c.enemyStunned
+        ? uiText('Враг ошеломлён и пропускает ход!', 'Foe is staggered and skips turn!')
+        : (intentDef ? (en ? intentDef.descEn : intentDef.descRu) : '');
+
+      let bannerHtml = '';
+      if (c.finished) {
+        if (c.victory) {
+          bannerHtml = `<div class="duel-banner duel-banner-victory"><span class="duel-banner-title">⚔ ${uiText('БЛЕСТЯЩАЯ ПОБЕДА!', 'RESOUNDING VICTORY!')}</span><p>${uiText('Соперник повержен твоим боевым искусством. Награда начислена!', 'The opponent is defeated by your martial prowess. Rewards claimed!')}</p></div>`;
+        } else {
+          bannerHtml = `<div class="duel-banner duel-banner-defeat"><span class="duel-banner-title">💨 ${uiText('ТАКТИЧЕСКИЙ ОТХОД', 'TACTICAL RETREAT')}</span><p>${uiText('Силы иссякли. Защитный покров Жемчужины позволил безопасно отступить.', 'Endurance depleted. The Pearl’s veil covered your safe retreat.')}</p></div>`;
+        }
+      }
+
+      const heroCard = `
+        <div class="duel-card duel-card-hero">
+          <div class="duel-card-header">
+            <span class="duel-card-badge">${uiText('Твой герой', 'Your Hero')}</span>
+            <h4>${s.playerName || uiText('Культиватор', 'Cultivator')}</h4>
+            <small>${E.realmName(s.realm)} · ${uiText('Тело', 'Body')} ${fmt(s.body)}</small>
+          </div>
+          <div class="duel-gauges">
+            <div class="gauge-group">
+              <div class="gauge-label"><span>${uiText('Здоровье', 'Health')}</span><strong>${c.playerHp} / ${c.playerMaxHp}</strong></div>
+              <div class="gauge-track track-hp"><div class="gauge-fill fill-hp" style="width:${pPhp}%"></div></div>
+            </div>
+            <div class="gauge-group">
+              <div class="gauge-label"><span>${uiText('Стойка', 'Poise')}</span><strong>${c.playerPoise} / ${c.playerMaxPoise}</strong></div>
+              <div class="gauge-track track-poise"><div class="gauge-fill fill-poise" style="width:${pPpoise}%"></div></div>
+            </div>
+            <div class="gauge-group">
+              <div class="gauge-label"><span>${uiText('Выносливость', 'Stamina')}</span><strong>${c.playerStamina} / ${c.playerMaxStamina}</strong></div>
+              <div class="gauge-track track-stamina"><div class="gauge-fill fill-stamina" style="width:${pPstam}%"></div></div>
+            </div>
+          </div>
+        </div>`;
+
+      const foeCard = `
+        <div class="duel-card duel-card-foe">
+          <div class="duel-card-header">
+            <span class="duel-card-badge badge-foe">${archetypes[c.foeType] || c.foeType}</span>
+            <h4>${c.foeName}</h4>
+            <small>${uiText('Базовая сила', 'Base Power')} ${fmt(c.foePower)}</small>
+          </div>
+          <div class="duel-gauges">
+            <div class="gauge-group">
+              <div class="gauge-label"><span>${uiText('Здоровье', 'Health')}</span><strong>${c.enemyHp} / ${c.enemyMaxHp}</strong></div>
+              <div class="gauge-track track-hp"><div class="gauge-fill fill-hp" style="width:${ePhp}%"></div></div>
+            </div>
+            <div class="gauge-group">
+              <div class="gauge-label"><span>${uiText('Стойка', 'Poise')}</span><strong>${c.enemyPoise} / ${c.enemyMaxPoise}</strong></div>
+              <div class="gauge-track track-poise"><div class="gauge-fill fill-poise" style="width:${ePpoise}%"></div></div>
+            </div>
+            <div class="intent-box ${c.enemyStunned ? 'intent-stunned' : ''}">
+              <div class="intent-header">
+                <span class="intent-icon">${c.enemyStunned ? '💥' : '⚠'}</span>
+                <strong>${uiText('Замысел врага:', 'Foe intent:')} ${intentTitle}</strong>
+              </div>
+              <p class="intent-desc">${intentDesc}</p>
+            </div>
+          </div>
+        </div>`;
+
+      let deckHtml = '';
+      if (c.finished) {
+        deckHtml = `
+          <div class="duel-deck duel-deck-finished">
+            ${button('combat-retreat', '', uiText('Завершить поединок', 'Conclude duel'))}
+          </div>`;
+      } else {
+        deckHtml = `
+          <div class="duel-deck">
+            <div class="deck-title"><span>${uiText('Выбери действие на раунд', 'Choose your round action')}</span></div>
+            <div class="deck-actions">
+              ${button('combat-act', 'thrust', uiText('Быстрый выпад', 'Swift thrust'))}
+              ${button('combat-act', 'heavy', uiText('Тяжёлый удар', 'Heavy strike'))}
+              ${button('combat-act', 'parry', uiText('Парирование', 'Parry'))}
+              ${button('combat-act', 'technique', uiText('Боевая техника', 'Martial technique'))}
+              ${button('combat-act', 'pearl', uiText('Жемчужина', 'Pearl'), !c.pearlUsed)}
+              ${button('combat-act', 'pill', uiText('Пилюля', 'Pill'), s.resources.pills >= 1)}
+            </div>
+            <div class="deck-secondary">
+              ${button('combat-retreat', '', uiText('Отступить', 'Retreat'))}
+              ${button('fight', '', uiText('Авто-бой', 'Auto-fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}
+            </div>
+          </div>`;
+      }
+
+      const logItems = (c.log || []).map(item => `
+        <div class="combat-log-entry">
+          <span class="combat-log-badge">${uiText('Раунд', 'Round')} ${item.round}</span>
+          <p class="combat-log-text">${en ? item.en : item.ru}</p>
+        </div>`).join('');
+
+      const logHtml = `
+        <div class="combat-chronicle">
+          <div class="chronicle-header">
+            <h4>${uiText('Хроника поединка', 'Combat Chronicle')}</h4>
+            <small>${uiText('Записи духовного ока', 'Spiritual Eye records')}</small>
+          </div>
+          <div class="combat-log-stream">${logItems}</div>
+        </div>`;
+
+      return `
+        <h2>${s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path')}</h2>
+        <div class="duel-arena">
+          <div class="duel-top-bar">
+            <div class="duel-eyebrow">${uiText('РАУНД', 'ROUND')} ${c.round} · ${uiText('ТАКТИЧЕСКИЙ ПОЕДИНОК', 'TACTICAL DUEL')}</div>
+            ${counterMatches ? `<span class="style-advantage-pill">✦ ${uiText('Преимущество стиля (+35%)', 'Style Advantage (+35%)')}</span>` : ''}
+          </div>
+          ${bannerHtml}
+          <div class="duel-vs-grid">
+            ${heroCard}
+            <div class="duel-vs-divider"><span class="vs-emblem">⚔</span></div>
+            ${foeCard}
+          </div>
+          ${deckHtml}
+          ${logHtml}
+        </div>`;
+    }
+
     if (tab === 'combat') {
-      const foe = E.enemy(s), counter = { swift: 'Быстрый шаг', armored: 'Пробивающий удар', mystic: 'Духовный заслон' };
-      html = `<h2>${s.stage === 2 ? 'Турнир и соперники' : 'Испытания пути'}</h2>${s.stage===0?'<p class="intro">Первый бой: в деревне, после прорыва и перед финалом первой арки. Можно завершить арку без боя.</p>':''}<p class="intro">Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.</p><div class="rebirth combat-duel"><div class="eyebrow">СЛЕДУЮЩИЙ СОПЕРНИК</div><h2>${foe.name}</h2><p>Сила соперника: <strong>${fmt(foe.power)}</strong></p><p>Твоя сила в этом бою: ${fmt(E.battlePower(s))}. Подходящий стиль: ${counter[foe.type]}.</p><p>Награда: ${fmt(30 * 1.8 ** s.wins)} монет · ${(s.wins + 1) * 10} трав · 1 осколок.</p>${button('fight', '', s.cooldown > 0 ? `Отдых: ${duration(s.cooldown)}` : 'Принять вызов', s.cooldown === 0 && E.battlePower(s) >= foe.power)}<p class="intro">Побед: ${s.wins}. После боя — 5 минут отдыха.</p></div>`;
+      const foe = E.enemy(s), counter = { swift: uiText('Быстрый шаг', 'Swift Step'), armored: uiText('Пробивающий удар', 'Piercing Strike'), mystic: uiText('Духовный заслон', 'Spirit Ward') };
+      if (s.combat) {
+        html = combatArenaView(s, foe);
+      } else {
+        html = `<h2>${s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path')}</h2>${s.stage===0?`<p class="intro">${uiText('Первый бой: в деревне, после прорыва и перед финалом первой арки. Можно завершить арку без боя.', 'First fight opens in the village after your breakthrough and before the first arc finale. Can be completed peacefully.')}</p>`:''}<p class="intro">${uiText('Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.', 'Train your body, techniques and weapons to overcome stronger rivals. Outcomes are predictable; randomness does not take your rewards away.')}</p><div class="rebirth combat-duel"><div class="eyebrow">${uiText('СЛЕДУЮЩИЙ СОПЕРНИК', 'NEXT RIVAL')}</div><h2>${foe.name}</h2><p>${uiText('Сила соперника:', 'Rival power:')} <strong>${fmt(foe.power)}</strong></p><p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${counter[foe.type]}.</p><p>${uiText('Награда:', 'Reward:')} ${fmt(30 * 1.8 ** s.wins)} ${uiText('монет', 'coins')} · ${(s.wins + 1) * 10} ${uiText('трав', 'herbs')} · 1 ${uiText('осколок', 'shard')}.</p><div class="combat-actions-row">${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), s.cooldown === 0 && E.battlePower(s) >= foe.power)} ${button('fight', '', s.cooldown > 0 ? `${uiText('Отдых: ', 'Rest: ')}${duration(s.cooldown)}` : uiText('Быстрый бой', 'Quick fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}</div><p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('После боя — 5 минут отдыха.', 'Rest for 5 minutes after a fight.')}</p></div>`;
+      }
     }
     if (tab === 'sect') {
       html = (s.world.admission?schoolView(s.world.admission):'')+`<h2>${s.stage === 2 ? 'Жизнь ученика' : 'Твоя секта'}</h2><p class="intro">${s.stage === 2 ? 'Выполняй поручения, заслуживай репутацию и получай доступ к знаниям.' : 'Распредели последователей. Алхимикам нужны травы и духовная энергия; без них производство останавливается.'}</p>`;

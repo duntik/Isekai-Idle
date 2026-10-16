@@ -66,11 +66,33 @@
     }
     if(['hero','world'].includes(tab))for(const a of E.techniqueActions?.(s,root.IsekaiLocale?.language||'ru')||[])row(a.name,a.hint,`${E.techniques[a.technique].name}. ${a.description}`,btn('technique-action',a.id,uiText('Выполнить приём','Use method'),a.enabled)+(s.cultivation.active!==a.technique?btn('equip-technique',a.technique,uiText('Выбрать эту технику','Equip this technique')):''));
     if(tab==='combat') {
-      if(s.stage===0)row('Первый бой','Деревня','После прорыва и перед финалом первой арки. Можно завершить арку без боя.');
-      row('Соперник',E.enemy(s).name,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('fight','','Выполнить',!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
-      row('Подходящий стиль',{swift:'Быстрый шаг',armored:'Пробивающий удар',mystic:'Духовный заслон'}[E.enemy(s).type],'Соответствие даёт +35%');
-      row('Интервал',`${Math.ceil(s.cooldown)} сек`,'Пять минут после победы');
-      row('Результат',s.wins,`Монеты +${f(30*1.8**s.wins)}; травы +${(s.wins+1)*10}; осколки +1`);
+      const Combat = typeof module !== 'undefined' && module.exports ? require('./combat.js') : (root.IsekaiCombat || E.combat);
+      if(s.stage===0)row(uiText('Первый бой','First fight'),uiText('Деревня','Village'),uiText('После прорыва и перед финалом первой арки. Можно завершить арку без боя.','After breakthrough and before first arc finale. Can be completed peacefully.'));
+      if(s.combat) {
+        const c=s.combat;
+        if(c.finished) {
+          row(uiText('Результат поединка','Duel result'),c.victory?uiText('Победа','Victory'):uiText('Отступление','Retreat'),c.victory?uiText('Соперник повержен. Трофеи начислены.','Opponent defeated. Rewards claimed.'):uiText('Силы иссякли. Защитный покров Жемчужины позволил отступить.','Endurance depleted. Sky Poison Pearl enabled safe retreat.'),btn('combat-retreat','',uiText('Завершить поединок','Conclude duel')));
+        } else {
+          row(uiText('Раунд поединка','Duel round'),c.round,`${c.foeName} (${c.foeType}); ${uiText('Намерение:','Intent:')} ${(Combat?.intents?.[c.enemyIntent]?.[root.IsekaiLocale?.language==='en'?'en':'ru'])||c.enemyIntent}`);
+          row(uiText('Здоровье героя','Hero health'),`${c.playerHp}/${c.playerMaxHp}`,`${uiText('Стойка:','Poise:')} ${c.playerPoise}/${c.playerMaxPoise}; ${uiText('Выносливость:','Stamina:')} ${c.playerStamina}/${c.playerMaxStamina}`);
+          row(uiText('Здоровье врага','Foe health'),`${c.enemyHp}/${c.enemyMaxHp}`,`${uiText('Стойка:','Poise:')} ${c.enemyPoise}/${c.enemyMaxPoise}${c.enemyStunned?(' · '+uiText('Стойка пробита!','Guard broken!')):''}`);
+          row(uiText('Действия поединка','Duel actions'),'—',uiText('Выбери приём против замысла врага','Choose technique against enemy intent'),
+            btn('combat-act','thrust',uiText('Быстрый выпад','Swift thrust'))+' '+
+            btn('combat-act','heavy',uiText('Тяжёлый удар','Heavy strike'))+' '+
+            btn('combat-act','parry',uiText('Парирование','Parry'))+' '+
+            btn('combat-act','technique',uiText('Боевая техника','Martial technique'))+' '+
+            btn('combat-act','pearl',uiText('Жемчужина','Pearl'),!c.pearlUsed)+' '+
+            btn('combat-act','pill',uiText('Пилюля','Pill'),s.resources.pills>=1)+' '+
+            btn('combat-retreat','',uiText('Отступить','Retreat'))+' '+
+            btn('fight','',uiText('Авто-бой','Auto-fight'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power)
+          );
+        }
+      } else {
+        row(uiText('Соперник','Rival'),E.enemy(s).name,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('combat-start','',uiText('Вступить в поединок','Enter tactical duel'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power)+' '+btn('fight','',uiText('Быстрый бой','Quick fight'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
+        row(uiText('Подходящий стиль','Recommended style'),{swift:uiText('Быстрый шаг','Swift Step'),armored:uiText('Пробивающий удар','Piercing Strike'),mystic:uiText('Духовный заслон','Spirit Ward')}[E.enemy(s).type],uiText('Соответствие даёт +35%','Matching style grants +35%'));
+        row(uiText('Интервал','Interval'),`${Math.ceil(s.cooldown)} сек`,uiText('Пять минут после победы','Five minutes after a victory'));
+        row(uiText('Результат','Reward'),s.wins,`Монеты +${f(30*1.8**s.wins)}; травы +${(s.wins+1)*10}; осколки +1`);
+      }
     }
     if(tab==='world') {
       const memoryScene=E.world.current(s),context=memoryScene&&E.world.memory?.context(s,memoryScene,root.IsekaiLocale?.language||'ru');
