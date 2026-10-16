@@ -3,6 +3,8 @@
   const E = Isekai, KEY = 'isekai-idle-v2', $ = id => document.getElementById(id);
   const L=typeof IsekaiLocale!=='undefined'?IsekaiLocale:null,t=value=>L?L.text(value):value,h=value=>L?L.html(value):value;
   const uiText=(ru,en)=>L?.language==='en'?en:ru;
+  const FateTree=typeof IsekaiFateTree!=='undefined'?IsekaiFateTree:(typeof require==='function'?(()=>{try{return require('./fate-tree.js');}catch{return null;}})():null);
+  let activeFateTab='story';
   const quotes=typeof IsekaiQuotes!=='undefined'?IsekaiQuotes.createRotator():null;
   const N=IsekaiNames;
   let nameStyle='cultivation',nameOptions=[];
@@ -680,6 +682,7 @@
             ${novelStepperHtml(s, activeStep)}
             <div class="story-archive-banner">
               <div class="story-archive-badge"><span class="archive-icon">📜</span> <strong>${uiText('Архив прочитанной главы', 'Archived Chapter')}</strong> · ${uiText('Все сделанные выборы уже запечатлены в твоей судьбе.', 'Your choices have already been woven into destiny.')}</div>
+              <button type="button" class="btn-fate-tree-link-small" id="story-open-fate-tree"><span class="fate-icon">✦</span> ${uiText('Древо Судьбы', 'Fate Tree')}</button>
               <button type="button" class="story-archive-return-btn" data-novel-step="${s.storyStep}">${uiText('↩ К текущей главе', '↩ Return to current')}</button>
             </div>
             <div class="story-header-row">
@@ -695,10 +698,10 @@
                 ${uiText(`↩ Вернуться к текущей главе (${s.storyStep+1} · ${beat?.title || ''})`, `↩ Return to current chapter (${s.storyStep+1} · ${beat?.title || ''})`)}
               </button>
             </div>
-            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details>
+            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details>
           </article>`;
         } else {
-          storyHtml = beat ? `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s, s.storyStep)}<div class="story-header-row"><h2>${beat.title}</h2>${novelControls}</div><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat, s.storyStep, false)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details></article>` : `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><div class="story-header-row"><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2>${novelControls}</div><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
+          storyHtml = beat ? `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s, s.storyStep)}<div class="story-header-row"><h2>${beat.title}</h2>${novelControls}</div><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat, s.storyStep, false)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details></article>` : `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><div class="story-header-row"><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2>${novelControls}</div><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
         }
         heroStory=storyHtml;
       }
@@ -879,11 +882,15 @@
     if (tab === 'city') html = `<h2>Город и торговля</h2><p class="intro">Производство секты снабжает город. Каждый район позволяет открыть постоянный маршрут: караван приносит 500 монет и 30 влияния каждые 30 минут.</p>${projects([4])}<div class="workers"><h3>Маршруты ${s.routes.length} / ${s.buildings.market}</h3>${button('route', '', 'Открыть маршрут · 300 монет, 30 припасов', s.routes.length < s.buildings.market && E.affordable(s,{gold:300,supplies:30}))}${s.routes.map((r,i)=>`<p class="intro">Караван ${i+1}: возвращение через ${duration(r.remaining)}</p>`).join('')}</div>`;
     if (tab === 'planet') html = `<h2>Мировая сеть</h2><p class="intro">Узлы производят эссенцию и усиливают щит. Для следующего портала нужна сила щита ${fmt(10000 * (s.resources.worlds + 1))}; сейчас ${fmt(E.power(s) + s.buildings.node * 20)}.</p>${projects([5])}<div class="rebirth"><h3>Закрепить межмировой портал</h3><p>Переход занимает 2 часа. Награда: один мир и 80 эссенции. Каждый мир производит 0,01 эссенции/сек.</p>${expedition()}${button('portal', '', 'Открыть портал · 500 энергии, 50 припасов', !s.expedition && E.power(s) + s.buildings.node * 20 >= 10000*(s.resources.worlds+1) && E.affordable(s,{qi:500,supplies:50}))}</div>`;
     if (tab === 'galaxy') html = `<h2>Звёздная экспансия</h2><p class="intro">Для освоения следующего мира нужен флот из ${s.resources.worlds + 1} кораблей. Расширяй снабжение города и строй корабли из руды и эссенции.</p>${projects([6,7])}<div class="rebirth"><h3>Колониальный поход</h3><p>Поход занимает 4 часа; основание колонии добавляет мир и 80 эссенции.</p>${expedition()}${button('colonize', '', 'Отправить флот · 60 эссенции, 100 припасов', !s.expedition && s.buildings.fleet >= s.resources.worlds+1 && E.affordable(s,{cosmic:60,supplies:100}))}</div>`;
-    if (tab === 'legacy') html = `<h2>Наследие души</h2><p class="intro">Жизнь ${s.life} · Души ${s.souls} · Постоянный бонус ${s.souls * 10}%.</p><div class="rebirth"><h3>Новый круг</h3><p>После 24-й ступени можно переродиться. Все владения, ресурсы и навыки сбросятся. Останутся души: +${Math.max(1, Math.floor(s.realm/6))}, каждая ускоряет личное развитие на 10%.</p>${button('rebirth', '', 'Переродиться', s.realm >= 24)}</div>`;
+    if (tab === 'legacy') {
+      const fateSummary = (FateTree && FateTree.renderCompact) ? FateTree.renderCompact(s, L?.language || 'ru') : '';
+      html = `<h2>${uiText('Наследие души','Legacy of the soul')}</h2><p class="intro">${uiText(`Жизнь ${s.life} · Души ${s.souls} · Постоянный бонус ${s.souls * 10}%.`,`Life ${s.life} · Souls ${s.souls} · Permanent bonus ${s.souls * 10}%.`)}</p><div class="rebirth"><h3>${uiText('Новый круг','New cycle')}</h3><p>${uiText(`После 24-й ступени можно переродиться. Все владения, ресурсы и навыки сбросятся. Останутся души: +${Math.max(1, Math.floor(s.realm/6))}, каждая ускоряет личное развитие на 10%.`,`After realm 24 you can be reborn. All possessions, resources and skills will reset. Souls will remain: +${Math.max(1, Math.floor(s.realm/6))}, each accelerating personal cultivation by 10%.`)}</p>${button('rebirth', '', 'Переродиться', s.realm >= 24)}</div><section class="legacy-fate-tree-section"><div class="section-head"><h3>${uiText('Древо Судьбы и Карма Души','Fate Tree & Soul Karma')}</h3><button type="button" class="btn-fate-tree-link" id="legacy-open-fate-tree">${uiText('Развернуть полное Древо','Expand Full Fate Tree')}</button></div><p class="intro">${uiText('Хроника всех принятых решений, уз кармы с жителями мира и открытых путей судьбы.','Chronicle of all decisions made, karmic bonds with the world’s denizens, and unlocked destiny paths.')}</p>${fateSummary}</section>`;
+    }
     if (tab === 'roadmap') html = `<h2>Ближайший горизонт</h2><p class="intro">Тебе известна только ближайшая цель. Дальнейший путь откроется, когда ты до неё доберёшься. Поручения, знания, помощь людям и испытания позволяют заслужить признание разными способами. Личная культивация и запас ресурсов по-прежнему необходимы.</p><div class="cards">${E.stages.slice(0,s.stage+2).map((st,i)=>card(`${i < s.stage ? '✓' : i === s.stage ? '●' : '◇'} ${st.name}`, st.subtitle, `<small>${i === s.stage ? 'Текущая глава' : i < s.stage ? 'Пройдена' : 'Ближайшая цель'}</small>`)).join('')}</div>${s.stage>0&&s.stage<7?card('Признание',`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`,Object.entries(s.world.director.paths[s.stage]||{}).map(([k,n])=>`${t(E.world.pathNames[k])}: ${n}`).join(' · '),button('advance','','Перейти',E.canAdvance(s))) : ''}`;
     $('content').innerHTML = h(returnSummaryView()+(view === 'data' ? IsekaiDataView.render(s, tab, E) : html));
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
+    if($('open-fate-tree'))$('open-fate-tree').textContent=uiText('✦ Древо Судьбы','✦ Fate Tree');
     for(const id of ['resources','navigation','hero-compact-resources','hud-resources'])if($(id))$(id).innerHTML=h($(id).innerHTML);
     if($('mini-hud')&&view!=='data'){
       const place=E.world.locations[s.world.location]?.name||s.world.location;
@@ -966,6 +973,38 @@
     renderLocationDialog(place);
     $('location-dialog')?.showModal?.();
   }
+  function renderFateTree(){
+    const body=$('fate-tree-body');
+    if(!body)return;
+    const lang=L?.language||'ru';
+    if($('fate-tree-title'))$('fate-tree-title').textContent=uiText('Древо Судьбы и Хроника Кармы','Fate Tree & Karma Chronicle');
+    if($('fate-tree-intro'))$('fate-tree-intro').textContent=uiText('Хроника принятых решений, уз кармы и открытых путей.','Chronicle of choices, karmic bonds and unlocked paths.');
+    if($('close-fate-tree'))$('close-fate-tree').textContent=uiText('Закрыть','Close');
+    const tabs=$('fate-tree-dialog')?.querySelectorAll?.('.fate-tab');
+    if(tabs){
+      tabs.forEach(btn=>{
+        const isAct=btn.dataset.fateTab===activeFateTab;
+        btn.classList.toggle('active',isAct);
+        btn.setAttribute('aria-selected',isAct?'true':'false');
+        if(btn.dataset.fateTab==='story')btn.textContent=uiText('✦ Ветви Судьбы','✦ Story Branches');
+        if(btn.dataset.fateTab==='npc')btn.textContent=uiText('✦ Узы Кармы','✦ Bonds of Karma');
+        if(btn.dataset.fateTab==='factions')btn.textContent=uiText('✦ Фракции и Секты','✦ Factions & Sects');
+      });
+    }
+    if(FateTree&&FateTree.renderTreeHtml){
+      body.innerHTML=FateTree.renderTreeHtml(s,activeFateTab,lang);
+    }else{
+      body.innerHTML=`<p class="intro">${uiText('Древо Судьбы временно недоступно.','Fate Tree is currently unavailable.')}</p>`;
+    }
+  }
+  function openFateTreeDialog(){
+    renderFateTree();
+    const d=$('fate-tree-dialog');
+    if(d){
+      if(typeof d.showModal==='function')d.showModal();
+      else d.setAttribute('open','');
+    }
+  }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
     let html=`<h2>Дороги другого мира</h2><p class="intro">Сейчас: ${W.locations[w.location].name}. ${w.journey?`В пути: ${W.locations[w.journey.destination].name}, осталось ${Math.ceil(w.journey.remaining)} сек.`:'Можно выбрать маршрут или поискать встречу на месте.'}</p>`;
@@ -1034,6 +1073,9 @@
         return;
       }
     }
+    if(b.dataset?.fateTab){activeFateTab=b.dataset.fateTab;renderFateTree();return;}
+    if(b.id==='open-fate-tree'||b.id==='story-open-fate-tree'||b.id==='story-open-fate-tree-archive'||b.id==='legacy-open-fate-tree'){openFateTreeDialog();return;}
+    if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
     if(b.id==='hero-collapse-toggle'){heroCollapsed=!heroCollapsed;setUiPref('isekai-hero-collapsed',String(heroCollapsed));applyHeroCollapse();return;}
     if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
@@ -1146,6 +1188,9 @@
   $('breakthrough-modal')?.addEventListener?.('click',e=>{if(e.target?.classList?.contains?.('breakthrough-backdrop')||e.target?.id==='close-breakthrough'){$('breakthrough-modal')&&($('breakthrough-modal').hidden=true);}});
   $('close-location-dialog')?.addEventListener('click',()=>{$('location-dialog')?.close?.();currentDialogPlace=null;});
   $('location-dialog')?.addEventListener('click',e=>{if(e.target===$('location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}});
+  $('open-fate-tree')?.addEventListener('click',openFateTreeDialog);
+  $('close-fate-tree')?.addEventListener('click',()=>{$('fate-tree-dialog')?.close?.();});
+  $('fate-tree-dialog')?.addEventListener('click',e=>{if(e.target===$('fate-tree-dialog'))$('fate-tree-dialog')?.close?.();});
   $('open-map').addEventListener('click',()=>{
     renderMap();$('world-map-dialog').showModal?.();
     centerMap();

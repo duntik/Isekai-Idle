@@ -293,4 +293,18 @@ html:not([data-interface="data"]) .story-archive-return-btn:hover{background:lin
 .reward-tag-world{color:#a5d1b6;font-size:11px;font-weight:600;white-space:nowrap}
 .reward-tag-system{color:var(--gold);font-size:11px;font-weight:600;white-space:nowrap}
 
+/* Fate Tree Visual Atmosphere */
+html:not([data-interface="data"]) #fate-tree-dialog{background:linear-gradient(135deg,#1c2f35,#102025);border-color:#3a5450;box-shadow:0 16px 48px rgba(0,0,0,0.65)}
+html:not([data-interface="data"]) .fate-step-card{background:linear-gradient(145deg,#182d32,#112226);border-color:#2f4946;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+html:not([data-interface="data"]) .fate-step-card.fate-step-completed{border-left:3px solid var(--spirit-jade)}
+html:not([data-interface="data"]) .fate-step-card.fate-step-current{border-left:3px solid var(--gold);box-shadow:0 0 16px rgba(229,195,130,0.15)}
+html:not([data-interface="data"]) .fate-option-card.chosen{border-color:var(--gold);background:linear-gradient(145deg,rgba(229,195,130,0.12),rgba(18,36,40,0.92));box-shadow:0 0 16px rgba(229,195,130,0.2)}
+html:not([data-interface="data"]) .fate-option-card.available{border-color:var(--spirit-jade);box-shadow:0 0 10px rgba(46,219,162,0.15)}
+html:not([data-interface="data"]) .fate-npc-card{background:linear-gradient(145deg,#172c31,#102125);border-color:#2d4744}
+html:not([data-interface="data"]) .fate-npc-card.trust-high{border-top:2px solid var(--gold);box-shadow:0 4px 16px rgba(229,195,130,0.15)}
+html:not([data-interface="data"]) .fate-npc-card.trust-good{border-top:2px solid var(--spirit-jade)}
+html:not([data-interface="data"]) .fate-npc-card.trust-wary{border-top:2px solid var(--crimson-flame)}
+html:not([data-interface="data"]) .fate-faction-card{background:linear-gradient(145deg,#192e34,#112227);border-color:#2f4a47;box-shadow:0 4px 16px rgba(0,0,0,0.25)}
+html:not([data-interface="data"]) .fate-faction-card:hover{border-color:var(--gold);transform:translateY(-1px);transition:transform .2s ease,border-color .2s ease}
+
 

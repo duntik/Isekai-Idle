@@ -365,3 +365,102 @@ html[data-interface="data"] .system-box.system-tactical .system-prompt-title{col
   .backup-row{flex-direction:column;align-items:stretch;gap:8px;padding:10px 0}
   .backup-row button{width:100%;min-height:40px}
 }
+
+/* Fate Tree & Karma Chronicle Dialog */
+#open-fate-tree{background:linear-gradient(135deg,rgba(229,195,130,0.15),rgba(46,219,162,0.12));border:1px solid rgba(229,195,130,0.45);color:var(--gold)}
+#open-fate-tree:hover{background:linear-gradient(135deg,rgba(229,195,130,0.28),rgba(46,219,162,0.2));border-color:var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.25)}
+#fate-tree-dialog{max-width:880px;width:calc(100% - 32px);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);padding:24px}
+#fate-tree-dialog::backdrop{background:#000b}
+.fate-tree-tabs{display:flex;gap:8px;margin:14px 0 18px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.fate-tab{background:transparent;border:1px solid var(--line);border-radius:6px;padding:8px 16px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s ease}
+.fate-tab:hover{color:var(--text);border-color:var(--gold)}
+.fate-tab.active{background:var(--panel);color:var(--gold);border-color:var(--gold);font-weight:600}
+.fate-branches-list{display:flex;flex-direction:column;gap:18px}
+.fate-step-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.fate-step-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.fate-step-badge{background:rgba(229,195,130,0.15);border:1px solid rgba(229,195,130,0.4);color:var(--gold);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.fate-step-title{margin:0;font-size:15px;color:var(--text);flex:1 1 auto}
+.fate-step-status{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px}
+.fate-step-completed .fate-step-status{color:var(--green);background:rgba(46,219,162,0.12)}
+.fate-step-current .fate-step-status{color:var(--gold);background:rgba(229,195,130,0.15)}
+.fate-step-locked .fate-step-status{color:var(--muted);background:rgba(255,255,255,0.06)}
+.fate-step-summary{font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.5}
+.fate-options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fate-option-card{background:rgba(10,22,26,0.6);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.fate-option-card.chosen{border-color:var(--gold);box-shadow:0 0 12px rgba(229,195,130,0.18);background:linear-gradient(145deg,rgba(229,195,130,0.08),rgba(16,32,36,0.85))}
+.fate-option-card.unchosen{opacity:0.65;border-style:dashed}
+.fate-option-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.fate-option-title{font-size:13px;color:var(--text)}
+.fate-option-card.chosen .fate-option-title{color:var(--gold)}
+.fate-option-badge{font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.fate-option-card.chosen .fate-option-badge{background:rgba(229,195,130,0.2);color:var(--gold);font-weight:600}
+.fate-option-card.unchosen .fate-option-badge{background:rgba(255,255,255,0.06);color:var(--muted)}
+.fate-option-desc{font-size:12px;color:var(--muted);margin:0;line-height:1.5}
+.fate-impact-box{background:rgba(0,0,0,0.25);border-left:3px solid var(--green);padding:8px 10px;border-radius:0 6px 6px 0;font-size:11.5px;line-height:1.5}
+.fate-impact-label{font-weight:600;color:var(--green);margin-bottom:2px;font-size:11px}
+.fate-impact-text{color:#d2e5dd}
+.fate-option-meta{display:flex;flex-direction:column;gap:4px;margin-top:auto;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.08);font-size:11px}
+.fate-reward-pill{color:var(--gold)}
+.fate-unlocked-pill{color:#a5d1b6}
+
+/* NPC Bonds Grid */
+.fate-npc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.fate-npc-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.fate-npc-top{display:flex;align-items:center;gap:10px}
+.fate-npc-glyph{font-size:24px;width:38px;height:38px;display:grid;place-items:center;background:rgba(255,255,255,0.06);border-radius:8px;flex-shrink:0}
+.fate-npc-info{flex:1 1 auto;min-width:0}
+.fate-npc-name{margin:0;font-size:14px;color:var(--text)}
+.fate-npc-role{font-size:11px;color:var(--muted)}
+.fate-npc-loc{color:var(--gold)}
+.fate-trust-badge{font-size:11px;padding:3px 8px;border-radius:4px;white-space:nowrap;background:rgba(255,255,255,0.08)}
+.trust-high .fate-trust-badge{background:rgba(229,195,130,0.2);color:var(--gold);font-weight:600}
+.trust-good .fate-trust-badge{background:rgba(46,219,162,0.15);color:var(--green);font-weight:600}
+.trust-wary .fate-trust-badge{background:rgba(226,75,75,0.2);color:#ff9898}
+.fate-trust-gauge-box{background:rgba(0,0,0,0.2);padding:8px 10px;border-radius:6px}
+.fate-trust-label-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;color:var(--muted)}
+.fate-trust-label-row strong{color:var(--gold)}
+.fate-trust-track{width:100%;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.fate-trust-fill{height:100%;background:linear-gradient(90deg,#5ca0d3,#2edba2,#e5c382);transition:width .3s ease}
+.fate-npc-summary{font-size:11.5px;color:var(--gold);margin:0;line-height:1.4}
+.fate-deeds-section{border-top:1px dashed rgba(255,255,255,0.1);padding-top:8px}
+.fate-deeds-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.fate-deeds-list{margin:0;padding-left:16px;font-size:11.5px;color:#d2e5dd;line-height:1.55}
+.fate-deeds-list li{margin:3px 0}
+
+/* Factions Grid */
+.fate-factions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.fate-faction-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.fate-faction-top{display:flex;align-items:center;gap:10px}
+.fate-faction-glyph{font-size:26px;width:42px;height:42px;display:grid;place-items:center;background:rgba(255,255,255,0.06);border-radius:8px;flex-shrink:0}
+.fate-faction-info{flex:1 1 auto;min-width:0}
+.fate-faction-name{margin:0;font-size:14px;color:var(--text)}
+.fate-faction-role{font-size:11px;color:var(--muted)}
+.fate-standing-badge{font-size:11px;padding:3px 8px;border-radius:4px;white-space:nowrap;background:rgba(229,195,130,0.18);color:var(--gold);font-weight:600}
+.fate-standing-meter{width:100%;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.fate-standing-fill{height:100%;background:linear-gradient(90deg,var(--spirit-jade),var(--gold))}
+.fate-faction-desc{font-size:12px;color:var(--muted);margin:0;line-height:1.5}
+.fate-faction-deeds{border-top:1px dashed rgba(255,255,255,0.1);padding-top:8px}
+
+/* Archive Link & Legacy Section */
+.btn-fate-tree-link{background:linear-gradient(135deg,rgba(229,195,130,0.15),rgba(46,219,162,0.1));border:1px solid rgba(229,195,130,0.4);border-radius:8px;padding:10px 14px;color:var(--text);cursor:pointer;font-size:12.5px;text-align:left;display:inline-flex;align-items:center;gap:8px;transition:all .2s ease;width:100%;box-sizing:border-box}
+.btn-fate-tree-link:hover{border-color:var(--gold);background:linear-gradient(135deg,rgba(229,195,130,0.25),rgba(46,219,162,0.18));box-shadow:0 0 12px rgba(229,195,130,0.2)}
+.btn-fate-tree-link-small{background:rgba(229,195,130,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn-fate-tree-link-small:hover{background:rgba(229,195,130,0.3)}
+.fate-tree-archive-entry{margin:10px 0 14px}
+.legacy-fate-tree-section{margin-top:20px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.legacy-fate-summary-card{margin-top:12px}
+.legacy-fate-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.legacy-fate-stat{background:rgba(0,0,0,0.2);padding:10px;border-radius:6px;text-align:center}
+.legacy-fate-val{display:block;font-size:18px;font-weight:700;color:var(--gold)}
+.legacy-fate-lbl{font-size:11px;color:var(--muted)}
+.legacy-fate-highlights p{margin:0 0 6px;font-size:12px;color:var(--text)}
+.legacy-fate-list{margin:0;padding-left:18px;font-size:12px;line-height:1.6;color:var(--muted)}
+
+/* Data Interface */
+html[data-interface="data"] #open-fate-tree{background:#fff;border-color:#778792;color:#20252a}
+html[data-interface="data"] #fate-tree-dialog{background:#fff;color:#20252a;border-radius:2px;font:12px Arial}
+html[data-interface="data"] .fate-tab{background:#f8f9fa;color:#20252a;border-color:#b7bec4;border-radius:2px}
+html[data-interface="data"] .fate-tab.active{background:#fff;border-color:#334a60;color:#334a60}
+html[data-interface="data"] .fate-step-card,html[data-interface="data"] .fate-npc-card,html[data-interface="data"] .fate-faction-card,html[data-interface="data"] .legacy-fate-tree-section{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+html[data-interface="data"] .fate-option-card{background:#fff;border-color:#d4d8dc;border-radius:2px}
+html[data-interface="data"] .btn-fate-tree-link{background:#fff;border-color:#adb6bd;color:#20252a;border-radius:2px}
