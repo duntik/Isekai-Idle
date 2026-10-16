@@ -477,3 +477,67 @@ html[data-interface="data"] .audio-control-widget{background:#f7f8f9;border:1px 
 html[data-interface="data"] .audio-toggle-btn{padding:1px 3px!important;font-size:13px}
 html[data-interface="data"] #audio-volume{width:46px;accent-color:#525b64}
 
+/* Alchemy Dialog & Crucible/Shop */
+#open-alchemy{background:linear-gradient(135deg,rgba(46,219,162,0.18),rgba(226,75,75,0.14));border:1px solid rgba(46,219,162,0.45);color:var(--green,#2edba2)}
+#open-alchemy:hover{background:linear-gradient(135deg,rgba(46,219,162,0.3),rgba(226,75,75,0.22));border-color:var(--green,#2edba2);box-shadow:0 0 10px rgba(46,219,162,0.3)}
+#alchemy-dialog{max-width:920px;width:calc(100% - 32px);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);padding:24px}
+#alchemy-dialog::backdrop{background:#000b}
+.alchemy-tabs{display:flex;gap:8px;margin:14px 0 18px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.alchemy-tab{background:transparent;border:1px solid var(--line);border-radius:6px;padding:8px 16px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s ease}
+.alchemy-tab:hover{color:var(--text);border-color:var(--green,#2edba2)}
+.alchemy-tab.active{background:var(--panel);color:var(--green,#2edba2);border-color:var(--green,#2edba2);font-weight:600}
+
+.alchemy-rank-banner{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.alchemy-rank-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.alchemy-rank-title{font-size:15px;font-weight:700;color:var(--gold)}
+.alchemy-rank-perk{font-size:12.5px;color:var(--muted)}
+.alchemy-stats-row{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.alchemy-stat-item strong{color:var(--text)}
+
+.alchemy-ingredients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:12px 0 18px}
+.alchemy-ing-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;transition:border-color .2s}
+.alchemy-ing-card:hover{border-color:var(--green,#2edba2)}
+.alchemy-ing-icon{font-size:22px}
+.alchemy-ing-name{font-size:12px;color:var(--text);font-weight:600}
+.alchemy-ing-count{font-size:13px;font-weight:700;color:var(--gold)}
+
+.alchemy-recipes-list{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+.alchemy-recipe-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.alchemy-recipe-card.requires-pearl{border-color:rgba(226,75,75,0.45);background:linear-gradient(135deg,rgba(226,75,75,0.06),var(--panel))}
+.alchemy-recipe-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.alchemy-recipe-title{font-size:14.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.alchemy-recipe-desc{font-size:12.5px;color:var(--muted);margin:0}
+.alchemy-recipe-reqs{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}
+.alchemy-req-pill{background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:4px;padding:2px 8px}
+.alchemy-req-pill.met{border-color:rgba(46,219,162,0.4);color:var(--green,#2edba2)}
+.alchemy-req-pill.unmet{border-color:rgba(226,75,75,0.4);color:var(--crimson-flame,#e24b4b)}
+.alchemy-recipe-effect{font-size:12px;color:var(--gold);background:rgba(229,195,130,0.08);border-left:3px solid var(--gold);padding:6px 10px;border-radius:0 4px 4px 0}
+.alchemy-recipe-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+.btn-crucible{background:linear-gradient(135deg,rgba(46,219,162,0.18),rgba(46,219,162,0.08));border:1px solid rgba(46,219,162,0.45);color:var(--green,#2edba2);padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-crucible:hover:not(:disabled){background:rgba(46,219,162,0.3);border-color:var(--green,#2edba2)}
+.btn-pearl{background:linear-gradient(135deg,rgba(226,75,75,0.22),rgba(229,195,130,0.15));border:1px solid rgba(226,75,75,0.5);color:#ff9e9e;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-pearl:hover:not(:disabled){background:rgba(226,75,75,0.35);border-color:#ff6e6e;box-shadow:0 0 10px rgba(226,75,75,0.35)}
+.btn-crucible:disabled,.btn-pearl:disabled{opacity:0.4;cursor:not-allowed}
+
+.alchemy-log-box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px}
+.alchemy-log-box h4{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.alchemy-log-item{font-size:12px;color:var(--text);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+
+/* Apothecary Shop */
+.apothecary-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.apothecary-section h4{margin:0 0 10px;font-size:14px;color:var(--gold)}
+.apothecary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.apothecary-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.apothecary-card-head{display:flex;align-items:center;gap:8px}
+.apothecary-card-title{font-size:13px;font-weight:600;color:var(--text)}
+.apothecary-card-price{font-size:12px;color:var(--gold);font-weight:700}
+.apothecary-card button{padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer}
+
+html[data-interface="data"] #open-alchemy{background:#fff;border-color:#778792;color:#20252a}
+html[data-interface="data"] #alchemy-dialog{background:#fff;color:#20252a;border-radius:2px;font:12px Arial}
+html[data-interface="data"] .alchemy-tab{background:#f8f9fa;color:#20252a;border-color:#b7bec4;border-radius:2px}
+html[data-interface="data"] .alchemy-tab.active{background:#fff;border-color:#334a60;color:#334a60}
+html[data-interface="data"] .alchemy-rank-banner,html[data-interface="data"] .alchemy-ing-card,html[data-interface="data"] .alchemy-recipe-card,html[data-interface="data"] .apothecary-section,html[data-interface="data"] .apothecary-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+
+

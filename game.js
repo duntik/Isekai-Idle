@@ -4,6 +4,7 @@
   const L=typeof IsekaiLocale!=='undefined'?IsekaiLocale:null,t=value=>L?L.text(value):value,h=value=>L?L.html(value):value;
   const uiText=(ru,en)=>L?.language==='en'?en:ru;
   const FateTree=typeof IsekaiFateTree!=='undefined'?IsekaiFateTree:(typeof require==='function'?(()=>{try{return require('./fate-tree.js');}catch{return null;}})():null);
+  const Alchemy=typeof IsekaiAlchemy!=='undefined'?IsekaiAlchemy:(typeof require==='function'?(()=>{try{return require('./alchemy.js');}catch{return null;}})():null);
   const Sound = typeof IsekaiSound !== 'undefined' ? IsekaiSound : (typeof require === 'function' ? (() => { try { return require('./sound.js'); } catch { return null; } })() : null) || {
     init(){},
     toggle(){ return false; },
@@ -48,7 +49,7 @@
       volInput.disabled = isMuted;
     }
   }
-  let activeFateTab='story';
+  let activeFateTab='story', activeAlchemyTab='cauldron';
   const quotes=typeof IsekaiQuotes!=='undefined'?IsekaiQuotes.createRotator():null;
   const N=IsekaiNames;
   let nameStyle='cultivation',nameOptions=[];
@@ -1129,6 +1130,7 @@
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
     if($('open-fate-tree'))$('open-fate-tree').textContent=uiText('✦ Древо Судьбы','✦ Fate Tree');
+    if($('open-alchemy'))$('open-alchemy').textContent=uiText('🧪 Алхимия','🧪 Alchemy');
     for(const id of ['resources','navigation','hero-compact-resources','hud-resources'])if($(id))$(id).innerHTML=h($(id).innerHTML);
     if($('mini-hud')&&view!=='data'){
       const place=E.world.locations[s.world.location]?.name||s.world.location;
@@ -1243,6 +1245,245 @@
       else d.setAttribute('open','');
     }
   }
+  function renderAlchemy(){
+    const body=$('alchemy-body');
+    if(!body)return;
+    const lang=L?.language||'ru';
+    const isEn=lang==='en';
+    if($('alchemy-title'))$('alchemy-title').textContent=uiText('Алхимический Котёл и Лавка','Alchemy Crucible & Shop');
+    if($('alchemy-intro'))$('alchemy-intro').textContent=uiText('Варка снадобий в котле, очищение Жемчужиной Злого Неба и торговля с мастером Хо.','Brewing remedies in crucible, Sky Poison Pearl purification and trading with Master Huo.');
+    if($('close-alchemy'))$('close-alchemy').textContent=uiText('Закрыть','Close');
+    const tabs=$('alchemy-dialog')?.querySelectorAll?.('.alchemy-tab');
+    if(tabs){
+      tabs.forEach(btn=>{
+        const isAct=btn.dataset.alchemyTab===activeAlchemyTab;
+        btn.classList.toggle('active',isAct);
+        btn.setAttribute('aria-selected',isAct?'true':'false');
+        if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('Алхимический Котёл','Alchemy Crucible');
+        if(btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Лавка мастера Хо','Master Huo’s Apothecary');
+      });
+    }
+
+    const alc=s.alchemy||(E.alchemy?E.alchemy.fresh():null);
+    if(!alc){
+      body.innerHTML=`<p class="intro">${uiText('Алхимия недоступна.','Alchemy is unavailable.')}</p>`;
+      return;
+    }
+
+    const Alc=typeof IsekaiAlchemy!=='undefined'?IsekaiAlchemy:(E.alchemy||Alchemy);
+    const currentRank=Alc.RANKS[alc.level-1]||Alc.RANKS[0];
+    const nextRank=Alc.RANKS[alc.level]||null;
+    const xpMax=nextRank?nextRank.xpReq:currentRank.xpReq;
+
+    if(activeAlchemyTab==='cauldron'){
+      const rankTitle=isEn?currentRank.en:currentRank.ru;
+      const rankPerk=isEn?currentRank.perkEn:currentRank.perkRu;
+
+      const rankBanner=`
+        <div class="alchemy-rank-banner">
+          <div class="alchemy-rank-header">
+            <span class="alchemy-rank-title">${uiText('Ранг алхимии:','Alchemy rank:')} ${rankTitle} (${uiText('Ранг','Rank')} ${alc.level}/5)</span>
+            <small>${uiText('Опыт алхимии:','Alchemy XP:')} ${alc.xp}${nextRank?` / ${nextRank.xpReq}`:''}</small>
+          </div>
+          <progress max="${xpMax}" value="${alc.xp}" aria-label="${uiText('Опыт алхимии:','Alchemy XP:')}"></progress>
+          <div class="alchemy-rank-perk">✦ ${rankPerk}</div>
+          <div class="alchemy-stats-row">
+            <span class="alchemy-stat-item">${uiText('Всего сварено:','Total brewed:')} <strong>${alc.stats.brews}</strong></span>
+            <span class="alchemy-stat-item">${uiText('Успехов:','Successes:')} <strong>${alc.stats.success}</strong></span>
+            <span class="alchemy-stat-item">${uiText('Критических успехов:','Critical successes:')} <strong>${alc.stats.crit}</strong></span>
+            <span class="alchemy-stat-item">${uiText('Неудач (шлак):','Failures (slag):')} <strong>${alc.stats.fail}</strong></span>
+            <span class="alchemy-stat-item">${uiText('Очищено Жемчужиной:','Purified with Pearl:')} <strong>${alc.stats.pearlPurified}</strong></span>
+          </div>
+        </div>`;
+
+      const ingKeys=Object.keys(Alc.INGREDIENTS);
+      const ingCards=ingKeys.map(k=>{
+        const ing=Alc.INGREDIENTS[k];
+        const count=alc.ingredients[k]||0;
+        return `
+          <div class="alchemy-ing-card" title="${isEn?ing.descEn:ing.descRu}">
+            <span class="alchemy-ing-icon">${ing.icon}</span>
+            <span class="alchemy-ing-name">${isEn?ing.nameEn:ing.nameRu}</span>
+            <span class="alchemy-ing-count">${count}</span>
+          </div>`;
+      }).join('');
+
+      const ingSection=`
+        <div class="section-head"><h3>${uiText('Ингредиенты в сумке','Ingredients in Pouch')}</h3></div>
+        <div class="alchemy-ingredients-grid">${ingCards}</div>`;
+
+      const unlocked=alc.unlockedRecipes||['vigor_broth'];
+      const recipesHtml=unlocked.map(rId=>{
+        const r=Alc.RECIPES[rId];
+        if(!r)return '';
+        const canCrucible=Alc.canBrew(s,rId,'crucible');
+        const canPearl=Alc.canBrew(s,rId,'pearl');
+
+        const reqsHtml=Object.entries(r.ingredients).map(([ingId,needed])=>{
+          const ing=Alc.INGREDIENTS[ingId];
+          const has=alc.ingredients[ingId]||0;
+          const isMet=has>=needed;
+          return `<span class="alchemy-req-pill ${isMet?'met':'unmet'}">${ing.icon} ${isEn?ing.nameEn:ing.nameRu}: ${has}/${needed}</span>`;
+        }).join(' ');
+
+        const crucibleBtn=!r.requiresPearl
+          ? `<button type="button" class="btn-crucible" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="false" ${canCrucible?'':'disabled'}>${uiText('Сварить в котле','Brew in crucible')}</button>`
+          : `<span class="alchemy-req-pill unmet">${uiText('Только очищение Жемчужиной','Pearl purification only')}</span>`;
+
+        const pearlBtn=`<button type="button" class="btn-pearl" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="true" ${canPearl?'':'disabled'}>${uiText(`Очистить Жемчужиной (${r.pearlQi} Ци)`,`Purify with Pearl (${r.pearlQi} Qi)`)}</button>`;
+
+        return `
+          <div class="alchemy-recipe-card ${r.requiresPearl?'requires-pearl':''}">
+            <div class="alchemy-recipe-head">
+              <span class="alchemy-recipe-title">${r.icon} ${isEn?r.nameEn:r.nameRu}</span>
+              <small>${uiText('Требуется ранг:','Required rank:')} ${r.reqLevel}</small>
+            </div>
+            <p class="alchemy-recipe-desc">${isEn?r.descEn:r.descRu}</p>
+            <div class="alchemy-recipe-reqs">${reqsHtml}</div>
+            <div class="alchemy-recipe-effect">⚡ ${isEn?r.effectEn:r.effectRu}</div>
+            <div class="alchemy-recipe-actions">
+              ${crucibleBtn}
+              ${pearlBtn}
+            </div>
+          </div>`;
+      }).join('');
+
+      const recipesSection=`
+        <div class="section-head"><h3>${uiText('Рецепты снадобий','Medicine Recipes')}</h3></div>
+        <div class="alchemy-recipes-list">${recipesHtml}</div>`;
+
+      let logHtml='';
+      if(alc.log&&alc.log.length>0){
+        logHtml=`
+          <div class="alchemy-log-box">
+            <h4>${uiText('История варки','Brewing Log')}</h4>
+            ${alc.log.slice(0,5).map(e=>`<div class="alchemy-log-item">${isEn?e.en:e.ru}</div>`).join('')}
+          </div>`;
+      }
+
+      body.innerHTML=rankBanner+ingSection+recipesSection+logHtml;
+    }else{
+      // Shop tab
+      const herbsForSale=['mountain_herb','spring_water','spirit_clover','iron_root','frost_lotus','flame_bloom','poison_sac'];
+      const herbCards=herbsForSale.map(ingId=>{
+        const ing=Alc.INGREDIENTS[ingId];
+        const canBuy1=s.resources.gold>=ing.cost;
+        const canBuy5=s.resources.gold>=ing.cost*5;
+        return `
+          <div class="apothecary-card">
+            <div class="apothecary-card-head">
+              <span class="alchemy-ing-icon">${ing.icon}</span>
+              <div>
+                <div class="apothecary-card-title">${isEn?ing.nameEn:ing.nameRu}</div>
+                <div class="apothecary-card-price">${ing.cost} ${uiText('монет','coins')}</div>
+              </div>
+            </div>
+            <div class="actions" style="gap:4px">
+              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="1" ${canBuy1?'':'disabled'}>${uiText('+1 шт','+1 pc')}</button>
+              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="5" ${canBuy5?'':'disabled'}>${uiText('+5 шт','+5 pcs')}</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const shopHerbs=`
+        <div class="apothecary-section">
+          <h4>${uiText('Купить ингредиенты','Buy ingredients')} · ${s.resources.gold} ${uiText('монет','coins')}</h4>
+          <div class="apothecary-grid">${herbCards}</div>
+        </div>`;
+
+      const availableRecipes=[
+        {id:'body_pill',cost:35},
+        {id:'calm_tea',cost:45},
+        {id:'breakthrough_pill',cost:80}
+      ];
+      const recipeCards=availableRecipes.map(item=>{
+        const r=Alc.RECIPES[item.id];
+        const isUnlocked=alc.unlockedRecipes.includes(item.id);
+        const canBuy=!isUnlocked&&s.resources.gold>=item.cost;
+        return `
+          <div class="apothecary-card">
+            <div class="apothecary-card-head">
+              <span class="alchemy-ing-icon">${r.icon}</span>
+              <div>
+                <div class="apothecary-card-title">${isEn?r.nameEn:r.nameRu}</div>
+                <div class="apothecary-card-price">${item.cost} ${uiText('монет','coins')}</div>
+              </div>
+            </div>
+            ${isUnlocked
+              ? `<button type="button" disabled>${uiText('Изучен','Learned')}</button>`
+              : `<button type="button" data-alchemy-action="buy" data-item="recipe_${item.id}" ${canBuy?'':'disabled'}>${uiText('Купить','Buy')}</button>`}
+          </div>`;
+      }).join('');
+
+      const shopRecipes=`
+        <div class="apothecary-section">
+          <h4>${uiText('Купить рецепт','Buy recipe')}</h4>
+          <div class="apothecary-grid">${recipeCards}</div>
+        </div>`;
+
+      const pillsCount=s.resources.pills||0;
+      const relicsCount=s.resources.relics||0;
+      const canSellStd=pillsCount>=1;
+      const canSellPure=pillsCount>=1&&alc.stats.pearlPurified>=1;
+      const canGrind=relicsCount>=1;
+
+      const shopTrading=`
+        <div class="apothecary-section">
+          <h4>${uiText('Сдать пилюли в лавку','Sell pills to apothecary')}</h4>
+          <div class="apothecary-grid">
+            <div class="apothecary-card">
+              <div class="apothecary-card-head">
+                <span class="alchemy-ing-icon">💊</span>
+                <div>
+                  <div class="apothecary-card-title">${uiText('Обычная пилюля','Standard pill')}</div>
+                  <div class="apothecary-card-price">+20 ${uiText('монет','coins')}</div>
+                </div>
+              </div>
+              <button type="button" data-alchemy-action="sell" data-kind="standard" data-count="1" ${canSellStd?'':'disabled'}>${uiText('Сдать (+20 монет)','Sell (+20 coins)')}</button>
+            </div>
+            <div class="apothecary-card">
+              <div class="apothecary-card-head">
+                <span class="alchemy-ing-icon">✨</span>
+                <div>
+                  <div class="apothecary-card-title">${uiText('Пилюля 100% чистоты','100% pure pill')}</div>
+                  <div class="apothecary-card-price">+45 ${uiText('монет, +1 репутация','coins, +1 rep')}</div>
+                </div>
+              </div>
+              <button type="button" data-alchemy-action="sell" data-kind="pure" data-count="1" ${canSellPure?'':'disabled'}>${uiText('Сдать (+45 монет, +1 репутация)','Sell (+45 coins, +1 rep)')}</button>
+            </div>
+            <div class="apothecary-card">
+              <div class="apothecary-card-head">
+                <span class="alchemy-ing-icon">🏛️</span>
+                <div>
+                  <div class="apothecary-card-title">${uiText('Ступка алтаря: перетереть осколок','Altar mortar: grind relic shard')}</div>
+                  <div class="apothecary-card-price">${relicsCount} ${uiText('осколков','shards')}</div>
+                </div>
+              </div>
+              <button type="button" data-alchemy-action="grind" ${canGrind?'':'disabled'}>${uiText('Перетереть осколок (+2 Нефритовой пыли)','Grind shard (+2 Jade Relic Dust)')}</button>
+            </div>
+          </div>
+        </div>`;
+
+      let logHtml='';
+      if(alc.log&&alc.log.length>0){
+        logHtml=`
+          <div class="alchemy-log-box">
+            <h4>${uiText('История лавки','Shop Log')}</h4>
+            ${alc.log.slice(0,5).map(e=>`<div class="alchemy-log-item">${isEn?e.en:e.ru}</div>`).join('')}
+          </div>`;
+      }
+
+      body.innerHTML=shopHerbs+shopRecipes+shopTrading+logHtml;
+    }
+  }
+  function openAlchemyDialog(){
+    renderAlchemy();
+    const d=$('alchemy-dialog');
+    if(d){
+      if(typeof d.showModal==='function')d.showModal();
+      else d.setAttribute('open','');
+    }
+  }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
     let html=`<h2>Дороги другого мира</h2><p class="intro">Сейчас: ${W.locations[w.location].name}. ${w.journey?`В пути: ${W.locations[w.journey.destination].name}, осталось ${Math.ceil(w.journey.remaining)} сек.`:'Можно выбрать маршрут или поискать встречу на месте.'}</p>`;
@@ -1315,6 +1556,51 @@
     if(b.dataset?.fateTab){activeFateTab=b.dataset.fateTab;renderFateTree();return;}
     if(b.id==='open-fate-tree'||b.id==='story-open-fate-tree'||b.id==='story-open-fate-tree-archive'||b.id==='legacy-open-fate-tree'){Sound.playParchment();openFateTreeDialog();return;}
     if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
+    if(b.id==='open-alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
+    if(b.id==='close-alchemy'){$('alchemy-dialog')?.close?.();return;}
+    if(b.dataset?.alchemyTab){activeAlchemyTab=b.dataset.alchemyTab;renderAlchemy();return;}
+    if(b.dataset?.alchemyAction){
+      const act = b.dataset.alchemyAction;
+      if (act === 'craft') {
+        const recipeId = b.dataset.recipe;
+        const usePearl = b.dataset.pearl === 'true';
+        if (E.action(s, 'alchemy-craft', recipeId, { usePearl })) {
+          if (usePearl) Sound.playBreakthrough();
+          else Sound.playBowl();
+          save();
+        } else {
+          toast(uiText('Не хватает сырья или уровня!', 'Missing ingredients or level!'));
+        }
+      } else if (act === 'buy') {
+        const itemId = b.dataset.item;
+        const count = parseInt(b.dataset.count || '1', 10);
+        if (E.action(s, 'alchemy-buy', itemId, count)) {
+          Sound.playClick();
+          save();
+        } else {
+          toast(uiText('Не хватает монет!', 'Not enough coins!'));
+        }
+      } else if (act === 'sell') {
+        const kind = b.dataset.kind || 'standard';
+        const count = parseInt(b.dataset.count || '1', 10);
+        if (E.action(s, 'alchemy-sell', kind, count)) {
+          Sound.playClick();
+          save();
+        } else {
+          toast(uiText('Нечего продать!', 'Nothing to sell!'));
+        }
+      } else if (act === 'grind') {
+        if (E.action(s, 'alchemy-grind')) {
+          Sound.playClick();
+          save();
+        } else {
+          toast(uiText('Нет осколков!', 'No relic shards!'));
+        }
+      }
+      renderAlchemy();
+      render();
+      return;
+    }
     if(b.id==='hero-collapse-toggle'){heroCollapsed=!heroCollapsed;setUiPref('isekai-hero-collapsed',String(heroCollapsed));applyHeroCollapse();return;}
     if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
@@ -1457,6 +1743,9 @@
   $('open-fate-tree')?.addEventListener('click',openFateTreeDialog);
   $('close-fate-tree')?.addEventListener('click',()=>{$('fate-tree-dialog')?.close?.();});
   $('fate-tree-dialog')?.addEventListener('click',e=>{if(e.target===$('fate-tree-dialog'))$('fate-tree-dialog')?.close?.();});
+  $('open-alchemy')?.addEventListener('click',openAlchemyDialog);
+  $('close-alchemy')?.addEventListener('click',()=>{$('alchemy-dialog')?.close?.();});
+  $('alchemy-dialog')?.addEventListener('click',e=>{if(e.target===$('alchemy-dialog'))$('alchemy-dialog')?.close?.();});
   $('open-map').addEventListener('click',()=>{
     renderMap();$('world-map-dialog').showModal?.();
     centerMap();
@@ -1543,6 +1832,8 @@
       if ($('breakthrough-modal') && !$('breakthrough-modal').hidden) { $('breakthrough-modal').hidden = true; return; }
       if ($('location-dialog')?.open) { $('location-dialog')?.close?.(); currentDialogPlace = null; return; }
       if ($('world-map-dialog')?.open) { $('world-map-dialog')?.close?.(); return; }
+      if ($('fate-tree-dialog')?.open) { $('fate-tree-dialog')?.close?.(); return; }
+      if ($('alchemy-dialog')?.open) { $('alchemy-dialog')?.close?.(); return; }
       if ($('save-dialog')?.open) { $('save-dialog')?.close?.(); return; }
     }
     if (e.key === ' ' || e.code === 'Space') {

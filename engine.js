@@ -8,6 +8,7 @@
   const R = typeof module !== 'undefined' && module.exports ? require('./return-report.js') : root.IsekaiReturnReport;
   const Combat = typeof module !== 'undefined' && module.exports ? require('./combat.js') : root.IsekaiCombat;
   const ChapterTwo = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : root.IsekaiChapterTwo;
+  const Alchemy = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : root.IsekaiAlchemy;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -153,7 +154,7 @@
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>S.library(s,'invitation')},
     iron:{name:'Железные сухожилия',source:'Закрытая библиотека Каменного Оплота',desc:'Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.',effect:'body',secondary:'power',practiceBody:.005,available:s=>S.library(s,'gates')}
   };
-  const fresh = () => ({...baseFresh(), combat: null, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, chapterTwoStep: 0, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), combat: null, alchemy: Alchemy ? Alchemy.fresh() : { level: 1, xp: 0, unlockedRecipes: ['vigor_broth'], ingredients: {}, buffs: {}, stats: {}, log: [] }, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, chapterTwoStep: 0, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
   const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
   const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
@@ -258,11 +259,11 @@
   const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return (1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0))*(s.stage>=2&&S.schools[s.world.admission]?.bonus===effect?1.15:1);};
   const canLearn=(s,k)=>Object.hasOwn(techniques,k)&&(techniques[k].available(s)||!!s.cultivation.learned[k])&&affordable(s,techniqueCost(s,k))&&(!s.cultivation.learned[k]||(s.cultivation.learned[k].rank<5&&s.cultivation.learned[k].progress>=techniqueNeeded(s.cultivation.learned[k].rank)));
   const log = (s, text) => { s.events.unshift({ text, day: Math.floor(s.age / 3600) + 1 }); s.events = s.events.slice(0, 30); };
-  const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2);
+  const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2) * (s.alchemy?.buffs?.meditationBoostUntil > Date.now() && s.activity === 'meditate' ? 1.25 : 1);
   const needed = s => Math.ceil(60 * 2 ** s.realm);
   const power = s => Math.floor((8 + s.body * 2 + s.mastery * 3 + s.weapon * 12) * 1.55 ** s.realm * techniqueBonus(s,'power'));
   const enemy = s => ({ name: ['Дорожный разбойник', 'Страж руин', 'Ученик Белого Клыка', 'Первый соперник', 'Внутренний ученик', 'Наследник клана', 'Старейшина соперников', 'Чемпион долины', 'Лорд приграничья', 'Владыка города', 'Хранитель континента', 'Небесный посланник', 'Владыка океанов', 'Страж мирового ядра', 'Звёздный захватчик', 'Лорд спутника', 'Пожиратель миров', 'Страж портала', 'Чемпион звёзд', 'Владыка системы', 'Адмирал пустоты', 'Галактический претендент', 'Хранитель законов', 'Древний бессмертный', 'Судья пространства', 'Страж вечности'][s.wins] || 'Эхо бесконечности', power: Math.floor(18 * 1.75 ** s.wins), type: ['swift', 'armored', 'mystic'][s.wins % 3] });
-  const battlePower = s => power(s) * (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[enemy(s).type] === s.style ? 1.35 : 1);
+  const battlePower = s => power(s) * (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[enemy(s).type] === s.style ? 1.35 : 1) * (s.alchemy?.buffs?.evilGodFights > 0 ? 1.25 : 1);
   const affordable = (s, c) => Object.entries(c).every(([k, v]) => s.resources[k] >= v);
   const spend = (s, c) => Object.entries(c).forEach(([k, v]) => s.resources[k] -= v);
   const buildCost = (s, k) => Object.fromEntries(Object.entries(projects[k].cost).map(([r, v]) => [r, Math.ceil(v * 1.5 ** s.buildings[k])]));
@@ -656,8 +657,19 @@
       if (!canFight(s)) return false;
       log(s, `Победа: ${enemy(s).name}. Твои успехи привлекли внимание более сильных противников.`);
       s.resources.gold += 30 * 1.8 ** s.wins; s.resources.herbs += 10 * (s.wins + 1); s.resources.relics += 1; s.wins++; s.cooldown = 300;
+      if (s.alchemy?.buffs?.evilGodFights > 0) s.alchemy.buffs.evilGodFights--;
       taskPractice(s,'combat');
       s.combat = null;
+    } else if (type === 'alchemy-craft') {
+      const [recipeId, mode] = value.split(':');
+      return Alchemy ? Alchemy.brew(s, recipeId, mode || 'crucible', api) : false;
+    } else if (type === 'alchemy-buy') {
+      const [itemId, countStr] = value.split(':');
+      return Alchemy ? Alchemy.buy(s, itemId, countStr ? Number(countStr) : 1) : false;
+    } else if (type === 'alchemy-sell') {
+      return Alchemy ? Alchemy.sellPill(s, value || 'standard', 1) : false;
+    } else if (type === 'alchemy-grind') {
+      return Alchemy ? Alchemy.grindRelic(s) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;
@@ -697,6 +709,7 @@
     ...(A.unlocked(s,'practice')&&s.cultivation.active?[{id:'practice',name:['Короткая отработка приёма','Short technique practice'],description:['До 5 освоения выбранной техники. Расход: 5 выносливости; восстановление 60 сек.','Up to 5 practice for the active technique. Costs 5 stamina; recovery 60 sec.'],enabled:!s.world.journey&&s.stamina>=5&&!(s.achievements.cooldowns.practice>0)&&s.cultivation.learned[s.cultivation.active].rank<5&&s.cultivation.learned[s.cultivation.active].progress<techniqueNeeded(s.cultivation.learned[s.cultivation.active].rank)}]:[])
   ];
   function action(s,type,value){
+    if(type.startsWith('alchemy-')){const result=performAction(s,type,value);if(result)A.sync(s);return result;}
     if(type==='choose-vow')return A.chooseVow(s,value);
     if(type==='atlas-survey'){const result=Atlas.survey(s,api);if(result)A.sync(s);return result;}
     if(type==='atlas-secret')return Atlas.claimSecret(s,value,api);
@@ -759,6 +772,7 @@
       if (s.stage >= 5) s.resources.cosmic += (s.buildings.node * .015 + s.resources.worlds * .01) * dt;
       if (s.expedition) { s.expedition.remaining -= dt; if (s.expedition.remaining <= 0) { s.resources.worlds++; s.resources.cosmic += 80; log(s, s.expedition.kind === 'portal' ? 'Портал закреплён: новый мир присоединился к твоей сети.' : 'Колония основана. Флот вернулся из звёздного похода.'); s.expedition = null; } }
       W.advance(s,dt,api);
+      if(Alchemy&&Alchemy.advance)Alchemy.advance(s,dt);
       s.age += dt; s.cooldown = Math.max(0, s.cooldown - dt);
     }
     A.sync(s);
@@ -779,7 +793,7 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat','alchemy'].includes(k)) base[k] = input[k];
     base.chapterTwoStep = (Number.isInteger(input.chapterTwoStep) && input.chapterTwoStep >= 0 && input.chapterTwoStep <= 6) ? input.chapterTwoStep : 0;
     base.fed = input.fed !== undefined ? !!input.fed : (base.storyStep > 1);
     base.activity=activity;
@@ -803,6 +817,7 @@
     base.atlas=Atlas.validate(input.atlas);
     if(input.atlas?.discoveries===undefined)Atlas.migrate(base,api);
     base.combat=Combat.validate(input.combat);
+    base.alchemy=Alchemy?Alchemy.validate(input.alchemy):(input.alchemy||{level:1,xp:0});
     return base;
   }
   const realmName = n => `${['Смертный', 'Пробуждение', 'Сбор энергии', 'Основание', 'Духовное ядро', 'Пробуждение души', 'Небесный путь', 'Звёздный дух', 'Закон пространства'][Math.min(8, Math.floor((n + 2) / 3))]} · ступень ${n}`;
@@ -847,6 +862,6 @@
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
   const chapterTwoBeat = (s, step, lang) => ChapterTwo ? ChapterTwo.getBeat(s, step, lang) : null;
-  const api = { chapterTwo: ChapterTwo, chapterTwoBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

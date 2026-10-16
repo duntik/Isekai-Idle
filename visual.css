@@ -307,4 +307,12 @@ html:not([data-interface="data"]) .fate-npc-card.trust-wary{border-top:2px solid
 html:not([data-interface="data"]) .fate-faction-card{background:linear-gradient(145deg,#192e34,#112227);border-color:#2f4a47;box-shadow:0 4px 16px rgba(0,0,0,0.25)}
 html:not([data-interface="data"]) .fate-faction-card:hover{border-color:var(--gold);transform:translateY(-1px);transition:transform .2s ease,border-color .2s ease}
 
+/* Alchemy Visual Atmosphere */
+html:not([data-interface="data"]) #alchemy-dialog{background:linear-gradient(135deg,#192d33,#0e1e23);border-color:#2f4e4a;box-shadow:0 16px 48px rgba(0,0,0,0.7)}
+html:not([data-interface="data"]) .alchemy-rank-banner{background:linear-gradient(145deg,#1b3036,#122428);border-color:#33534f;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+html:not([data-interface="data"]) .alchemy-recipe-card{background:linear-gradient(145deg,#172c32,#112126);border-color:#2e4945;box-shadow:0 4px 14px rgba(0,0,0,0.25)}
+html:not([data-interface="data"]) .alchemy-recipe-card.requires-pearl{background:linear-gradient(145deg,rgba(226,75,75,0.08),#112126);border-color:rgba(226,75,75,0.45);box-shadow:0 0 16px rgba(226,75,75,0.15)}
+html:not([data-interface="data"]) .apothecary-section{background:linear-gradient(145deg,#182d33,#112227);border-color:#304d49}
+html:not([data-interface="data"]) .apothecary-card{background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(0,0,0,0.2));border-color:#2b4240}
+
 
