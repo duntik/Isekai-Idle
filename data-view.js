@@ -22,13 +22,19 @@
       for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
       for(const a of milestones.filter(a=>a.special&&!a.earned))row(a.name,'◇',a.description);
       for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
-      const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',root.IsekaiLocale?.language||'ru');
-      if(hint)row(root.IsekaiLocale?.language==='en'?'Next step':'Следующий шаг','→',hint);
-      if(s.stage===0) {
-        const beat=E.storyBeat(s);
-        if(beat)row(beat.title,`${s.storyStep+1}/${E.story.length}`,`${beat.goal}${Object.keys(beat.reward||{}).length?`; ${cost(beat.reward)}`:''}`,s.storyStep===0?Object.entries(beat.prologueChoices).map(([k,c])=>btn('story',k,uiText(c.name,c.enName),beat.ready(s))).join(' '):s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>btn('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?Object.entries(beat.sectChoices).map(([k,c])=>btn('story',k,uiText(c.name,c.enName),beat.ready(s)&&c.ready(s))).join(' '):btn('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission)));
-        else row('Сюжет','Завершён','Доступна следующая глава');
-        if(s.storyStep>0)for(const p of E.world.developmentPaths?.(s,root.IsekaiLocale?.language||'ru')||[])row(p.name,`${p.progress}/${p.total}`,`${p.description} ${p.next}`,`<button data-tab="world">${uiText('Искать встречи','Look for encounters')}</button>`);
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep));
+      const hint = E.guidance(s, isStoryActive ? 'story' : 'advance', '', root.IsekaiLocale?.language || 'ru');
+      if(hint) row(root.IsekaiLocale?.language === 'en' ? 'Next step' : 'Следующий шаг', '→', hint);
+      if(s.stage === 0) {
+        const beat = E.storyBeat(s);
+        if(beat) row(beat.title, `${s.storyStep + 1}/${E.story.length}`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, s.storyStep === 0 ? Object.entries(beat.prologueChoices).map(([k,c]) => btn('story', k, uiText(c.name, c.enName), beat.ready(s))).join(' ') : s.storyStep === 6 ? Object.entries(E.firstRoutes).map(([k,label]) => btn('story', k, label, beat.ready(s) && E.firstRouteReady(s, k))).join('') : s.storyStep === 7 && !s.world.admission ? Object.entries(beat.sectChoices).map(([k,c]) => btn('story', k, uiText(c.name, c.enName), beat.ready(s) && c.ready(s))).join(' ') : btn('story', '', beat.button, beat.ready(s) && (s.storyStep !== 7 || !s.world.admission)));
+        else row('Сюжет', 'Завершён', 'Доступна следующая глава');
+        if(s.storyStep > 0) for(const p of E.world.developmentPaths?.(s, root.IsekaiLocale?.language || 'ru') || []) row(p.name, `${p.progress}/${p.total}`, `${p.description} ${p.next}`, `<button data-tab="world">${uiText('Искать встречи', 'Look for encounters')}</button>`);
+      }
+      if(s.stage === 1) {
+        const beat = E.chapterTwoBeat ? E.chapterTwoBeat(s, s.chapterTwoStep, root.IsekaiLocale?.language || 'ru') : null;
+        if(beat) row(beat.title, `${(s.chapterTwoStep || 0) + 1}/6`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        else row(uiText('Глава 2: Врата секты', 'Chapter 2: Sect Gates'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
       }
       const journey=s.world.journey;
       row('Текущее место',E.world.locations[s.world.location].name,journey?`${uiText('В пути:','Travelling to:')} ${E.world.locations[journey.destination].name} · ${Math.ceil(journey.remaining)} ${uiText('сек','sec')}`:activityLabels[s.activity]);

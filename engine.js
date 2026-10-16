@@ -7,6 +7,7 @@
   const S = typeof module !== 'undefined' && module.exports ? require('./sects.js') : root.IsekaiSects;
   const R = typeof module !== 'undefined' && module.exports ? require('./return-report.js') : root.IsekaiReturnReport;
   const Combat = typeof module !== 'undefined' && module.exports ? require('./combat.js') : root.IsekaiCombat;
+  const ChapterTwo = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : root.IsekaiChapterTwo;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
     { name: 'Начинающий практик', subtitle: 'Техники, снаряжение и первые испытания', realm: 3, wins: 3, cost: { gold: 150, relics: 3 }, intro: 'В осколке обнаружена техника Пустого Неба. Теперь предстоит заслужить место в секте.' },
@@ -139,7 +140,7 @@
       button: 'Вступить в секту'
     }
   ];
-  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, fed: false, combat: null, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, fed: false, combat: null, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
     sky:{name:'Сутра Злого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
     ink:{name:'След туши',source:'Урок библиотекаря Вэя',desc:'Понимание +8% за ранг. Позволяет читать повреждённые надписи в храме.',effect:'xp',available:s=>s.world.mentors.includes('scholar')},
@@ -152,7 +153,7 @@
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>S.library(s,'invitation')},
     iron:{name:'Железные сухожилия',source:'Закрытая библиотека Каменного Оплота',desc:'Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.',effect:'body',secondary:'power',practiceBody:.005,available:s=>S.library(s,'gates')}
   };
-  const fresh = () => ({...baseFresh(), combat: null, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), combat: null, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, chapterTwoStep: 0, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
   const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
   const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
@@ -449,6 +450,20 @@
       return say(`Не хватает: ${deficit}.${sources.length?' '+sources.join('; ')+'.':''}`,`Missing: ${deficit}.${sources.length?' '+sources.join('; ')+'.':''}`);
     };
     if(action==='story'){
+      if(s.stage===1){
+        const b = ChapterTwo ? ChapterTwo.getBeat(s, s.chapterTwoStep, language) : null;
+        if(!b)return guidance(s,'advance','',language);
+        if(s.world.journey)return say('Дождись прибытия. Затем вернись к сюжетной цели.','Wait until you arrive, then return to the story objective.');
+        if(s.world.location!=='city')return say(`Открой «Путешествия» и отправься: ${W.locations.city.name}. Прогресс цели сохранится.`,`Open Travel and go to Silver Bridge City. Your objective progress is kept.`);
+        if(ChapterTwo && ChapterTwo.isReady(s, s.chapterTwoStep))return say('Условия выполнены. Нажми сюжетную кнопку, чтобы получить награду и продолжить.','Requirements met. Press the story button to collect your reward and continue.');
+        const step = s.chapterTwoStep || 0;
+        if(step===0)return say('Подтверди регистрацию во внешнем дворе секты, чтобы получить форму и жалование.','Confirm your registration in the outer court of the sect to receive robes and allowance.');
+        if(step===1)return say('Выполни физические поручения, работу или укрепи тело до 2.5 для сдачи норм послушания.','Complete physical tasks, work or temper body to 2.5 to submit duty merit.');
+        if(step===2)return say(`Понимание энергии ${n(s.resources.qi)}/20, ступень ${s.realm}/2. Медитируй и соверши прорыв для смотра наставника.`,`Spiritual qi ${n(s.resources.qi)}/20, realm ${s.realm}/2. Meditate and break through for the mentor’s inspection.`);
+        if(step===3)return say(`Боевая сила ${n(power(s))}/24 или побед ${s.wins}/1. Дай отпор высокомерному отпрыску на помосте чести.`,`Combat power ${n(power(s))}/24 or wins ${s.wins}/1. Put the arrogant scion in his place on the duel stage.`);
+        if(step===4)return say(`Понимание ${n(s.xp)}/50. Накапливай понимание медитацией для резонанса с Запретным архивом.`,`Understanding ${n(s.xp)}/50. Accumulate understanding to resonate with the Forbidden Archive.`);
+        if(step===5)return say(`Ступень ${s.realm}/3, побед ${s.wins}/3, монет ${n(s.resources.gold)}/150. Победи в турнире внешних учеников!`,`Realm ${s.realm}/3, wins ${s.wins}/3, coins ${n(s.resources.gold)}/150. Win the Grand Outer Disciples’ Tournament!`);
+      }
       const beat=storyBeat(s);if(!beat)return guidance(s,'advance','',language);
       if(s.world.journey)return say('Дождись прибытия. Затем вернись к сюжетной цели.','Wait until you arrive, then return to the story objective.');
       if(s.world.location!==beat.location)return say(`Открой «Путешествия» и отправься: ${W.locations[beat.location].name}. Прогресс цели сохранится.`,`Open Travel and go to ${beat.location==='ruins'?'the ruins':'the village'}. Your objective progress is kept.`);
@@ -571,6 +586,9 @@
       if(['sweep','haul'].includes(value)){s.employment.order.progress++;taskPractice(s,value);}
       if(value==='scout')taskPractice(s,'scout');
     } else if (type === 'story') {
+      if (s.stage === 1) {
+        return ChapterTwo ? ChapterTwo.action(s, value, api) : false;
+      }
       const beat=storyBeat(s);if(!beat||!beat.ready(s))return false;
       if(s.storyStep===0){
         const choiceKey=value||'shoulder';
@@ -761,7 +779,8 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat'].includes(k)) base[k] = input[k];
+    base.chapterTwoStep = (Number.isInteger(input.chapterTwoStep) && input.chapterTwoStep >= 0 && input.chapterTwoStep <= 6) ? input.chapterTwoStep : 0;
     base.fed = input.fed !== undefined ? !!input.fed : (base.storyStep > 1);
     base.activity=activity;
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
@@ -809,7 +828,11 @@
       else if(s.storyStep>=2){title='Тело, которое не слушается';accent='стать крепче своими усилиями.';}
       else if(s.storyStep>=1){title='Место у деревенского очага';accent='заработать на первый день.';}
     }else if(s.stage===1){
-      if(s.world.admission){title='Поручительство принято';accent='подготовиться к жизни ученика.';}
+      const ch2 = ChapterTwo ? ChapterTwo.getBeat(s, s.chapterTwoStep) : null;
+      if(ch2){
+        title = ch2.title;
+        accent = 'жизнь во внешнем дворе секты.';
+      } else if(s.world.admission){title='Поручительство принято';accent='подготовиться к жизни ученика.';}
       else if(s.world.location==='mountains'){title='На перевале Облачного Меча';accent='испытать себя и найти учителя.';}
       else if(s.world.location==='forest'){title='Лесные пути культивации';accent='найти того, кто поделится знанием.';}
       else if(s.world.location==='city'){title='Перед дверями трёх сект';accent='выбрать своё ученичество.';}
@@ -818,10 +841,12 @@
     if(s.stage>=2&&s.stage<7&&canAdvance(s)){title=stages[s.stage+1].name;accent='пора открыть новую главу.';}
     const place=W.locations[s.world.location].name;
     if(s.world.journey){title='В дороге к новой вехе';accent=W.locations[s.world.journey.destination].name;}
-    const objective=s.stage===0&&storyBeat(s)?storyBeat(s).goal:stages[s.stage].subtitle;
+    const ch2Beat = s.stage===1 && ChapterTwo ? ChapterTwo.getBeat(s, s.chapterTwoStep) : null;
+    const objective=s.stage===0&&storyBeat(s)?storyBeat(s).goal:ch2Beat?ch2Beat.goal:stages[s.stage].subtitle;
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
-  const api = { combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const chapterTwoBeat = (s, step, lang) => ChapterTwo ? ChapterTwo.getBeat(s, step, lang) : null;
+  const api = { chapterTwo: ChapterTwo, chapterTwoBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

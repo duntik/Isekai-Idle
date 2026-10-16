@@ -399,15 +399,22 @@
     ];
   }
 
+  function getChapterTwoBranches(s, lang){
+    const ch2 = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : (root.IsekaiChapterTwo || (typeof window !== 'undefined' ? window.IsekaiChapterTwo : null));
+    return ch2 ? ch2.getStoryBranches(s, lang) : [];
+  }
+
   function renderTreeHtml(s, activeTab, lang){
     const en = lang === 'en';
     const tab = activeTab || 'story';
 
     if (tab === 'story') {
       const branches = getStoryBranches(s, lang);
+      const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
+      const allBranches = [...branches, ...ch2Branches];
       return `
         <div class="fate-branches-list">
-          ${branches.map(b => {
+          ${allBranches.map(b => {
             const statusClass = b.status === 'completed' ? 'fate-step-completed' : (b.status === 'current' ? 'fate-step-current' : 'fate-step-locked');
             const statusLabel = b.status === 'completed' ? (en ? '✓ Completed' : '✓ Завершено') : (b.status === 'current' ? (en ? '● Current' : '● Текущий шаг') : (en ? '🔒 Future' : '🔒 Впереди'));
             return `
@@ -526,7 +533,9 @@
   function renderCompact(s, lang){
     const en = lang === 'en';
     const branches = getStoryBranches(s, lang);
-    const completedCount = branches.filter(b => b.status === 'completed').length;
+    const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
+    const allBranches = [...branches, ...ch2Branches];
+    const completedCount = allBranches.filter(b => b.status === 'completed').length;
     const bonds = getNpcBonds(s, lang);
     const friendlyCount = bonds.filter(b => b.trust >= 3).length;
 
@@ -534,7 +543,7 @@
       <div class="legacy-fate-summary-card">
         <div class="legacy-fate-stats-row">
           <div class="legacy-fate-stat">
-            <span class="legacy-fate-val">${completedCount} / ${branches.length}</span>
+            <span class="legacy-fate-val">${completedCount} / ${allBranches.length}</span>
             <small class="legacy-fate-lbl">${en ? 'Story Branches' : 'Ветвей Судьбы'}</small>
           </div>
           <div class="legacy-fate-stat">
@@ -561,6 +570,7 @@
 
   const api = {
     getStoryBranches,
+    getChapterTwoBranches,
     getNpcBonds,
     getFactions,
     renderTreeHtml,

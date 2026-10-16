@@ -198,8 +198,41 @@
     }
     return null;
   }
-  function novelStepperHtml(st, activeStep = (novelViewStep !== null && novelViewStep <= st.storyStep ? novelViewStep : st.storyStep)) {
-    if (st.stage !== 0) return '';
+  function novelStepperHtml(st, activeStep) {
+    if (st.stage > 1) return '';
+    if (st.stage === 1) {
+      const curStep = st.chapterTwoStep || 0;
+      const viewing = (activeStep !== undefined && activeStep !== null && activeStep <= curStep) ? activeStep : (novelViewStep !== null && novelViewStep <= curStep ? novelViewStep : curStep);
+      const stepLabels = [
+        uiText('Врата', 'Gates'),
+        uiText('Труд', 'Labor'),
+        uiText('Смотр', 'Exam'),
+        uiText('Вызов', 'Duel'),
+        uiText('Архив', 'Archive'),
+        uiText('Турнир', 'Tournament')
+      ];
+      const steps = stepLabels.map((lbl, idx) => {
+        const isPast = idx < curStep;
+        const isCurrent = idx === curStep;
+        const isViewing = idx === viewing;
+        const cls = [
+          isPast ? 'step-done' : isCurrent ? 'step-active' : 'step-locked',
+          isViewing ? 'step-selected' : ''
+        ].filter(Boolean).join(' ');
+        const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
+        const isClickable = idx <= curStep;
+        if (isClickable) {
+          const titleHint = isCurrent
+            ? uiText('Текущий эпизод (активный)', 'Current episode (active)')
+            : uiText(`Прочитать архив: Эпизод ${idx + 1} (${lbl})`, `Read archive: Episode ${idx + 1} (${lbl})`);
+          return `<button type="button" class="novel-step ${cls}" data-novel-step="${idx}" title="${titleHint}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></button>`;
+        }
+        return `<div class="novel-step ${cls}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></div>`;
+      }).join('<div class="novel-step-line" aria-hidden="true"></div>');
+      return `<nav class="novel-stepper" aria-label="${uiText('Шаги второй главы', 'Second chapter steps')}">${steps}</nav>`;
+    }
+    const curStep = st.storyStep;
+    const viewing = (activeStep !== undefined && activeStep !== null && activeStep <= curStep) ? activeStep : (novelViewStep !== null && novelViewStep <= curStep ? novelViewStep : curStep);
     const stepLabels = [
       uiText('Пролог', 'Prologue'),
       uiText('Двор', 'Yard'),
@@ -211,15 +244,15 @@
       uiText('Секта', 'Sect')
     ];
     const steps = stepLabels.map((lbl, idx) => {
-      const isPast = idx < st.storyStep;
-      const isCurrent = idx === st.storyStep;
-      const isViewing = idx === activeStep;
+      const isPast = idx < curStep;
+      const isCurrent = idx === curStep;
+      const isViewing = idx === viewing;
       const cls = [
         isPast ? 'step-done' : isCurrent ? 'step-active' : 'step-locked',
         isViewing ? 'step-selected' : ''
       ].filter(Boolean).join(' ');
       const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
-      const isClickable = idx <= st.storyStep;
+      const isClickable = idx <= curStep;
       if (isClickable) {
         const titleHint = isCurrent
           ? uiText('Текущая глава (активная)', 'Current chapter (active)')
@@ -234,7 +267,7 @@
     if (view === 'data') return '';
     if (id === 'hero') {
       const btReady = s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
-      const stReady = s.stage === 0 && E.storyBeat(s)?.ready(s);
+      const stReady = s.stage === 0 ? E.storyBeat(s)?.ready(s) : (s.stage === 1 && E.chapterTwo ? E.chapterTwo.isReady(s, s.chapterTwoStep) : false);
       if (btReady || stReady) return ` <span class="tab-badge badge-gold" title="${uiText('Готово действие', 'Action ready')}">●</span>`;
     }
     if (id === 'combat') {
@@ -415,7 +448,70 @@
     viewport.scrollLeft=scroll[0];viewport.scrollTop=scroll[1];
   }
   function storyGoalTrackerHtml(s) {
-    if (s.stage !== 0) return '';
+    if (s.stage > 1) return '';
+    if (s.stage === 1) {
+      const step = s.chapterTwoStep || 0;
+      let tracker = '';
+      let actions = '';
+      if (step === 0) {
+        const atCity = s.world.location === 'city' && !s.world.journey;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span class="story-goal-status ${atCity ? 'active' : 'paused'}">${atCity ? '● ' + uiText('Врата секты достигнуты', 'Sect gates reached') : '⚠ ' + uiText('В пути или вне города', 'In transit or outside city')}</span></div></div>`;
+        if (!atCity && !s.world.journey) {
+          actions = `<button type="button" class="quick-action-btn golden-btn" data-quick-action="travel" data-quick-value="city" ${E.world.canTravel(s, 'city') ? '' : 'disabled'}>${uiText('🏛 Войти в ворота города', '🏛 Enter city gates')}</button>`;
+        }
+      } else if (step === 1) {
+        const bodyVal = s.body || 0;
+        const totalClicks = (s.clicks?.squat || 0) + (s.clicks?.run || 0);
+        const jobsCompleted = s.employment?.completed || 0;
+        const isMet = bodyVal >= 2.5 || totalClicks >= 25 || jobsCompleted >= 1;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="2.5" value="${Math.min(2.5, bodyVal)}" aria-label="${uiText('Тело', 'Body')}"></progress><span>${uiText('Тело: ', 'Body: ')}${fmt(bodyVal)} / 2.5 ${isMet ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="25" value="${Math.min(25, totalClicks)}" aria-label="${uiText('Упражнения', 'Exercises')}"></progress><span>${uiText('Упражнения: ', 'Exercises: ')}${totalClicks} / 25</span></div></div>`;
+        actions = `<button type="button" class="quick-action-btn" data-quick-action="click" data-quick-value="squat" ${E.canClick(s, 'squat') ? '' : 'disabled'}>${uiText('✦ Присесть (-3)', '✦ Squat (-3)')}</button> <button type="button" class="quick-action-btn" data-quick-action="click" data-quick-value="run" ${E.canClick(s, 'run') ? '' : 'disabled'}>${uiText('✦ Пробежка (-5)', '✦ Run (-5)')}</button>`;
+      } else if (step === 2) {
+        const qiVal = s.resources?.qi || 0;
+        const realmVal = s.realm || 0;
+        const isMeditating = s.activity === 'meditate' && E.activityRunning(s);
+        const readyBt = s.realm < 2 && s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="2" value="${Math.min(2, realmVal)}" aria-label="${uiText('Ступень', 'Realm')}"></progress><span>${uiText('Ступень: ', 'Realm: ')}${realmVal} / 2 ${realmVal >= 2 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="20" value="${Math.min(20, qiVal)}" aria-label="${uiText('Ци', 'Qi')}"></progress><span>${uiText('Ци: ', 'Qi: ')}${fmt(qiVal)} / 20 ${qiVal >= 20 ? '✓' : ''}</span></div></div>`;
+        if (readyBt) {
+          actions = `<button type="button" class="quick-action-btn golden-btn" data-quick-action="breakthrough" data-quick-value="">${uiText('⚡ Совершить Прорыв меридианов', '⚡ Perform Meridian Breakthrough')}</button>`;
+        } else if (!isMeditating) {
+          actions = `<button type="button" class="quick-action-btn" data-quick-action="activity" data-quick-value="meditate" ${E.canActivity(s, 'meditate') ? '' : 'disabled'}>${uiText('☯ Медитировать для накопления ци', '☯ Meditate to accumulate qi')}</button>`;
+        } else {
+          actions = `<span class="story-goal-note">${uiText('Медитация активна (+ци)', 'Meditation active (+qi)')}</span>`;
+        }
+      } else if (step === 3) {
+        const winsVal = s.wins || 0;
+        const pwrVal = E.power(s);
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="1" value="${Math.min(1, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 1 ${winsVal >= 1 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="24" value="${Math.min(24, pwrVal)}" aria-label="${uiText('Боевая мощь', 'Power')}"></progress><span>${uiText('Боевая мощь: ', 'Power: ')}${fmt(pwrVal)} / 24 ${pwrVal >= 24 ? '✓' : ''}</span></div></div>`;
+        actions = `<button type="button" class="quick-action-btn golden-btn" data-tab="combat">${uiText('⚔ Выйти на арену чести', '⚔ Enter arena of honor')}</button>`;
+      } else if (step === 4) {
+        const xpVal = s.xp || 0;
+        const isMeditating = s.activity === 'meditate' && E.activityRunning(s);
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="50" value="${Math.min(50, xpVal)}" aria-label="${uiText('Понимание', 'Insight')}"></progress><span>${uiText('Понимание: ', 'Insight: ')}${fmt(xpVal)} / 50 ${xpVal >= 50 ? '✓' : ''}</span></div></div>`;
+        if (xpVal < 50) {
+          if (!isMeditating) {
+            actions = `<button type="button" class="quick-action-btn" data-quick-action="activity" data-quick-value="meditate" ${E.canActivity(s, 'meditate') ? '' : 'disabled'}>${uiText('☯ Постигать основы (медитация)', '☯ Study foundation (meditation)')}</button>`;
+          } else {
+            actions = `<span class="story-goal-note">${uiText('Постижение свитков идёт', 'Studying scriptures active')}</span>`;
+          }
+        }
+      } else if (step === 5) {
+        const realmVal = s.realm || 0;
+        const winsVal = s.wins || 0;
+        const goldVal = s.resources?.gold || 0;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, realmVal)}" aria-label="${uiText('Ступень', 'Realm')}"></progress><span>${uiText('Ступень: ', 'Realm: ')}${realmVal} / 3</span></div><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 3</span></div><div class="story-goal-progress-row"><progress max="150" value="${Math.min(150, goldVal)}" aria-label="${uiText('Монеты', 'Gold')}"></progress><span>${uiText('Монеты: ', 'Gold: ')}${fmt(goldVal)} / 150</span></div></div>`;
+        if (realmVal < 3) {
+          const readyBt = s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
+          if (readyBt) {
+            actions = `<button type="button" class="quick-action-btn golden-btn" data-quick-action="breakthrough" data-quick-value="">${uiText('⚡ Совершить Прорыв меридианов', '⚡ Perform Meridian Breakthrough')}</button>`;
+          }
+        } else if (winsVal < 3) {
+          actions = `<button type="button" class="quick-action-btn golden-btn" data-tab="combat">${uiText('⚔ Сразиться в турнире внешних учеников', '⚔ Fight in outer disciples’ tournament')}</button>`;
+        }
+      }
+      if (!tracker && !actions) return '';
+      return tracker + (actions ? `<div class="story-quick-actions">${actions}</div>` : '');
+    }
     const step = s.storyStep;
     let tracker = '';
     let actions = '';
@@ -492,9 +588,23 @@
     if (!tracker && !actions) return '';
     return tracker + (actions ? `<div class="story-quick-actions">${actions}</div>` : '');
   }
-  function systemBoxHtml(s, beat, stepOverride = s.storyStep, isArchive = false) {
+  function systemBoxHtml(s, beat, stepOverride = (s.stage === 0 ? s.storyStep : (s.chapterTwoStep || 0)), isArchive = false) {
     if (!beat) {
       return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE')}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${uiText('«[Начать следующую главу и отправиться в секту]».', '“[Start the next chapter and set out for your sect]”.')}</p></div>${storyGoalTrackerHtml(s)}</div>`;
+    }
+
+    if (s.stage === 1) {
+      const step = stepOverride !== undefined ? stepOverride : (s.chapterTwoStep || 0);
+      const ch2Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : (globalThis.IsekaiChapterTwo || (typeof window !== 'undefined' ? window.IsekaiChapterTwo : null));
+      const dir = ch2Mod ? ch2Mod.systemDirective(s, step, L?.language || 'ru') : {
+        header: uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE'),
+        prompt: `«[${beat.goal}]».`,
+        world: uiText('Награда секты', 'Sect reward'),
+        system: uiText('Развитие пути', 'Path advancement')
+      };
+      const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
+      const rewardsBlock = `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">🌿 ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${dir.world}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${dir.system}</span></div></div>`;
+      return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${dir.header}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${dir.prompt}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
     }
 
     const step = stepOverride !== undefined ? stepOverride : s.storyStep;
@@ -602,6 +712,29 @@
     const rewardsBlock = profile ? `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">🌿 ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${profile.world}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${profile.system}</span></div></div>` : '';
     return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
   }
+  function renderArchiveList(s) {
+    const isCh2 = s.stage === 1;
+    const ch1Html = E.story.slice(0, isCh2 ? E.story.length : s.storyStep).map((_, i) => {
+      const b = E.storyBeat(s, i), d = stepDecisionInfo(s, i);
+      const openBtn = !isCh2 ? `<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу', '📖 Open this chapter')}</button></p>` : '';
+      return `<h3>${uiText('Глава', 'Chapter')} ${i + 1} · ${b.title}</h3><p>${b.text}</p>${d ? `<p><strong>${uiText('Выбор: ', 'Choice: ')}</strong>${d.title}. ${d.desc}</p>` : ''}${b.chronicle ? `<p class="story-chronicle-past"><em>${b.chronicle}</em></p>` : ''}${openBtn}`;
+    }).join('');
+
+    let ch2Html = '';
+    if (isCh2) {
+      const ch2Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : (globalThis.IsekaiChapterTwo || (typeof window !== 'undefined' ? window.IsekaiChapterTwo : null));
+      const ch2Step = s.chapterTwoStep || 0;
+      if (ch2Mod && ch2Mod.beats) {
+        ch2Html = ch2Mod.beats.slice(0, ch2Step).map((b, i) => {
+          const beatLocalized = ch2Mod.getBeat(s, i, L?.language || 'ru');
+          return `<h3>${uiText('Глава 2 · Эпизод', 'Chapter 2 · Episode')} ${i + 1} · ${beatLocalized.title}</h3><p>${beatLocalized.text}</p>${beatLocalized.chronicle ? `<p class="story-chronicle-past"><em>${beatLocalized.chronicle}</em></p>` : ''}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть этот эпизод', '📖 Open this episode')}</button></p>`;
+        }).join('');
+      }
+    }
+
+    const total = ch1Html + ch2Html;
+    return total || `<p>${uiText('Твоя история только начинается.', 'Your story is just beginning.')}</p>`;
+  }
   function render() {
     const newlyEarned=E.achievements.list(s,L?.language||'ru').filter(a=>a.earned&&!seenMilestones.has(a.id));
     if(newlyEarned.length){newlyEarned.forEach(a=>seenMilestones.add(a.id));toast(uiText('Достижение: ','Achievement: ')+newlyEarned.slice(0,3).map(a=>a.name).join(' · '));}
@@ -657,15 +790,18 @@
       heroActivities = `<h3>Одно занятие — один путь</h3><p class="intro">Занятие продолжается офлайн до 24 часов. Его можно сменить в любой момент.</p><div class="cards">${Object.entries(E.activities).filter(([k]) => E.activityVisible(s,k)).map(([k, a]) => card(a.name, a.desc + ' '+E.taskPracticeText(k,L?.language||'ru') + (['meditate', 'train', 'technique', 'laws'].includes(k) ? ` Скорость развития ×${fmt(E.speed(s))}.` : ''), button('activity', k, s.activity === k ? '● Текущее занятие' : 'Выбрать занятие', s.activity !== k))).join('')}</div>`;
       heroEquipment = `<div class="workers"><h3>Тело ${fmt(s.body)} / ${(s.realm + 1) * 10} · Техника ${fmt(s.mastery)} / ${(s.realm + 1) * 10}</h3><p class="intro">${uiText("Тело растёт от физических действий, работы и двигательных техник. Медитация развивает спокойствие, понимание и энергию, но не тело.","The body grows through physical actions, work and movement techniques. Meditation develops calm, understanding and energy, but not the body.")}</p>${s.stage >= 1 ? `<p class="intro">Стиль даёт +35% силы против подходящего противника.</p><div class="actions">${Object.entries({ balanced: 'Равновесие', swift: 'Быстрый шаг', piercing: 'Пробивающий удар', ward: 'Духовный заслон' }).map(([k, v]) => button('style', k, (s.style === k ? '● ' : '') + v)).join('')}</div>${button('weapon', '', `Улучшить оружие · ур. ${s.weapon}`, s.weapon < (s.realm + 1) * 2 && E.affordable(s, { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) }))}<p class="intro">Цена: ${costs({gold:Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? {ore:Math.ceil(10 * 1.4 ** s.weapon)} : {})})}</p>` : ''}</div>`;
       if (s.stage < 7) nextChapterHtml = `<div class="rebirth"><div class="eyebrow">БЛИЖАЙШАЯ ЦЕЛЬ · ${E.stages[s.stage + 1].name}</div><p>Ступень ${s.realm} / ${next.realm} · ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}</p><p>Требуется: ${costs(next.cost)}${!s.found ? ' · найти древнюю технику' : ''}</p>${button('advance', '', 'Начать следующую главу', E.canAdvance(s))}</div>`;
-      if(s.stage===0) {
-        const beat=E.storyBeat(s);
+      if(s.stage===0 || s.stage===1) {
+        const isCh2 = s.stage === 1;
+        const curStep = isCh2 ? (s.chapterTwoStep || 0) : s.storyStep;
+        const isViewingArchive = novelViewStep !== null && novelViewStep < curStep;
+        const activeStep = isViewingArchive ? novelViewStep : curStep;
+        const beat = isCh2
+          ? (E.chapterTwoBeat ? E.chapterTwoBeat(s, activeStep, L?.language || 'ru') : null)
+          : (isViewingArchive ? E.storyBeat(s, activeStep) : E.storyBeat(s));
         const novelControls=`<div class="novel-controls"><button type="button" id="novel-font-btn" class="novel-control-btn ${novelSerif?'active':''}" title="${uiText('Шрифт с засечками / без засечек','Serif / Sans font')}" aria-label="${uiText('Шрифт','Font')}"><span class="novel-font-glyph ${novelSerif?'glyph-serif':'glyph-sans'}" aria-hidden="true">Aa</span></button><button type="button" id="novel-size-btn" class="novel-control-btn ${novelLarge?'active':''}" title="${uiText('Размер текста','Text size')}" aria-label="${uiText('Размер текста','Text size')}"><span class="novel-size-glyph" aria-hidden="true"><span class="glyph-sm">A</span><span class="glyph-lg">A</span></span></button></div>`;
-        const isViewingArchive = novelViewStep !== null && novelViewStep < s.storyStep;
-        const activeStep = isViewingArchive ? novelViewStep : s.storyStep;
-        const activeBeat = isViewingArchive ? E.storyBeat(s, activeStep) : beat;
         let storyHtml;
-        if (isViewingArchive && activeBeat) {
-          const dec = stepDecisionInfo(s, activeStep);
+        if (isViewingArchive && beat) {
+          const dec = !isCh2 ? stepDecisionInfo(s, activeStep) : null;
           const decisionHtml = dec ? `
           <div class="story-decision-card">
             <div class="story-decision-header">
@@ -677,31 +813,87 @@
             ${dec.detail ? `<p class="story-decision-detail">${dec.detail}</p>` : ''}
           </div>` : '';
 
+          const eyebrow = isCh2
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 2 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 2 · EPISODE ${activeStep+1} · ARCHIVE`)
+            : uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. ${activeStep+1} · ARCHIVE`);
+
+          const currentBeatTitle = isCh2
+            ? (E.chapterTwoBeat ? E.chapterTwoBeat(s, curStep, L?.language || 'ru')?.title || '' : '')
+            : (E.storyBeat(s)?.title || '');
+
           storyHtml = `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">
-            <div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${activeStep+1} · АРХИВ`,`AGAINST THE GODS · VOL. 1 · CH. ${activeStep+1} · ARCHIVE`)}</div>
+            <div class="eyebrow story-novel-eyebrow">${eyebrow}</div>
             ${novelStepperHtml(s, activeStep)}
             <div class="story-archive-banner">
               <div class="story-archive-badge"><span class="archive-icon">📜</span> <strong>${uiText('Архив прочитанной главы', 'Archived Chapter')}</strong> · ${uiText('Все сделанные выборы уже запечатлены в твоей судьбе.', 'Your choices have already been woven into destiny.')}</div>
               <button type="button" class="btn-fate-tree-link-small" id="story-open-fate-tree"><span class="fate-icon">✦</span> ${uiText('Древо Судьбы', 'Fate Tree')}</button>
-              <button type="button" class="story-archive-return-btn" data-novel-step="${s.storyStep}">${uiText('↩ К текущей главе', '↩ Return to current')}</button>
+              <button type="button" class="story-archive-return-btn" data-novel-step="${curStep}">${uiText('↩ К текущей главе', '↩ Return to current')}</button>
             </div>
             <div class="story-header-row">
-              <h2>${activeBeat.title}</h2>
+              <h2>${beat.title}</h2>
               ${novelControls}
             </div>
-            <p class="story-narrative">${activeBeat.text}</p>
+            <p class="story-narrative">${beat.text}</p>
             ${decisionHtml}
-            ${activeBeat.chronicle ? `<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${activeBeat.chronicle}</p></div>` : ""}
-            ${systemBoxHtml(s, activeBeat, activeStep, true)}
+            ${beat.chronicle ? `<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>` : ""}
+            ${systemBoxHtml(s, beat, activeStep, true)}
             <div class="story-archive-bottom-actions">
-              <button type="button" class="btn-primary story-archive-return-btn" data-novel-step="${s.storyStep}">
-                ${uiText(`↩ Вернуться к текущей главе (${s.storyStep+1} · ${beat?.title || ''})`, `↩ Return to current chapter (${s.storyStep+1} · ${beat?.title || ''})`)}
+              <button type="button" class="btn-primary story-archive-return-btn" data-novel-step="${curStep}">
+                ${uiText(`↩ Вернуться к текущей главе (${curStep+1} · ${currentBeatTitle})`, `↩ Return to current chapter (${curStep+1} · ${currentBeatTitle})`)}
               </button>
             </div>
-            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details>
+            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${renderArchiveList(s)}</details>
+          </article>`;
+        } else if (beat) {
+          const eyebrow = isCh2
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 2 · ЭПИЗОД ${curStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. 2 · EPISODE ${curStep+1}`)
+            : uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`);
+
+          let actionButtons = '';
+          if (isCh2) {
+            actionButtons = button('story', '', beat.button, beat.ready(s));
+          } else {
+            if (s.storyStep === 0) {
+              actionButtons = `<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`;
+            } else if (s.storyStep === 6) {
+              actionButtons = Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join('');
+            } else if (s.storyStep === 7 && !s.world.admission) {
+              actionButtons = `<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`;
+            } else {
+              actionButtons = button('story', '', beat.button, beat.ready(s) && (s.storyStep !== 7 || !s.world.admission));
+            }
+          }
+
+          storyHtml = `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">
+            <div class="eyebrow story-novel-eyebrow">${eyebrow}</div>
+            ${novelStepperHtml(s, curStep)}
+            <div class="story-header-row">
+              <h2>${beat.title}</h2>
+              ${novelControls}
+            </div>
+            <p class="story-narrative">${beat.text}</p>
+            ${beat.chronicle ? `<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>` : ""}
+            ${systemBoxHtml(s, beat, curStep, false)}
+            ${actionButtons}
+            <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${renderArchiveList(s)}</details>
           </article>`;
         } else {
-          storyHtml = beat ? `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`,`AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`)}</div>${novelStepperHtml(s, s.storyStep)}<div class="story-header-row"><h2>${beat.title}</h2>${novelControls}</div><p class="story-narrative">${beat.text}</p>${beat.chronicle?`<div class="story-chronicle"><span class="story-chronicle-badge">${uiText("ХРОНИКА ГЛАВЫ","CHAPTER CHRONICLE")}</span><p>${beat.chronicle}</p></div>`:""}${systemBoxHtml(s, beat, s.storyStep, false)}${s.storyStep===0?`<div class="cards prologue-cards">${Object.entries(beat.prologueChoices).map(([k,c])=>card(uiText(c.name,c.enName),uiText(c.desc,c.enDesc),button('story',k,uiText(c.name,c.enName),beat.ready(s)))).join('')}</div>`:s.storyStep===6?Object.entries(E.firstRoutes).map(([k,label])=>button('story',k,label,beat.ready(s)&&E.firstRouteReady(s,k))).join(''):s.storyStep===7&&!s.world.admission?`<div class="cards sect-cards">${Object.entries(beat.sectChoices).map(([k,c])=>{const unlocked=c.ready(s);return card(uiText(c.name,c.enName),`${uiText(c.role,c.enRole)}. ${uiText(c.desc,c.enDesc)}`,button('story',k,uiText(c.name,c.enName),beat.ready(s)&&unlocked)+(unlocked?'':`<small class="sect-lock">${uiText(c.reason,c.enReason)}</small>`),uiText(`Дар: ${c.gift}`,`Gift: ${c.enGift}`),`sect-card-${k}`,sectEmblems[k]||'');}).join('')}</div>`:button('story','',beat.button,beat.ready(s)&&(s.storyStep!==7||!s.world.admission))} <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${E.story.slice(0,s.storyStep).map((_,i)=>{const b=E.storyBeat(s,i),d=stepDecisionInfo(s,i);return `<h3>${uiText('Глава','Chapter')} ${i+1} · ${b.title}</h3><p>${b.text}</p>${d?`<p><strong>${uiText('Выбор: ','Choice: ')}</strong>${d.title}. ${d.desc}</p>`:''}${b.chronicle?`<p class="story-chronicle-past"><em>${b.chronicle}</em></p>`:""}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу','📖 Open this chapter')}</button></p>`;}).join('')||`<p>${uiText('Твоя история только начинается.','Your story is just beginning.')}</p>`}</details></article>` : `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}"><div class="eyebrow story-novel-eyebrow">${uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ","AGAINST THE GODS · VOL. 1 · EPILOGUE")}</div><div class="story-header-row"><h2>${uiText("Письмо через перевал","A path beyond the village")}</h2>${novelControls}</div><p>${E.storyBeat(s,6).text}</p>${systemBoxHtml(s, null)}</article>`;
+          const eyebrow = isCh2
+            ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ФИНАЛ ВРАТ СЕКТЫ", "AGAINST THE GODS · VOL. 1 · FINALE OF SECT GATES")
+            : uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ", "AGAINST THE GODS · VOL. 1 · EPILOGUE");
+          const epilogueTitle = isCh2
+            ? uiText("Первый ученик внешнего круга", "Top Disciple of the Outer Circle")
+            : uiText("Письмо через перевал", "A path beyond the village");
+          const epilogueNarrative = isCh2
+            ? uiText("Турнир завершён, лазурный пояс получен. Врата внутреннего двора распахнуты навстречу истинным тайнам культивации.", "The tournament is won, the azure sash bestowed. The inner gates swing wide toward the true mysteries of cultivation.")
+            : E.storyBeat(s, 6).text;
+
+          storyHtml = `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">
+            <div class="eyebrow story-novel-eyebrow">${eyebrow}</div>
+            <div class="story-header-row"><h2>${epilogueTitle}</h2>${novelControls}</div>
+            <p>${epilogueNarrative}</p>
+            ${systemBoxHtml(s, null)}
+          </article>`;
         }
         heroStory=storyHtml;
       }
@@ -712,7 +904,8 @@
     if(tab==='hero')heroTechniques=`<section class="workers"><h3>Техники и наставники</h3><p class="intro">Знакомства открывают разные знания. Изученные техники остаются с тобой; можно свободно менять активную. Эффект даёт одна выбранная техника. Для следующего ранга занимайся «Осваивать технику», затем оплати изучение. Физическая работа и помощь также укрепляют тело.</p><div class="cards">${Object.entries(E.techniques).filter(([k,t])=>t.available(s)||!!s.cultivation.learned[k]).map(([k,t])=>{const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;return card(t.name,`${E.techniqueSource(s,k)}. ${t.desc}${t.practiceBody?uiText(" Практика этой двигательной техники также укрепляет тело и расходует выносливость."," Practicing this movement technique also strengthens the body and uses stamina."):""}`,known?button('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?button('equip-technique',k,s.cultivation.active===k?'● Активна':'Применить',s.cultivation.active!==k):''):'<small>Найди источник знаний</small>',known?`Ранг ${learned?.rank||0}/5 · ${costs(E.techniqueCost(s,k))}${learned&&learned.rank<5?` · освоение ${fmt(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:''}`:'Не изучена');}).join('')}</div></section>`;
     if (tab === 'hero') {
       const fold=(id,title,body)=>body?`<details class="hero-fold" data-panel="${id}"><summary>${title}</summary><div class="hero-fold-body">${body}</div></details>`:'';
-      const hint=E.guidance(s,s.stage===0&&E.storyBeat(s)?'story':'advance','',L?.language||'ru');
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep));
+      const hint=E.guidance(s,isStoryActive?'story':'advance','',L?.language||'ru');
       const overview=`<section class="hero-overview" data-hero-section="overview"><div class="hero-overview-inner"><span class="hero-overview-badge">${uiText('Ближайшая цель','Current goal')}</span><span class="hero-overview-goal">${hint||t(E.stages[s.stage].subtitle)}</span></div></section>`;
       const order=s.employment.order;
       const work=order?`<section class="hero-current-order" data-hero-section="order">${employmentView()}${E.workMastered(s,order.kind)?button('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')):''}${!E.canWorkOrder(s)&&!s.world.journey?button('travel',order.place||'village',uiText('Вернуться к месту работы','Return to the workplace'),E.world.canTravel(s,order.place||'village')):''}</section>`:'';
@@ -1081,9 +1274,10 @@
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
     if(b.id==='close-breakthrough'){if($('breakthrough-modal'))$('breakthrough-modal').hidden=true;return;}
     if(b.dataset?.novelStep !== undefined){
+      const maxStep = s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : 0);
       const step = parseInt(b.dataset.novelStep, 10);
-      if(!isNaN(step) && step >= 0 && step <= s.storyStep){
-        novelViewStep = (step === s.storyStep) ? null : step;
+      if(!isNaN(step) && step >= 0 && step <= maxStep){
+        novelViewStep = (step === maxStep) ? null : step;
         render();
         return;
       }
