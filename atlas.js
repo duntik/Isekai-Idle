@@ -2,15 +2,17 @@
   'use strict';
   const places=['village','forest','city','ruins','mountains'];
   const journalPlaces=[...places,'village-mill','forest-garden','ruins-observatory','city-apothecary','mountains-cliff'],resourceKeys=['gold','herbs','qi','relics','wood','ore','pills','reputation','influence','supplies','cosmic','worlds'];
-  const fresh=()=>({notes:{},pins:[],surveys:{},cooldown:0,discoveries:{}});
+  const fresh=()=>({notes:{},pins:[],surveys:{},cooldown:0,discoveries:{},secrets:[]});
   const labels={village:['Окрестности деревни','Village surroundings'],forest:['Светлая опушка','Bright forest edge'],city:['Торговые проходы','Market passages'],ruins:['Внешняя стена храма','Outer temple wall'],mountains:['Нижняя тропа перевала','Lower pass trail'],'village-mill':['Старая мельница','Old mill'],'forest-garden':['Скрытый сад','Hidden garden'],'ruins-observatory':['Обсерватория под плющом','Ivy observatory'],'city-apothecary':['Алхимическая лаборатория Хо','Huo’s alchemy lab'],'mountains-cliff':['Облачный утёс Юнь','Yun’s Cloud Cliff']};
   const danger={village:['Безопасная деревенская дорога.','A safe village road.'],forest:['Опушка безопасна; в тёмной чаще видны звериные глаза.','The edge is safe; animal eyes watch from the dark thicket.'],city:['Стража проверяет право входа. Конфликт с учениками опасен.','Guards check entry rights. Conflicts with disciples are dangerous.'],ruins:['Внешний двор безопасен. Печати под алтарём требуют подготовки.','The outer yard is safe. Seals beneath the altar require preparation.'],mountains:['Нижний склон доступен. Верхнюю тропу охраняет страж.','The lower slope is accessible. A guard protects the upper trail.'],'village-mill':['Безопасная мельница мастера Туна.','Fastening craftsman Tong’s safe mill.'],'forest-garden':['Уединённый лекарственный сад Суй.','Sui’s secluded medicinal garden.'],'ruins-observatory':['Башня обсерватории за внешней стеной храма.','Observatory tower behind the outer temple wall.'],'city-apothecary':['Запах трав и горящих углей. Безопасная мастерская.','Smell of herbs and burning embers. A safe workshop.'],'mountains-cliff':['Сильный горный ветер над обрывом. Нужна устойчивая стойка.','Strong mountain wind over the chasm. Requires steady stance.']};
   function validate(input){const a=fresh();if(!input||typeof input!=='object')return a;
-    for(const[id,note]of Object.entries(input.notes||{}))if(typeof note==='string'&&id.length<=180&&/^(village|forest|city|ruins|mountains|dark-forest|sealed-crypt|upper-pass|site:|lead:)/.test(id))a.notes[id]=note.slice(0,600);
+    for(const[id,note]of Object.entries(input.notes||{}))if(typeof note==='string'&&id.length<=180&&/^(village|forest|city|ruins|mountains|dark-forest|sealed-crypt|upper-pass|site:|lead:|cache:)/.test(id))a.notes[id]=note.slice(0,600);
     a.pins=Array.isArray(input.pins)?[...new Set(input.pins.filter(id=>typeof id==='string'&&id.length<=180))].slice(0,80):[];
     for(const k of places){const n=input.surveys?.[k];if(Number.isSafeInteger(n)&&n>=0)a.surveys[k]=Math.min(1000000,n);}
     for(const k of journalPlaces)if(Array.isArray(input.discoveries?.[k]))a.discoveries[k]=[...new Set(input.discoveries[k].filter(v=>resourceKeys.includes(v)))].sort();
-    if(Number.isFinite(input.cooldown)&&input.cooldown>=0)a.cooldown=Math.min(300,input.cooldown);return a;
+    if(Number.isFinite(input.cooldown)&&input.cooldown>=0)a.cooldown=Math.min(300,input.cooldown);
+    a.secrets=Array.isArray(input.secrets)?[...new Set(input.secrets.filter(id=>typeof id==='string'&&id.length<=80))].slice(0,50):[];
+    return a;
   }
   const trail=(s,place)=>(s.atlas.surveys[place]||0)>=2;
   function hint(s,lang='ru'){const en=lang==='en';if(s.world.journey)return en?'Finish the journey before surveying.':'Закончи переход перед осмотром.';
@@ -212,5 +214,76 @@
     const encounters=Object.values(E.world.encounters).flat().filter(scene=>scene.id.startsWith(place+':')&&s.world.completed.includes(scene.id));if(encounters.length)facts.push(say(`Завершено местных историй: ${encounters.length}.`,`Local stories completed: ${encounters.length}.`));
     return {visited,people:people.map(p=>({name:p.name,role:p.role})),resources,facts,summary:say('Собственные наблюдения. Новые встречи и находки дополняют запись.','Your own observations. New encounters and discoveries add to this record.')};
   }
-  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,overview,locationKnowledge:overview,observe,migrate,journal};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const secretsCatalog=[
+    {
+      id:'hermit-cave',
+      name:['Заросшая пещера отшельника','Overgrown Hermit Cave'],
+      desc:['Укрытая в плюще расщелина среди скал. Внутри ощущается след древнего спокойствия.','An ivy-choked cleft among the rocks. A faint trace of ancient tranquility lingers inside.'],
+      icon:'⛰',
+      x:330, y:80,
+      reward:{calm:2,herbs:3,xp:0.5},
+      rewardText:['Спокойствие +2, травы +3, эхо понимания','Calm +2, herbs +3, echo of insight'],
+      ready:s=>s.storyStep>=1||s.stage>=1||(s.atlas?.surveys?.ruins||0)>=1
+    },
+    {
+      id:'spirit-spring',
+      name:['Духовный ключ в ущелье','Profound Spring in Chasm'],
+      desc:['Из разлома скалы бьёт мерцающий родник чистейшей ци, окутанный лазурным паром.','A shimmering spring of pure qi wells from a rock fissure, cloaked in azure mist.'],
+      icon:'♨',
+      x:680, y:110,
+      reward:{stamina:30,qi:1},
+      rewardText:['Восстановление выносливости (+30) и 1 ци','Stamina recovery (+30) and 1 qi'],
+      ready:s=>s.storyStep>=2||s.stage>=1||(s.atlas?.surveys?.forest||0)>=1
+    },
+    {
+      id:'peddler-camp',
+      name:['Стоянка бродячего торговца','Wandering Peddler’s Camp'],
+      desc:['Одинокий костёр у старой дороги. Старый путник прячет повозку от разбойников.','A lonely campfire off the old road. An old traveler conceals his cart from bandits.'],
+      icon:'🏕',
+      x:140, y:390,
+      reward:{gold:10},
+      rewardText:['Монеты +10 и дорожный совет','Coins +10 and trail advice'],
+      ready:s=>s.storyStep>=1||s.stage>=1
+    },
+    {
+      id:'herb-glade',
+      name:['Потайная поляна трав','Hidden Herb Glade'],
+      desc:['Скрытая за густым терновником поляна, где цветут дикорастущие целебные травы.','A glade concealed behind dense briars where wild medicinal herbs flourish.'],
+      icon:'🌿',
+      x:540, y:420,
+      reward:{herbs:8},
+      rewardText:['Редкие травы +8','Rare herbs +8'],
+      ready:s=>((s.world?.visits?.forest||0)>0||(s.atlas?.surveys?.forest||0)>=1)
+    }
+  ];
+  function secrets(s,lang='ru'){
+    const en=lang==='en';
+    return secretsCatalog.filter(sec=>sec.ready(s)).map(sec=>({
+      id:sec.id,
+      name:sec.name[en?1:0],
+      desc:sec.desc[en?1:0],
+      icon:sec.icon,
+      x:sec.x,
+      y:sec.y,
+      rewardText:sec.rewardText[en?1:0],
+      found:(s.atlas?.secrets||[]).includes(sec.id)
+    }));
+  }
+  function claimSecret(s,id,E){
+    if(!s.atlas)s.atlas=fresh();
+    if(!Array.isArray(s.atlas.secrets))s.atlas.secrets=[];
+    if(s.atlas.secrets.includes(id))return false;
+    const sec=secretsCatalog.find(item=>item.id===id);
+    if(!sec||!sec.ready(s))return false;
+    s.atlas.secrets.push(id);
+    if(sec.reward.gold)s.resources.gold=(s.resources.gold||0)+sec.reward.gold;
+    if(sec.reward.herbs)s.resources.herbs=(s.resources.herbs||0)+sec.reward.herbs;
+    if(sec.reward.qi&&(s.found||s.stage>=1))s.resources.qi=(s.resources.qi||0)+sec.reward.qi;
+    if(sec.reward.calm)s.calm=Math.min(100,(s.calm||0)+sec.reward.calm);
+    if(sec.reward.stamina)s.stamina=Math.min(E?.staminaMax?E.staminaMax(s):100,(s.stamina||0)+sec.reward.stamina);
+    if(sec.reward.xp&&s.found)s.xp=Math.min(E?.needed?E.needed(s):100,(s.xp||0)+sec.reward.xp);
+    if(E?.log)E.log(s,`Тайник обнаружен: ${sec.name[0]}. ${sec.rewardText[0]}`);
+    return true;
+  }
+  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,overview,locationKnowledge:overview,observe,migrate,journal,secretsCatalog,secrets,claimSecret};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

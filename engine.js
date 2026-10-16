@@ -681,6 +681,7 @@
   function action(s,type,value){
     if(type==='choose-vow')return A.chooseVow(s,value);
     if(type==='atlas-survey'){const result=Atlas.survey(s,api);if(result)A.sync(s);return result;}
+    if(type==='atlas-secret')return Atlas.claimSecret(s,value,api);
     if(type==='atlas-note'){
       if(!value||typeof value.id!=='string'||typeof value.text!=='string'||!W.map(s).nodes.some(n=>n.id===value.id))return false;
       const note=value.text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,600).trim();if(note)s.atlas.notes[value.id]=note;else delete s.atlas.notes[value.id];return true;
