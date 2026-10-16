@@ -402,7 +402,8 @@
     if(!actions.length)return '';
     return `<section class="technique-actions"><h3>${uiText('Применить знания','Put your knowledge to use')}</h3><p class="intro">${uiText('Приёмы для текущего места. Выбери нужную активную технику; применение прерывает фоновое занятие.','Methods for your current location. Equip the required technique; using a method interrupts your background activity.')}</p><div class="cards">${actions.map(a=>card(a.name,`${t(E.techniques[a.technique].name)}. ${a.description}`,button('technique-action',a.id,uiText('Выполнить приём','Use method'),a.enabled)+(s.cultivation.active!==a.technique?button('equip-technique',a.technique,uiText('Выбрать эту технику','Equip this technique')):''),a.hint)).join('')}</div></section>`;
   }
-  let mapZoom=1,mapPendingOnly=false,noteSelection=null;
+  let mapZoom=1,mapPendingOnly=false,noteSelection=null,showMapSecrets=true;
+  try{if(localStorage.getItem('isekai-show-map-secrets')==='false')showMapSecrets=false;}catch{}
   function placeJournal(place){const en=L?.language==='en',r=E.atlas.journal(s,E,place,L?.language||'ru');return `<div class="place-journal"><strong>${en?'Recorded observations':'Записанные наблюдения'}</strong><p>${r.summary}</p>${r.people.length?`<p><b>${en?'People met here':'Знакомые здесь'}:</b> ${r.people.map(p=>`${p.name} (${p.role})`).join('; ')}</p>`:''}${r.resources.length?`<p><b>${en?'Finds and rewards obtained here':'Здесь находил и получал'}:</b> ${r.resources.join(', ')}</p>`:''}${r.facts.map(f=>`<p>${f}</p>`).join('')}</div>`;}
   function centerMap(targetId){
     const id=targetId||s.world.location;
@@ -447,14 +448,12 @@
       journeyStatus = en ? ` In transit to ${destName}: ${Math.ceil(j.remaining)}s remaining.` : ` В пути (${destName}): осталось ${Math.ceil(j.remaining)} сек.`;
     }
     const secretsList = E.atlas.secrets ? E.atlas.secrets(s, language) : [];
-    const secretsHtml = secretsList.map(sec => {
+    const secretsHtml = showMapSecrets ? secretsList.map(sec => {
       const found = sec.found;
-      const beaconAura = found ? '' : '<span class="secret-pulse-ring" aria-hidden="true"></span>';
-      const actionHtml = found
-        ? `<span class="secret-reward-done">${en ? '✓ Claimed' : '✓ Получено'}</span>`
-        : `<button type="button" class="map-secret-claim-btn" data-secret-id="${sec.id}">${en ? '✦ Claim discovery' : '✦ Забрать находку'}</button>`;
-      return `<article data-map-secret="${sec.id}" class="map-secret-node ${found ? 'secret-found' : 'secret-unclaimed'}" style="left:${sec.x}px;top:${sec.y}px"><div class="secret-beacon"><span class="secret-icon" aria-hidden="true">${sec.icon}</span>${beaconAura}</div><div class="secret-content"><strong>${sec.name}</strong><small class="secret-badge">${found ? (en ? '✓ Discovery claimed' : '✓ Находка исследована') : (en ? '✦ Secret in the fog' : '✦ Тайник в тумане')}</small><p class="secret-desc">${sec.desc}</p><div class="secret-reward-row"><span class="secret-reward-tag">🎁</span><span class="secret-reward-val">${sec.rewardText}</span></div><div class="secret-actions">${actionHtml}</div></div></article>`;
-    }).join('');
+      const statusLabel = found ? (en ? 'Claimed' : 'Найдено') : (en ? 'Available' : 'Доступно');
+      const tooltip = `${sec.name} · ${statusLabel} · ${sec.rewardText}`;
+      return `<button type="button" class="map-landmark-tag ${found ? 'is-claimed' : 'is-ready'}" style="left:${sec.x}px;top:${sec.y}px" data-secret-id="${sec.id}" title="${tooltip}" aria-label="${tooltip}"><span class="landmark-icon" aria-hidden="true">${sec.icon}</span><span class="landmark-name">${sec.name}</span><span class="landmark-badge" aria-hidden="true">${found ? '✓' : '✦'}</span></button>`;
+    }).join('') : '';
     const cloudsHtml = `<div class="map-clouds-layer" aria-hidden="true"><div class="cloud-puff cloud-1"></div><div class="cloud-puff cloud-2"></div><div class="cloud-puff cloud-3"></div></div>`;
     const dayHour = Math.floor((s.age % 1200) / 50) % 24;
     const timeOfDay = dayHour >= 5 && dayHour < 9 ? 'map-dawn' : (dayHour >= 9 && dayHour < 18 ? 'map-day' : (dayHour >= 18 && dayHour < 22 ? 'map-dusk' : 'map-night'));
@@ -467,8 +466,22 @@
     $('map-center').textContent=en?'My location':'Где я';$('map-fit').textContent=en?'All routes':'Все пути';
     $('map-survey').textContent=en?'Survey surroundings':'Осмотреть окрестности';$('map-survey').disabled=!E.atlas.canSurvey(s);
     $('map-filter').textContent=mapPendingOnly?(en?'Show all landmarks':'Все ориентиры'):(en?'Unfinished and bookmarked':'Ожидающие и отмеченные');$('map-filter').setAttribute?.('aria-pressed',String(mapPendingOnly));
+    const toggleSecretsBtn = $('map-toggle-secrets');
+    if (toggleSecretsBtn) {
+      toggleSecretsBtn.textContent = showMapSecrets ? (en ? '✨ Hide landmarks' : '✨ Скрыть тайники') : (en ? '✨ Landmarks on map' : '✨ Тайники на карте');
+      toggleSecretsBtn.setAttribute?.('aria-pressed', String(showMapSecrets));
+    }
     const local=E.atlas.details(s,s.world.location,language),rumors=E.atlas.rumors(s,language),leads=E.world.causalLeads(s,language);
-    $('map-intelligence').innerHTML=h(`<h3>${en?'Explorer’s journal':'Дневник исследователя'}</h3><p class="map-local-warning">${local.danger}</p><p>${E.atlas.hint(s,language)}</p><p>${en?'Local surveys':'Осмотры области'}: ${local.survey} · ${local.trail?(en?'Trail discovered: travel −20%':'Тропа найдена: переход −20%'):(en?'Trail: 2 surveys needed':'Для тропы: 2 осмотра')}</p>${secretsList.length?`<p>${en?'Secrets found':'Найдено тайников'}: ${(s.atlas?.secrets||[]).length} / ${secretsList.length}</p>`:''}${s.stage<7?`<div class="map-horizon"><small>${en?'Next horizon':'Следующий горизонт'}</small><strong>${t(E.stages[s.stage+1].name)}</strong></div>`:''}<details><summary>${en?'Rumours':'Слухи'} (${rumors.length})</summary>${rumors.map(r=>`<p><strong>${r.confirmed?'✓':'?'}</strong> ${r.text}<br><small>${r.source}</small></p>`).join('')}</details><details open><summary>${en?'Unfinished stories':'Незавершённые истории'} (${leads.length})</summary>${leads.map(q=>`<p>${q.title}<br><small>${t(E.world.locations[q.location].name)}</small></p>`).join('')||`<p>${en?'New threads appear after encounters.':'Новые нити появятся после встреч.'}</p>`}</details>`);
+    const secretsFoundCount = (s.atlas?.secrets || []).length;
+    const secretsSection = secretsList.length ? `<details class="map-secrets-details" open><summary>${en ? 'Hidden caches & landmarks' : 'Тайники и ориентиры'} (${secretsFoundCount} / ${secretsList.length})</summary><div class="map-secrets-list">${secretsList.map(sec => {
+      const found = sec.found;
+      const statusText = found ? (en ? '✓ Explored' : '✓ Найдено') : (en ? '✦ Available' : '✦ Доступно');
+      const claimButton = found
+        ? `<span class="secret-card-done">${en ? 'Reward collected' : 'Награда получена'}</span>`
+        : `<button type="button" class="secret-card-claim-btn map-secret-claim-btn" data-secret-id="${sec.id}">${en ? '✦ Claim reward' : '✦ Забрать награду'}</button>`;
+      return `<div class="map-secret-card ${found ? 'card-claimed' : 'card-ready'}" data-secret-card="${sec.id}"><div class="secret-card-header"><strong class="secret-card-title"><span class="secret-card-icon" aria-hidden="true">${sec.icon}</span> ${sec.name}</strong><small class="secret-card-status ${found ? 'status-done' : 'status-ready'}">${statusText}</small></div><p class="secret-card-desc">${sec.desc}</p><div class="secret-card-reward"><span class="reward-icon" aria-hidden="true">🎁</span> <span class="reward-text">${sec.rewardText}</span></div><div class="secret-card-actions">${claimButton}<button type="button" class="secret-card-locate-btn" data-locate-secret="${sec.id}">${en ? '📍 On map' : '📍 На карте'}</button></div></div>`;
+    }).join('')}</div></details>` : '';
+    $('map-intelligence').innerHTML=h(`<h3>${en?'Explorer’s journal':'Дневник исследователя'}</h3><p class="map-local-warning">${local.danger}</p><p>${E.atlas.hint(s,language)}</p><p>${en?'Local surveys':'Осмотры области'}: ${local.survey} · ${local.trail?(en?'Trail discovered: travel −20%':'Тропа найдена: переход −20%'):(en?'Trail: 2 surveys needed':'Для тропы: 2 осмотра')}</p>${secretsSection}${s.stage<7?`<div class="map-horizon"><small>${en?'Next horizon':'Следующий горизонт'}</small><strong>${t(E.stages[s.stage+1].name)}</strong></div>`:''}<details><summary>${en?'Rumours':'Слухи'} (${rumors.length})</summary>${rumors.map(r=>`<p><strong>${r.confirmed?'✓':'?'}</strong> ${r.text}<br><small>${r.source}</small></p>`).join('')}</details><details open><summary>${en?'Unfinished stories':'Незавершённые истории'} (${leads.length})</summary>${leads.map(q=>`<p>${q.title}<br><small>${t(E.world.locations[q.location].name)}</small></p>`).join('')||`<p>${en?'New threads appear after encounters.':'Новые нити появятся после встреч.'}</p>`}</details>`);
     $('map-note-label').textContent=en?'Personal note · up to 600 characters':'Личная заметка · до 600 символов';$('map-note-save').textContent=en?'Save note':'Сохранить заметку';
     if(s.world.encounter){const scene=E.world.current(s);$('map-intelligence').innerHTML+=h(`<div class="map-horizon"><small>${en?'Current unresolved encounter':'Текущая незавершённая встреча'}</small><strong>${E.world.sceneText(scene,'title',language,s)}</strong><button data-tab="world" id="map-show-encounter">${en?'Return to the encounter':'Вернуться к встрече'}</button></div>`);}
     Array.from($('map-intelligence').querySelectorAll?.('details')||[]).forEach((node,index)=>{if(sidebarOpen[index]!==undefined)node.open=sidebarOpen[index];});
@@ -1567,7 +1580,42 @@
         toast(uiText('Тайник обнаружен!', 'Cache discovered!'));
         renderMap();
         return;
+      } else {
+        const sec = (E.atlas.secretsCatalog || []).find(item => item.id === secId);
+        if (sec && (s.atlas?.secrets || []).includes(secId)) {
+          const secName = L?.language === 'en' ? sec.name[1] : sec.name[0];
+          toast(uiText('Тайник уже исследован: ', 'Cache already explored: ') + secName);
+          return;
+        }
       }
+    }
+    if(b.dataset?.locateSecret){
+      const secId = b.dataset.locateSecret;
+      const sec = (E.atlas.secretsCatalog || []).find(item => item.id === secId);
+      if(sec){
+        if(!showMapSecrets){
+          showMapSecrets = true;
+          try { localStorage.setItem('isekai-show-map-secrets', 'true'); } catch {}
+          renderMap();
+        }
+        const v = $('map-viewport');
+        if(v){
+          v.scrollLeft = Math.max(0, sec.x * mapZoom - (v.clientWidth || 800) / 2);
+          v.scrollTop = Math.max(0, sec.y * mapZoom - (v.clientHeight || 500) / 2);
+        }
+        const marker = $('map-canvas')?.querySelector?.(`[data-secret-id="${secId}"]`);
+        if(marker){
+          marker.classList.add('landmark-pulse-active');
+          setTimeout(() => marker.classList.remove('landmark-pulse-active'), 2500);
+        }
+      }
+      return;
+    }
+    if(b.id==='map-toggle-secrets'){
+      showMapSecrets = !showMapSecrets;
+      try { localStorage.setItem('isekai-show-map-secrets', String(showMapSecrets)); } catch {}
+      renderMap();
+      return;
     }
     if(b.id==='audio-toggle'||b.closest?.('#audio-toggle')){Sound.toggle();updateAudioUi();return;}
     if(b.dataset?.fateTab){activeFateTab=b.dataset.fateTab;renderFateTree();return;}

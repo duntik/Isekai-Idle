@@ -106,22 +106,44 @@ html[data-interface="data"] .map-roads line{stroke:#778792}
 .traveler-ripple{position:absolute;top:50%;left:50%;width:32px;height:32px;margin-top:-16px;margin-left:-16px;border-radius:50%;border:1.5px solid rgba(94,234,212,0.6);animation:travelerRipple 2s ease-out infinite;pointer-events:none}
 @keyframes travelerBob{0%{transform:translateY(0)}100%{transform:translateY(-4px)}}
 @keyframes travelerRipple{0%{transform:scale(0.6);opacity:0.9}100%{transform:scale(2.2);opacity:0}}
-.map-secret-node{position:absolute;transform:translate(-50%,-50%);z-index:5;transition:transform .2s ease,z-index .2s ease}
-.map-secret-node:hover,.map-secret-node:focus-within{z-index:20}
-.secret-beacon{position:relative;width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#2a4e44 40%,#152b27 100%);border:1.5px solid #d4af37;box-shadow:0 0 15px rgba(212,175,55,0.4);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
-.map-secret-node:hover .secret-beacon{transform:scale(1.15);box-shadow:0 0 22px rgba(212,175,55,0.7)}
-.secret-icon{font-size:18px;line-height:1}
-.secret-pulse-ring{position:absolute;inset:-6px;border-radius:50%;border:1px dashed rgba(212,175,55,0.6);animation:secretPulse 3s linear infinite}
-@keyframes secretPulse{0%{transform:rotate(0deg) scale(0.9);opacity:.8}50%{transform:rotate(180deg) scale(1.15);opacity:.4}100%{transform:rotate(360deg) scale(0.9);opacity:.8}}
-.secret-content{display:none;position:absolute;top:42px;left:50%;transform:translateX(-50%);width:220px;padding:10px 12px;background:#142426;border:1px solid #486461;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.7);color:var(--text);font-size:11px;line-height:1.5;pointer-events:auto}
-.map-secret-node:hover .secret-content,.map-secret-node:focus-within .secret-content{display:block}
-.secret-badge{display:block;font-size:10px;color:var(--gold);margin-bottom:4px}
-.secret-desc{margin:4px 0 6px;color:var(--muted);font-size:11px;line-height:1.45}
-.secret-reward-row{display:flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.25);border-radius:4px;margin-bottom:8px;font-size:11px;color:var(--gold)}
-.map-secret-claim-btn{width:100%;padding:6px 10px;font-size:11px;font-weight:600;background:linear-gradient(135deg,#2b594b,#1d3e34);color:#a5f3fc;border:1px solid #4ade80;border-radius:5px;cursor:pointer;transition:all .15s ease}
-.map-secret-claim-btn:hover{background:#346d5c;box-shadow:0 0 10px rgba(74,222,128,0.4)}
-.secret-reward-done{display:block;text-align:center;padding:4px;font-size:11px;color:#86efac;font-style:italic}
-.secret-found .secret-beacon{border-color:#55726b;box-shadow:none;opacity:.75}
+/* Non-intrusive landmark tags on map canvas */
+.map-landmark-tag{position:absolute;transform:translate(-50%,-50%);z-index:4;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;background:rgba(18,36,32,0.92);border:1px solid rgba(212,175,55,0.5);color:var(--gold);font-size:10.5px;font-weight:600;line-height:1.2;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.5),0 0 8px rgba(212,175,55,0.2);transition:all .15s ease;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.map-landmark-tag:hover{transform:translate(-50%,-50%) scale(1.06);background:#1d4138;border-color:#f5d77f;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.6),0 0 12px rgba(212,175,55,0.45);z-index:9}
+.map-landmark-tag.is-claimed{background:rgba(18,28,26,0.7);border-color:rgba(255,255,255,0.12);color:#8ca39c;box-shadow:none;opacity:.65}
+.map-landmark-tag.is-claimed:hover{opacity:.9;background:#182e29;border-color:#75948a}
+.landmark-icon{font-size:12px;line-height:1}
+.landmark-name{font-weight:600;letter-spacing:.02em}
+.landmark-badge{font-size:10px;font-weight:700;color:#5eead4}
+.map-landmark-tag.is-claimed .landmark-badge{color:#86efac}
+.landmark-pulse-active{animation:landmarkPulse 1.2s ease-in-out 2 alternate;z-index:25 !important}
+@keyframes landmarkPulse{0%{transform:translate(-50%,-50%) scale(1);box-shadow:0 0 0 0 rgba(94,234,212,0.8)}100%{transform:translate(-50%,-50%) scale(1.15);box-shadow:0 0 18px 6px rgba(94,234,212,0.6);border-color:#5eead4}}
+
+/* Dedicated Secrets & Landmarks Journal in Map Sidebar */
+.map-secrets-details{margin:12px 0;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,0.18);overflow:hidden}
+.map-secrets-details>summary{padding:8px 10px;font-weight:700;color:var(--gold);background:rgba(212,175,55,0.08);cursor:pointer;user-select:none}
+.map-secrets-list{display:flex;flex-direction:column;gap:8px;padding:8px}
+.map-secret-card{padding:9px 10px;border-radius:6px;background:#142527;border:1px solid #324744;font-size:11px;line-height:1.45}
+.map-secret-card.card-ready{border-color:rgba(212,175,55,0.35);background:linear-gradient(135deg,#162b27,#12201e)}
+.map-secret-card.card-claimed{opacity:.75;background:#101a1c;border-color:rgba(255,255,255,0.06)}
+.secret-card-header{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.secret-card-title{font-size:12px;font-weight:700;color:var(--text)}
+.map-secret-card.card-ready .secret-card-title{color:var(--gold)}
+.secret-card-icon{font-size:13px;margin-right:2px}
+.secret-card-status{font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px}
+.secret-card-status.status-ready{color:#5eead4;background:rgba(94,234,212,0.12);border:1px solid rgba(94,234,212,0.3)}
+.secret-card-status.status-done{color:#86efac;background:rgba(134,239,172,0.1)}
+.secret-card-desc{margin:3px 0 6px;color:var(--muted);font-size:11px}
+.secret-card-reward{display:flex;align-items:center;gap:4px;padding:3px 6px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.2);border-radius:4px;font-size:10.5px;color:var(--gold);margin-bottom:7px}
+.reward-icon{font-size:11px}
+.secret-card-actions{display:flex;gap:6px}
+.secret-card-actions button{flex:1;padding:5px 8px;font-size:11px;min-height:28px}
+.secret-card-claim-btn{background:linear-gradient(135deg,#2b594b,#1d3e34);color:#a5f3fc;border:1px solid #4ade80;border-radius:4px;font-weight:600;cursor:pointer;transition:all .15s ease}
+.secret-card-claim-btn:hover{background:#346d5c;box-shadow:0 0 10px rgba(74,222,128,0.4)}
+.secret-card-locate-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:var(--text);border-radius:4px;cursor:pointer;transition:all .15s ease}
+.secret-card-locate-btn:hover{background:rgba(255,255,255,0.14);color:#fff}
+.secret-card-done{display:inline-block;padding:4px 0;font-size:10.5px;color:#86efac;font-style:italic}
+.map-toggle-btn{padding:8px 12px;font-size:12px;cursor:pointer}
+.map-toggle-btn[aria-pressed="false"]{opacity:.65;background:transparent}
 .map-clouds-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;opacity:.25}
 .cloud-puff{position:absolute;border-radius:50%;background:radial-gradient(ellipse at center,rgba(230,245,240,0.5) 0%,rgba(200,230,225,0.15) 55%,transparent 70%);filter:blur(28px);animation:cloudDrift 90s linear infinite}
 .cloud-1{width:320px;height:180px;top:15%;left:-20%;animation-duration:75s}
@@ -134,10 +156,16 @@ html[data-interface="data"] .map-roads line{stroke:#778792}
 #map-canvas[data-time-of-day="map-dawn"]{filter:brightness(.95) contrast(1.02) sepia(.12) hue-rotate(5deg)}
 html[data-interface="data"] .map-clouds-layer{display:none}
 html[data-interface="data"] #map-canvas{filter:none !important}
-html[data-interface="data"] .secret-beacon{background:#e2e8f0;border-color:#94a3b8;box-shadow:none}
-html[data-interface="data"] .secret-content{background:#fff;color:#1e293b;border-color:#cbd5e1;box-shadow:none}
-html[data-interface="data"] .secret-reward-row{background:#f8fafc;border-color:#e2e8f0;color:#475569}
-html[data-interface="data"] .map-secret-claim-btn{background:#e2e8f0;color:#0f172a;border-color:#94a3b8}
+html[data-interface="data"] .map-landmark-tag{background:#fff;border-color:#adb5bd;color:#1e293b;box-shadow:none}
+html[data-interface="data"] .map-landmark-tag.is-claimed{background:#f1f5f9;color:#64748b}
+html[data-interface="data"] .map-secrets-details{background:#fff;border-color:#ced4da}
+html[data-interface="data"] .map-secrets-details>summary{background:#f8fafc;color:#1e293b}
+html[data-interface="data"] .map-secret-card{background:#fff;border-color:#cbd5e1;color:#1e293b}
+html[data-interface="data"] .map-secret-card.card-ready{background:#fff;border-color:#94a3b8}
+html[data-interface="data"] .secret-card-title{color:#0f172a}
+html[data-interface="data"] .secret-card-reward{background:#f1f5f9;border-color:#cbd5e1;color:#334155}
+html[data-interface="data"] .secret-card-claim-btn{background:#e2e8f0;color:#0f172a;border-color:#94a3b8}
+html[data-interface="data"] .secret-card-locate-btn{background:#f8fafc;border-color:#cbd5e1;color:#334155}
 html[data-interface="data"] .traveler-pin{background:#fff;border-color:#64748b;box-shadow:none}
 html[data-interface="data"] .traveler-badge{color:#334155}
 html[data-interface="data"] .traveler-ripple{display:none}

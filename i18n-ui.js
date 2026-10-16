@@ -288,5 +288,14 @@
     ,['Ресурсы:','Resources:']
     ,['Найденные ресурсы','Observed resources']
     ,['Разведанные ресурсы','Observed resources']
+    ,['✨ Скрыть тайники','✨ Hide landmarks']
+    ,['✨ Тайники на карте','✨ Landmarks on map']
+    ,['Тайники и ориентиры','Hidden caches & landmarks']
+    ,['Тайники и находки','Hidden caches & landmarks']
+    ,['Награда получена','Reward collected']
+    ,['Забрать награду','Claim reward']
+    ,['На карте','On map']
+    ,['Тайник обнаружен!','Cache discovered!']
+    ,['Тайник уже исследован: ','Cache already explored: ']
   ]);
 })(globalThis);
