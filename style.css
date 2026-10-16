@@ -464,3 +464,16 @@ html[data-interface="data"] .fate-tab.active{background:#fff;border-color:#334a6
 html[data-interface="data"] .fate-step-card,html[data-interface="data"] .fate-npc-card,html[data-interface="data"] .fate-faction-card,html[data-interface="data"] .legacy-fate-tree-section{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
 html[data-interface="data"] .fate-option-card{background:#fff;border-color:#d4d8dc;border-radius:2px}
 html[data-interface="data"] .btn-fate-tree-link{background:#fff;border-color:#adb6bd;color:#20252a;border-radius:2px}
+
+/* Audio Controls */
+.audio-control-widget{display:inline-flex;align-items:center;gap:6px;background:rgba(21,39,44,0.7);border:1px solid var(--line,#304348);border-radius:6px;padding:3px 8px;vertical-align:middle}
+.audio-toggle-btn{background:transparent!important;border:none!important;padding:2px 4px!important;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;min-height:unset!important;box-shadow:none!important}
+.audio-toggle-btn:hover{filter:brightness(1.25)}
+.audio-toggle-btn.audio-active #audio-icon{filter:drop-shadow(0 0 5px rgba(229,195,130,0.75))}
+.audio-slider-wrap{display:inline-flex;align-items:center}
+#audio-volume{width:56px;height:4px;accent-color:var(--gold,#e4c38a);cursor:pointer;margin:0;opacity:0.85;transition:opacity 0.2s}
+#audio-volume:disabled{opacity:0.28;cursor:not-allowed}
+html[data-interface="data"] .audio-control-widget{background:#f7f8f9;border:1px solid #b8bec4;border-radius:2px;padding:2px 6px}
+html[data-interface="data"] .audio-toggle-btn{padding:1px 3px!important;font-size:13px}
+html[data-interface="data"] #audio-volume{width:46px;accent-color:#525b64}
+

@@ -4,6 +4,50 @@
   const L=typeof IsekaiLocale!=='undefined'?IsekaiLocale:null,t=value=>L?L.text(value):value,h=value=>L?L.html(value):value;
   const uiText=(ru,en)=>L?.language==='en'?en:ru;
   const FateTree=typeof IsekaiFateTree!=='undefined'?IsekaiFateTree:(typeof require==='function'?(()=>{try{return require('./fate-tree.js');}catch{return null;}})():null);
+  const Sound = typeof IsekaiSound !== 'undefined' ? IsekaiSound : (typeof require === 'function' ? (() => { try { return require('./sound.js'); } catch { return null; } })() : null) || {
+    init(){},
+    toggle(){ return false; },
+    toggleMute(){ return true; },
+    isMuted(){ return true; },
+    getVolume(){ return 0.4; },
+    setVolume(){},
+    playBowl(){},
+    playSingingBowl(){},
+    playBreakthrough(){},
+    playParchment(){},
+    playClash(){},
+    playSwordClash(){},
+    playPunch(){},
+    playPhysicalStrike(){},
+    playVictory(){},
+    playVictoryChime(){},
+    playTenseDrone(){},
+    startQiDrone(){},
+    stopQiDrone(){},
+    playClick(){},
+    playJadeChime(){},
+    playTempleBlock(){},
+    playTrainingSwoosh(){}
+  };
+  function updateAudioUi() {
+    const toggleBtn = $('audio-toggle');
+    const iconSpan = $('audio-icon');
+    const volInput = $('audio-volume');
+    const isMuted = Sound.isMuted();
+    if (toggleBtn) {
+      const label = isMuted ? uiText('Звук: выкл.', 'Sound: off') : uiText('Звук: вкл.', 'Sound: on');
+      toggleBtn.setAttribute?.('aria-label', label);
+      toggleBtn.setAttribute?.('title', label);
+      toggleBtn.classList?.toggle?.('audio-active', !isMuted);
+    }
+    if (iconSpan) {
+      iconSpan.textContent = isMuted ? '🔈' : '🔊';
+    }
+    if (volInput) {
+      volInput.value = Math.round(Sound.getVolume() * 100);
+      volInput.disabled = isMuted;
+    }
+  }
   let activeFateTab='story';
   const quotes=typeof IsekaiQuotes!=='undefined'?IsekaiQuotes.createRotator():null;
   const N=IsekaiNames;
@@ -749,6 +793,7 @@
     $('identity-panel').hidden=!!s.playerName;
     document.documentElement.dataset.naming=s.playerName?'complete':'required';
     $('player-name').textContent=s.playerName||'';
+    updateAudioUi();
     const stage = E.stages[s.stage], next = E.stages[s.stage];
     $('chapter').textContent = `ГЛАВА ${s.stage + 1} · ${stage.name.toUpperCase()}`;
     const heading=E.heroHeading(s);
@@ -1266,14 +1311,16 @@
         return;
       }
     }
+    if(b.id==='audio-toggle'||b.closest?.('#audio-toggle')){Sound.toggle();updateAudioUi();return;}
     if(b.dataset?.fateTab){activeFateTab=b.dataset.fateTab;renderFateTree();return;}
-    if(b.id==='open-fate-tree'||b.id==='story-open-fate-tree'||b.id==='story-open-fate-tree-archive'||b.id==='legacy-open-fate-tree'){openFateTreeDialog();return;}
+    if(b.id==='open-fate-tree'||b.id==='story-open-fate-tree'||b.id==='story-open-fate-tree-archive'||b.id==='legacy-open-fate-tree'){Sound.playParchment();openFateTreeDialog();return;}
     if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
     if(b.id==='hero-collapse-toggle'){heroCollapsed=!heroCollapsed;setUiPref('isekai-hero-collapsed',String(heroCollapsed));applyHeroCollapse();return;}
     if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
     if(b.id==='close-breakthrough'){if($('breakthrough-modal'))$('breakthrough-modal').hidden=true;return;}
     if(b.dataset?.novelStep !== undefined){
+      Sound.playParchment();
       const maxStep = s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : 0);
       const step = parseInt(b.dataset.novelStep, 10);
       if(!isNaN(step) && step >= 0 && step <= maxStep){
@@ -1287,16 +1334,17 @@
     if(b.dataset?.mapNote){noteSelection=b.dataset.mapNote;$('map-note-place').value=noteSelection;$('map-note-text').value=s.atlas.notes[noteSelection]||'';$('map-note-text').focus?.();return;}
     if(b.id==='map-show-encounter')$('world-map-dialog').close?.();
     if(b.id==='dismiss-return-report'){returnSummary=null;render();return;}
-    if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();refreshNames();}
+    if(b.dataset.language&&L){L.setLanguage(b.dataset.language);applyView();refreshNames();updateAudioUi();}
     if(b.dataset.nameStyle&&N.styles[b.dataset.nameStyle]){nameStyle=b.dataset.nameStyle;refreshNames();}
     if(b.id==='random-names')refreshNames();
     if(b.dataset.namePick!==undefined&&nameOptions[Number(b.dataset.namePick)]){$('player-name-input').value=nameOptions[Number(b.dataset.namePick)];$('identity-error').textContent='';}
     if (['visual','data'].includes(b.dataset.view)) { view = b.dataset.view; try { localStorage.setItem('isekai-idle-interface',view); } catch {} applyView(); }
-    if (b.dataset.tab) tab = b.dataset.tab;
+    if (b.dataset.tab) { tab = b.dataset.tab; Sound.playClick(); }
     if (b.dataset?.quickAction) {
       const act = b.dataset.quickAction;
       const val = b.dataset.quickValue !== undefined ? b.dataset.quickValue : '';
       if (act === 'click') {
+        Sound.playClick();
         const clickKey = val, clickDef = E.clicks[clickKey];
         if (clickDef && E.canClick(s, clickKey)) {
           const rect = b.getBoundingClientRect ? b.getBoundingClientRect() : { left: 240, top: 320, width: 80 };
@@ -1318,13 +1366,17 @@
       }
       const realmBefore = s.realm;
       if (E.action(s, act, val)) {
-        if (['story', 'advance'].includes(act)) novelViewStep = null;
+        if (['story', 'advance'].includes(act)) { novelViewStep = null; Sound.playParchment(); }
+        if (act === 'activity' && val === 'meditate') Sound.playBowl();
+        if (act === 'rest') Sound.playBowl(260, 2.2);
+        if (act === 'breakthrough') Sound.playBreakthrough();
         if (s.realm > realmBefore) {
           const modal = $('breakthrough-modal');
           if (modal && view !== 'data') {
             if ($('breakthrough-realm')) $('breakthrough-realm').textContent = `✧ ${E.realmName(s.realm)} · ${uiText('Сила','Power')} ${fmt(E.power(s))} ⚔`;
             modal.hidden = false;
           }
+          Sound.playBreakthrough();
         }
         save();
       } else {
@@ -1337,6 +1389,7 @@
     if(['travel','map-inspect'].includes(b.dataset.action)&&b.closest?.('#world-map-dialog')){tab='world';renderMap();}
     if(b.dataset.action==='travel'&&b.closest?.('#location-dialog')){$('location-dialog')?.close?.();currentDialogPlace=null;}
     if(b.dataset.action==='click'){
+      Sound.playClick();
       const clickKey=b.dataset.value,clickDef=E.clicks[clickKey];
       if(clickDef&&E.canClick(s,clickKey)){
         const rect=b.getBoundingClientRect?b.getBoundingClientRect():{left:240,top:320,width:80};
@@ -1357,16 +1410,31 @@
       }
     }
     const realmBefore=s.realm;
+    const winsBefore=s.wins;
     if (b.dataset.action) {
       if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); }
       if (E.action(s,b.dataset.action,b.dataset.value)) {
-        if (['story', 'advance'].includes(b.dataset.action)) novelViewStep = null;
+        if (['story', 'advance'].includes(b.dataset.action)) { novelViewStep = null; Sound.playParchment(); }
+        if (b.dataset.action === 'activity' && b.dataset.value === 'meditate') Sound.playBowl();
+        if (b.dataset.action === 'rest') Sound.playBowl(260, 2.2);
+        if (b.dataset.action === 'breakthrough') Sound.playBreakthrough();
+        if (b.dataset.action === 'fight') {
+          if (s.wins > winsBefore) Sound.playVictory();
+          else Sound.playClash();
+        }
+        if (b.dataset.action?.startsWith('combat-')) {
+          if (['combat-strike', 'combat-technique'].includes(b.dataset.action)) Sound.playClash();
+          else if (b.dataset.action === 'combat-parry') Sound.playClash();
+          else if (b.dataset.action === 'combat-poison') Sound.playPunch();
+          if (s.combat?.result === 'win' || s.wins > winsBefore) Sound.playVictory();
+        }
         if(s.realm>realmBefore){
           const modal=$('breakthrough-modal');
           if(modal&&view!=='data'){
             if($('breakthrough-realm'))$('breakthrough-realm').textContent=`✧ ${E.realmName(s.realm)} · ${uiText('Сила','Power')} ${fmt(E.power(s))} ⚔`;
             modal.hidden=false;
           }
+          Sound.playBreakthrough();
         }
         save();
         if(b.dataset.action==='atlas-survey')toast(uiText('Окрестности осмотрены. Сведения и припасы обновлены.','Surroundings surveyed. Information and supplies updated.'));
@@ -1377,6 +1445,10 @@
     if (b.id === 'save') save(true);
     if (b.id === 'export') { const value = typeof IsekaiSaveCode !== 'undefined' ? IsekaiSaveCode.envelope(s) : s; const url = URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = `${view === 'data' ? 'data-snapshot' : 'isekai-idle'}-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','world','roadmap'].includes(tab)) tab = 'hero'; render();
+  });
+  $('audio-volume')?.addEventListener('input', e => {
+    const val = parseInt(e.target.value, 10);
+    if (!isNaN(val)) Sound.setVolume(val / 100);
   });
   $('close-breakthrough')?.addEventListener?.('click',()=>{$('breakthrough-modal')&&($('breakthrough-modal').hidden=true);});
   $('breakthrough-modal')?.addEventListener?.('click',e=>{if(e.target?.classList?.contains?.('breakthrough-backdrop')||e.target?.id==='close-breakthrough'){$('breakthrough-modal')&&($('breakthrough-modal').hidden=true);}});

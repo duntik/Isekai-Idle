@@ -216,5 +216,10 @@
     ,['Верных союзников','Trusted Allies']
     ,['Ключевые решения судьбы:','Key Destiny Choices:']
     ,['Путь открыт','Path open']
+    ,['Звук: выкл.','Sound: off']
+    ,['Звук: вкл.','Sound: on']
+    ,['Громкость звука','Sound volume']
+    ,['Громкость','Volume']
+    ,['Звук','Sound']
   ]);
 })(globalThis);

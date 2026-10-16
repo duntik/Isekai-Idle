@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Tests](https://img.shields.io/badge/Tests-36%2F36%20Passing-10b981?style=for-the-badge&logo=node.js&logoColor=white)](file:///tests)
+[![Tests](https://img.shields.io/badge/Tests-39%2F39%20Passing-10b981?style=for-the-badge&logo=node.js&logoColor=white)](file:///tests)
 [![Dependencies](https://img.shields.io/badge/Dependencies-Zero-38bdf8?style=for-the-badge)](file:///package.json)
 [![Architecture](https://img.shields.io/badge/Interface-Dual--View%20Parity-f59e0b?style=for-the-badge)](file:///game.js)
 [![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA%20Compliant-a855f7?style=for-the-badge)](file:///visual.css)
@@ -168,10 +168,10 @@ flowchart TD
 
 ## 🧪 Comprehensive Verification Suite
 
-The repository includes **36 deterministic test suites** powered by the native Node.js test runner (`node:test`):
+The repository includes **39 deterministic test suites** powered by the native Node.js test runner (`node:test`):
 
 ```bash
-# Run all 36 test suites
+# Run all 39 test suites
 node --test *.test.js
 ```
 
@@ -193,6 +193,7 @@ node --test *.test.js
 | `encounters.test.js` | Local scene pools, no immediate repeats, unique story finds |
 | `engine.test.js` | Core progression, realm breakthrough costs, offline/online balance |
 | `exploration-risk.test.js` | Deliberate exploration, warnings before commitment, safe retreats |
+| `fate-tree.test.js` | Story decision tree, karmic NPC bonds, unlocked faction chronicles |
 | `generation.test.js` | 1,080 causal local scenes, peaceful advancement, attribution checks |
 | `local-activities.test.js` | Location-dependent actions, temple discoveries, travel pauses |
 | `localization.test.js` | 100% translation coverage, zero Cyrillic leakage in English mode |
@@ -207,6 +208,7 @@ node --test *.test.js
 | `return-report.test.js` | Offline calculation deltas, capped gains, bilingual summary dialog |
 | `save.test.js` | Gzip save codes, Unicode safety, corruption resistance, cloud client |
 | `sects.test.js` | 4 exclusive sects, library research bonuses, legacy technique retention |
+| `sound.test.js` | 0 KB procedural Web Audio synthesis, singing bowls, breakthrough gong, safe headless fallback |
 | `story-memory-integration.test.js` | Causal alternatives, one-time rewards, relationship persistence |
 | `task-practice.test.js` | Technique practice limits, stamina expenditure, save compatibility |
 | `technique-actions.test.js` | Active technique mechanics, contextual action triggers |
