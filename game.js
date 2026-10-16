@@ -457,6 +457,7 @@
     }).join('');
     const cloudsHtml = `<div class="map-clouds-layer" aria-hidden="true"><div class="cloud-puff cloud-1"></div><div class="cloud-puff cloud-2"></div><div class="cloud-puff cloud-3"></div></div>`;
     const dayHour = Math.floor((s.age % 1200) / 50) % 24;
+    const timeOfDay = dayHour >= 5 && dayHour < 9 ? 'map-dawn' : (dayHour >= 9 && dayHour < 18 ? 'map-day' : (dayHour >= 18 && dayHour < 22 ? 'map-dusk' : 'map-night'));
     if (canvas.dataset) canvas.dataset.timeOfDay = timeOfDay;
     canvas.setAttribute?.('data-time-of-day', timeOfDay);
     $('map-canvas').style.width=`${width}px`;$('map-canvas').style.height=`${height}px`;
@@ -1242,7 +1243,7 @@
     const d=$('fate-tree-dialog');
     if(d){
       if(typeof d.showModal==='function')d.showModal();
-      else d.setAttribute('open','');
+      else d.setAttribute?.('open','');
     }
   }
   function renderAlchemy(){
@@ -1481,8 +1482,18 @@
     const d=$('alchemy-dialog');
     if(d){
       if(typeof d.showModal==='function')d.showModal();
-      else d.setAttribute('open','');
+      else d.setAttribute?.('open','');
     }
+  }
+  function openMapDialog(){
+    renderMap();
+    const d=$('world-map-dialog');
+    if(d){
+      if(typeof d.showModal==='function')d.showModal();
+      else d.setAttribute?.('open','');
+    }
+    centerMap();
+    Sound.playParchment?.();
   }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
@@ -1556,6 +1567,8 @@
     if(b.dataset?.fateTab){activeFateTab=b.dataset.fateTab;renderFateTree();return;}
     if(b.id==='open-fate-tree'||b.id==='story-open-fate-tree'||b.id==='story-open-fate-tree-archive'||b.id==='legacy-open-fate-tree'){Sound.playParchment();openFateTreeDialog();return;}
     if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
+    if(b.id==='open-map'){openMapDialog();return;}
+    if(b.id==='close-map'){$('world-map-dialog')?.close?.();return;}
     if(b.id==='open-alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
     if(b.id==='close-alchemy'){$('alchemy-dialog')?.close?.();return;}
     if(b.dataset?.alchemyTab){activeAlchemyTab=b.dataset.alchemyTab;renderAlchemy();return;}
@@ -1746,10 +1759,9 @@
   $('open-alchemy')?.addEventListener('click',openAlchemyDialog);
   $('close-alchemy')?.addEventListener('click',()=>{$('alchemy-dialog')?.close?.();});
   $('alchemy-dialog')?.addEventListener('click',e=>{if(e.target===$('alchemy-dialog'))$('alchemy-dialog')?.close?.();});
-  $('open-map').addEventListener('click',()=>{
-    renderMap();$('world-map-dialog').showModal?.();
-    centerMap();
-  });
+  $('open-map')?.addEventListener('click',openMapDialog);
+  $('close-map')?.addEventListener('click',()=>{$('world-map-dialog')?.close?.();});
+  $('world-map-dialog')?.addEventListener('click',e=>{if(e.target===$('world-map-dialog'))$('world-map-dialog')?.close?.();});
   $('map-zoom-in').addEventListener('click',()=>zoomMap(mapZoom+.15));
   $('map-zoom-out').addEventListener('click',()=>zoomMap(mapZoom-.15));
   $('map-center').addEventListener('click',centerMap);
