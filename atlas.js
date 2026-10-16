@@ -220,7 +220,7 @@
       name:['Заросшая пещера отшельника','Overgrown Hermit Cave'],
       desc:['Укрытая в плюще расщелина среди скал. Внутри ощущается след древнего спокойствия.','An ivy-choked cleft among the rocks. A faint trace of ancient tranquility lingers inside.'],
       icon:'⛰',
-      x:330, y:80,
+      x:390, y:520,
       reward:{calm:2,herbs:3,xp:0.5},
       rewardText:['Спокойствие +2, травы +3, эхо понимания','Calm +2, herbs +3, echo of insight'],
       ready:s=>s.storyStep>=1||s.stage>=1||(s.atlas?.surveys?.ruins||0)>=1
@@ -230,7 +230,7 @@
       name:['Духовный ключ в ущелье','Profound Spring in Chasm'],
       desc:['Из разлома скалы бьёт мерцающий родник чистейшей ци, окутанный лазурным паром.','A shimmering spring of pure qi wells from a rock fissure, cloaked in azure mist.'],
       icon:'♨',
-      x:680, y:110,
+      x:1030, y:130,
       reward:{stamina:30,qi:1},
       rewardText:['Восстановление выносливости (+30) и 1 ци','Stamina recovery (+30) and 1 qi'],
       ready:s=>s.storyStep>=2||s.stage>=1||(s.atlas?.surveys?.forest||0)>=1
@@ -240,7 +240,7 @@
       name:['Стоянка бродячего торговца','Wandering Peddler’s Camp'],
       desc:['Одинокий костёр у старой дороги. Старый путник прячет повозку от разбойников.','A lonely campfire off the old road. An old traveler conceals his cart from bandits.'],
       icon:'🏕',
-      x:140, y:390,
+      x:145, y:520,
       reward:{gold:10},
       rewardText:['Монеты +10 и дорожный совет','Coins +10 and trail advice'],
       ready:s=>s.storyStep>=1||s.stage>=1
@@ -250,7 +250,7 @@
       name:['Потайная поляна трав','Hidden Herb Glade'],
       desc:['Скрытая за густым терновником поляна, где цветут дикорастущие целебные травы.','A glade concealed behind dense briars where wild medicinal herbs flourish.'],
       icon:'🌿',
-      x:540, y:420,
+      x:635, y:520,
       reward:{herbs:8},
       rewardText:['Редкие травы +8','Rare herbs +8'],
       ready:s=>((s.world?.visits?.forest||0)>0||(s.atlas?.surveys?.forest||0)>=1)

@@ -211,9 +211,9 @@
     const ordinary=nodes.filter(n=>n.kind!=='site');
     const frontierCoords={'dark-forest':[3,1],'sealed-crypt':[0,0],'upper-pass':[3,0]};
     for(const node of ordinary){if(frontierCoords[node.id])[node.x,node.y]=frontierCoords[node.id];node.x=40+node.x*245;node.y=40+node.y*245;}
-    const bottom=Math.max(70,...ordinary.map(n=>n.y))+240;
+    const bottom=Math.max(70,...ordinary.map(n=>n.y))+300;
     for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=40+index%4*245;node.y=bottom+Math.floor(index/4)*245;}
-    return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:locations[id].parent||'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(540,...nodes.map(n=>n.x+250)),height:Math.max(400,...nodes.map(n=>n.y+240))};
+    return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:locations[id].parent||'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(1180,...nodes.map(n=>n.x+260)),height:Math.max(660,...nodes.map(n=>n.y+260))};
   }
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
   function offer(s,E){const w=s.world,k=w.location;let pool=encounters[k].map((scene,index)=>({scene,index})).filter(({scene})=>eligible(s,scene));

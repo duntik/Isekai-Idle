@@ -285,5 +285,8 @@
     ,['Алхимия недоступна.','Alchemy is unavailable.']
     ,['монет, +1 репутация','coins, +1 rep']
     ,['осколков','shards']
+    ,['Ресурсы:','Resources:']
+    ,['Найденные ресурсы','Observed resources']
+    ,['Разведанные ресурсы','Observed resources']
   ]);
 })(globalThis);
