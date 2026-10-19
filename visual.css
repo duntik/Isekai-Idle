@@ -368,5 +368,58 @@ html:not([data-interface="data"]) .fragment-desc{margin:0;color:#94a3b8;font-siz
 html:not([data-interface="data"]) .btn-assemble-map{width:100%;padding:8px 12px;margin-top:8px;font-weight:700;background:linear-gradient(135deg,#d4955a,#8c5d2e);border:1px solid var(--gold);color:#fff8e7;border-radius:6px;cursor:pointer}
 html:not([data-interface="data"]) .assembled-map-banner{font-size:11.5px;font-weight:700;color:#4efbc0;background:rgba(46,219,162,0.15);border:1px solid rgba(46,219,162,0.4);border-radius:6px;padding:7px 10px;margin-top:8px;text-align:center}
 
+/* Vector Cartography & Daoist Map Aesthetics */
+html:not([data-interface="data"]) .map-ink-mountains .ink-mountain{transition:opacity .3s ease}
+html:not([data-interface="data"]) .map-river-vein{filter:drop-shadow(0 0 4px rgba(56,189,248,0.35))}
+html:not([data-interface="data"]) .map-river-vein-core{animation:riverFlow 30s linear infinite}
+@keyframes riverFlow{from{stroke-dashoffset:0}to{stroke-dashoffset:-320}}
+html:not([data-interface="data"]) .map-bagua-compass{filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6));pointer-events:none}
+
+/* Compact Daoist Spirit Talisman Secrets Markers */
+html:not([data-interface="data"]) .map-landmark-tag{position:absolute;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,rgba(28,52,46,0.95),rgba(14,30,26,0.98));border:1.5px solid var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.35),0 3px 8px rgba(0,0,0,0.5);cursor:pointer;padding:0;z-index:4;transition:transform .2s cubic-bezier(0.2,0.8,0.2,1),box-shadow .2s ease}
+html:not([data-interface="data"]) .map-landmark-tag:hover,html:not([data-interface="data"]) .map-landmark-tag:focus-visible{transform:scale(1.15);box-shadow:0 0 16px rgba(229,195,130,0.6);z-index:10}
+html:not([data-interface="data"]) .map-landmark-tag.is-claimed{border-color:rgba(46,219,162,0.5);opacity:.75}
+html:not([data-interface="data"]) .map-landmark-tag .landmark-icon{font-size:14px;line-height:1}
+html:not([data-interface="data"]) .map-landmark-tag .landmark-badge{position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--gold);color:#0c1815;font-size:8px;font-weight:900;display:grid;place-items:center}
+html:not([data-interface="data"]) .map-landmark-tag.is-claimed .landmark-badge{background:var(--spirit-jade);color:#091210}
+html:not([data-interface="data"]) .map-landmark-tag .landmark-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:180px;padding:5px 8px;background:rgba(14,26,23,0.96);border:1px solid var(--gold);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,0.6);color:#fff8e7;font-size:10.5px;line-height:1.3;text-align:center;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .15s ease,transform .15s ease;white-space:normal}
+html:not([data-interface="data"]) .map-landmark-tag .landmark-tooltip strong{display:block;font-size:11px;color:var(--gold)}
+html:not([data-interface="data"]) .map-landmark-tag .landmark-tooltip small{display:block;font-size:9.5px;color:#a5d1b6}
+html:not([data-interface="data"]) .map-landmark-tag:hover .landmark-tooltip,html:not([data-interface="data"]) .map-landmark-tag:focus-visible .landmark-tooltip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(-2px)}
+
+/* Streamlined Pagoda / Pavilion Node Token Structure */
+html:not([data-interface="data"]) .map-node-header{display:flex;align-items:flex-start;gap:7px;margin-bottom:3px}
+html:not([data-interface="data"]) .map-node-meta{flex:1 1 auto;min-width:0}
+html:not([data-interface="data"]) .map-node-meta strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:not([data-interface="data"]) .map-node-actions{display:flex;gap:4px;align-items:center;margin-top:2px}
+html:not([data-interface="data"]) .map-node-action-btn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px !important;padding:5px 6px !important;min-height:24px}
+html:not([data-interface="data"]) .map-node-tools{display:flex;gap:3px;flex-shrink:0}
+html:not([data-interface="data"]) .btn-tool-note,html:not([data-interface="data"]) .btn-tool-pin{padding:2px 5px !important;min-height:24px;font-size:11px !important;line-height:1;border-radius:4px}
+html:not([data-interface="data"]) .map-node-details-drawer{margin-top:3px;font-size:9.5px}
+html:not([data-interface="data"]) .map-node-details-drawer summary{cursor:pointer;color:#94a3b8;font-size:9.5px;padding:2px 0}
+html:not([data-interface="data"]) .map-node-drawer-content{max-height:120px;overflow-y:auto;font-size:10px;line-height:1.4;color:#cbd5e1;padding:4px;background:rgba(0,0,0,0.25);border-radius:4px;margin:2px 0}
+
+/* Active Location Inspector in Sidebar */
+html:not([data-interface="data"]) .map-inspector-card{background:linear-gradient(135deg,rgba(22,44,38,0.96),rgba(14,28,25,0.98));border:1px solid rgba(229,195,130,0.45);border-top:3px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;box-shadow:0 6px 20px rgba(0,0,0,0.45)}
+html:not([data-interface="data"]) .inspector-head{margin-bottom:6px}
+html:not([data-interface="data"]) .inspector-badge-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+html:not([data-interface="data"]) .inspector-status-badge{font-size:9.5px;color:#94a3b8}
+html:not([data-interface="data"]) .inspector-status-badge.is-here{color:var(--spirit-jade);font-weight:700}
+html:not([data-interface="data"]) .inspector-title{margin:2px 0 3px;font-size:15px;font-weight:700;color:#fff8e7;display:flex;align-items:center;gap:7px}
+html:not([data-interface="data"]) .inspector-icon{font-size:18px;color:var(--gold)}
+html:not([data-interface="data"]) .inspector-perk{font-size:11px;color:#6ee7b7;display:block}
+html:not([data-interface="data"]) .inspector-desc{font-size:11.5px;line-height:1.5;color:#cbd5e1;margin:6px 0 10px}
+html:not([data-interface="data"]) .inspector-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:5px}
+html:not([data-interface="data"]) .inspector-res-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+html:not([data-interface="data"]) .inspector-res-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;background:rgba(0,0,0,0.35);border:1px solid rgba(229,195,130,0.25);border-radius:4px;font-size:10.5px;color:#fff8e7}
+html:not([data-interface="data"]) .inspector-res-icon{font-size:12px}
+html:not([data-interface="data"]) .inspector-empty-res{font-size:10.5px;color:#64748b;font-style:italic;margin:0 0 10px}
+html:not([data-interface="data"]) .inspector-actions{display:flex;gap:8px}
+html:not([data-interface="data"]) .inspector-travel-btn{flex:1 1 auto;padding:8px 12px;font-size:11.5px;font-weight:700;background:linear-gradient(135deg,#d4955a,#8c5d2e);border:1px solid var(--gold);color:#fff8e7;border-radius:6px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+html:not([data-interface="data"]) .inspector-travel-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 12px rgba(229,195,130,0.45)}
+html:not([data-interface="data"]) .inspector-details-btn{padding:8px 10px;font-size:11px;background:rgba(20,36,32,0.8);border:1px solid rgba(46,219,162,0.4);color:var(--spirit-jade);border-radius:6px;cursor:pointer}
+html:not([data-interface="data"]) .inspector-details-btn:hover{background:rgba(46,219,162,0.15);border-color:var(--spirit-jade)}
+
+
 
 

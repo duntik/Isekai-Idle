@@ -438,8 +438,12 @@
     const scroll=[viewport.scrollLeft||0,viewport.scrollTop||0],byId=new Map(map.nodes.map(n=>[n.id,n]));
     const width=map.width||1200,height=map.height||900;
     const nodeVisible=node=>!mapPendingOnly||node.kind==='location'||node.pending||s.atlas.pins.includes(node.id);
+    const svgDefs = `<defs><linearGradient id="inkMtnGrad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#244238" stop-opacity="0.65"/><stop offset="100%" stop-color="#0c1815" stop-opacity="0.05"/></linearGradient><linearGradient id="inkMtnGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#325a4c" stop-opacity="0.75"/><stop offset="100%" stop-color="#0c1815" stop-opacity="0.1"/></linearGradient></defs>`;
+    const mountainPaths = `<g class="map-ink-mountains" opacity="0.35" stroke="none"><path class="ink-mountain" fill="url(#inkMtnGrad1)" d="M 680 340 L 760 180 L 820 250 L 910 130 L 1020 290 L 960 340 Z"/><path class="ink-mountain" fill="url(#inkMtnGrad2)" d="M 440 220 L 510 120 L 580 200 L 650 110 L 720 230 Z"/><path class="ink-mountain" fill="url(#inkMtnGrad1)" d="M 120 480 L 210 320 L 280 410 L 360 270 L 460 470 Z"/></g>`;
+    const riverVein = `<g class="map-river-vein" aria-hidden="true"><path class="map-river-vein-glow" d="M 80 130 Q 300 230 460 340 T 800 420 T 1140 680" fill="none" stroke="#38bdf8" stroke-width="7" stroke-opacity="0.12" stroke-linecap="round"/><path class="map-river-vein-core" d="M 80 130 Q 300 230 460 340 T 800 420 T 1140 680" fill="none" stroke="#7dd3fc" stroke-width="2" stroke-opacity="0.38" stroke-dasharray="9 13"/></g>`;
+    const baguaCompass = `<g class="map-bagua-compass" transform="translate(1080, 80)" aria-hidden="true"><circle cx="0" cy="0" r="32" fill="rgba(14,28,24,0.85)" stroke="#e5c382" stroke-width="1.5" stroke-opacity="0.7"/><circle cx="0" cy="0" r="28" fill="none" stroke="#e5c382" stroke-width="0.8" stroke-dasharray="3 3" stroke-opacity="0.5"/><text x="0" y="-16" text-anchor="middle" fill="#e5c382" font-size="11" font-family="serif" font-weight="bold">北</text><text x="0" y="24" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="serif">南</text><text x="20" y="4" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="serif">东</text><text x="-20" y="4" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="serif">西</text><circle cx="0" cy="0" r="4" fill="#e5c382"/></g>`;
     const dragonVeins = `<path class="map-dragon-vein vein-yin" d="M 285 285 Q 430 150 585 140 T 820 220"/><path class="map-dragon-vein vein-yang" d="M 285 285 Q 400 370 530 285 T 775 285"/>`;
-    const edges=map.edges.map(edge=>{const from=byId.get(edge.from),to=byId.get(edge.to);return from&&to?`<line class="${to.locked?'map-blocked':E.atlas.trail(s,to.id)?'map-trail':''}" x1="${from.x+90}" y1="${from.y+40}" x2="${to.x+90}" y2="${to.y+40}"/>`:'';}).join('');
+    const edges=map.edges.map(edge=>{const from=byId.get(edge.from),to=byId.get(edge.to);return from&&to?`<line class="${to.locked?'map-blocked':E.atlas.trail(s,to.id)?'map-trail':''}" x1="${from.x+78}" y1="${from.y+45}" x2="${to.x+78}" y2="${to.y+45}"/>`:'';}).join('');
     let journeyLine = '';
     let travelerHtml = '';
     let journeyStatus = '';
@@ -451,8 +455,8 @@
       const totalTime = E.world.travelTime(s, j.destination);
       const ratio = Math.max(0, Math.min(1, 1 - (j.remaining / Math.max(1, totalTime))));
       if (fromNode && toNode) {
-        const x1 = fromNode.x + 90, y1 = fromNode.y + 40;
-        const x2 = toNode.x + 90, y2 = toNode.y + 40;
+        const x1 = fromNode.x + 78, y1 = fromNode.y + 45;
+        const x2 = toNode.x + 78, y2 = toNode.y + 45;
         journeyLine = `<line class="map-road-active-glow" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><line class="map-road-active" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
         const curX = Math.round(x1 + (x2 - x1) * ratio);
         const curY = Math.round(y1 + (y2 - y1) * ratio);
@@ -477,8 +481,7 @@
     const secretsHtml = showMapSecrets ? secretsList.map(sec => {
       const found = sec.found;
       const statusLabel = found ? (en ? 'Claimed' : 'Найдено') : (en ? 'Available' : 'Доступно');
-      const tooltip = `${sec.name} · ${statusLabel} · ${sec.rewardText}`;
-      return `<button type="button" class="map-landmark-tag ${found ? 'is-claimed' : 'is-ready'}" style="left:${sec.x}px;top:${sec.y}px" data-secret-id="${sec.id}" title="${tooltip}" aria-label="${tooltip}"><span class="landmark-icon" aria-hidden="true">${sec.icon}</span><span class="landmark-name">${sec.name}</span><span class="landmark-badge" aria-hidden="true">${found ? '✓' : '✦'}</span></button>`;
+      return `<button type="button" class="map-landmark-tag ${found ? 'is-claimed' : 'is-ready'}" style="left:${sec.x}px;top:${sec.y}px" data-secret-id="${sec.id}" aria-label="${sec.name} (${statusLabel})"><span class="landmark-icon" aria-hidden="true">${sec.icon}</span><span class="landmark-badge" aria-hidden="true">${found ? '✓' : '✦'}</span><div class="landmark-tooltip" aria-hidden="true"><strong>${sec.name}</strong><small>${statusLabel} · ${sec.rewardText}</small></div></button>`;
     }).join('') : '';
     const cloudsHtml = `<div class="map-clouds-layer" aria-hidden="true"><div class="cloud-puff cloud-1"></div><div class="cloud-puff cloud-2"></div><div class="cloud-puff cloud-3"></div></div>`;
     const dayHour = Math.floor((s.age % 1200) / 50) % 24;
@@ -516,7 +519,38 @@
       const locName = frag.locationName || frag.location;
       return `<div class="map-fragment-card ${found ? 'frag-found' : 'frag-missing'}"><div class="fragment-head"><span class="fragment-icon" aria-hidden="true">${frag.icon}</span><strong class="fragment-title">${frag.name}</strong><small class="fragment-status ${found ? 'status-found' : 'status-missing'}">${found ? (en ? '✓ Found' : '✓ Найдено') : (en ? '◇ Lost in ' + locName : '◇ Утеряно в ' + locName)}</small></div><p class="fragment-desc">${frag.desc}</p></div>`;
     }).join('')}${assembled ? `<div class="assembled-map-banner">✓ ${en ? 'Ancient Master’s Secret Grotto revealed!' : 'Тайный грот древнего мастера явлен!'}</div>` : (canAssemble ? `<button type="button" class="btn-assemble-map" data-map-assemble="true">📜 ${en ? 'Assemble Ancient Treasure Map' : 'Собрать карту воедино'}</button>` : '')}</div></details>` : '';
-    $('map-intelligence').innerHTML=h(`<h3>${en?'Explorer’s journal':'Дневник исследователя'}</h3>${celestialCardHtml}<p class="map-local-warning">${local.danger}</p><p>${E.atlas.hint(s,language)}</p><p>${en?'Local surveys':'Осмотры области'}: ${local.survey} · ${local.trail?(en?'Trail discovered: travel −20%':'Тропа найдена: переход −20%'):(en?'Trail: 2 surveys needed':'Для тропы: 2 осмотра')}</p>${secretsSection}${fragmentsSection}${s.stage<7?`<div class="map-horizon"><small>${en?'Next horizon':'Следующий горизонт'}</small><strong>${t(E.stages[s.stage+1].name)}</strong></div>`:''}<details><summary>${en?'Rumours':'Слухи'} (${rumors.length})</summary>${rumors.map(r=>`<p><strong>${r.confirmed?'✓':'?'}</strong> ${r.text}<br><small>${r.source}</small></p>`).join('')}</details><details open><summary>${en?'Unfinished stories':'Незавершённые истории'} (${leads.length})</summary>${leads.map(q=>`<p>${q.title}<br><small>${t(E.world.locations[q.location].name)}</small></p>`).join('')||`<p>${en?'New threads appear after encounters.':'Новые нити появятся после встреч.'}</p>`}</details>`);
+
+    const inspectPlaceId = (byId.has(noteSelection) ? noteSelection : s.world.location);
+    const inspectNode = byId.get(inspectPlaceId);
+    let inspectorHtml = '';
+    if (inspectNode) {
+      const isLoc = inspectNode.kind === 'location';
+      const isHere = s.world.location === inspectPlaceId && !s.world.journey;
+      const isGoing = s.world.journey && s.world.journey.destination === inspectPlaceId;
+      const statusText = isHere ? (en ? '● You are here' : '● Ты здесь') : isGoing ? (en ? `Travelling: ${Math.ceil(s.world.journey.remaining)}s` : `В пути: ${Math.ceil(s.world.journey.remaining)} сек.`) : inspectNode.locked ? (en ? '⊘ Route blocked' : '⊘ Путь закрыт') : inspectNode.visited ? (en ? '✓ Discovered' : '✓ Исследовано') : (en ? '○ Known route' : '○ Известная дорога');
+      const inspectIcon = ({village:'⌂',city:'♜',forest:'♠',ruins:'▥',mountains:'▲','dark-forest':'♠','sealed-crypt':'▥','upper-pass':'▲','village-mill':'⚙','forest-garden':'❧','ruins-observatory':'☉','city-apothecary':'⚗','mountains-cliff':'⚔','ancient-grotto':'☯'}[inspectPlaceId] || (inspectNode.kind === 'site' ? '♧' : '◇'));
+      
+      const inspectDisc = s.atlas.discoveries?.[inspectPlaceId] || [];
+      const resBadges = inspectDisc.map(r => {
+        const iconGlyph = {gold:'🪙',herbs:'🌿',qi:'✦',relics:'🔷',wood:'🪵',ore:'🪨',pills:'💊',reputation:'📜',influence:'🏛',supplies:'📦',cosmic:'✧',worlds:'🌐'}[r] || '•';
+        const resLabel = en
+          ? ({gold:'Coins',herbs:'Herbs',qi:'Qi',relics:'Relics',wood:'Wood',ore:'Ore',pills:'Pills',reputation:'Reputation',influence:'Influence',supplies:'Supplies',cosmic:'Essence',worlds:'Worlds'}[r] || r)
+          : ({gold:'Монеты',herbs:'Травы',qi:'Ци',relics:'Осколки',wood:'Древесина',ore:'Руда',pills:'Пилюли',reputation:'Репутация',influence:'Влияние',supplies:'Припасы',cosmic:'Эссенция',worlds:'Миры'}[r] || r);
+        return `<span class="inspector-res-pill" title="${resLabel}"><span class="inspector-res-icon">${iconGlyph}</span> ${resLabel}</span>`;
+      }).join('');
+
+      const inspectTravelTime = isLoc ? E.world.travelTime(s, inspectPlaceId) : 0;
+      const canInspectTravel = isLoc && !isHere && !s.world.journey && E.world.canTravel(s, inspectPlaceId);
+      const travelBtnText = isHere ? (en ? 'You are here' : 'Ты здесь') : isGoing ? (en ? 'In transit...' : 'Уже в пути...') : (en ? `Travel here · ${inspectTravelTime}s` : `Отправиться в путь · ${inspectTravelTime} сек`);
+
+      const inspectDetails = isLoc ? E.atlas.details(s, inspectPlaceId, language) : null;
+      const inspectOverview = isLoc ? E.atlas.overview(s, E, inspectPlaceId, language) : null;
+      const inspectNote = s.atlas?.notes?.[inspectPlaceId];
+
+      inspectorHtml = `<div class="map-inspector-card"><div class="inspector-head"><div class="inspector-badge-row"><span class="inspector-status-badge ${isHere ? 'is-here' : ''}">${statusText}</span>${inspectNode.tierLabel ? `<span class="map-node-tier tier-${inspectNode.tier||'mortal'}">${inspectNode.tierLabel}</span>` : ''}</div><h4 class="inspector-title"><span class="inspector-icon" aria-hidden="true">${inspectIcon}</span> ${inspectNode.name}</h4>${inspectOverview?.bonus ? `<span class="inspector-perk">✦ ${inspectOverview.bonus}</span>` : ''}</div><p class="inspector-desc">${inspectDetails?.danger || inspectNode.reason || inspectNode.detail || ''}</p>${resBadges ? `<div class="inspector-section-label">${en ? 'Observed resources' : 'Найденные ресурсы'}</div><div class="inspector-res-grid">${resBadges}</div>` : `<p class="inspector-empty-res">${en ? 'No resource deposits surveyed yet' : 'Залежи ресурсов ещё не исследованы'}</p>`}${inspectNote ? `<div class="inspector-section-label">${en ? 'Explorer’s note' : 'Заметка исследователя'}</div><p class="inspector-desc">«${inspectNote}»</p>` : ''}<div class="inspector-actions">${isLoc ? `<button type="button" class="inspector-travel-btn" data-action="travel" data-value="${inspectPlaceId}" ${canInspectTravel ? '' : 'disabled'}>${travelBtnText}</button><button type="button" class="inspector-details-btn location-details-btn" data-place="${inspectPlaceId}">${en ? 'Full chronicle' : 'Летопись места'}</button>` : ''}</div></div>`;
+    }
+
+    $('map-intelligence').innerHTML=h(`${inspectorHtml}<h3>${en?'Explorer’s journal':'Дневник исследователя'}</h3>${celestialCardHtml}<p class="map-local-warning">${local.danger}</p><p>${E.atlas.hint(s,language)}</p><p>${en?'Local surveys':'Осмотры области'}: ${local.survey} · ${local.trail?(en?'Trail discovered: travel −20%':'Тропа найдена: переход −20%'):(en?'Trail: 2 surveys needed':'Для тропы: 2 осмотра')}</p>${secretsSection}${fragmentsSection}${s.stage<7?`<div class="map-horizon"><small>${en?'Next horizon':'Следующий горизонт'}</small><strong>${t(E.stages[s.stage+1].name)}</strong></div>`:''}<details><summary>${en?'Rumours':'Слухи'} (${rumors.length})</summary>${rumors.map(r=>`<p><strong>${r.confirmed?'✓':'?'}</strong> ${r.text}<br><small>${r.source}</small></p>`).join('')}</details><details open><summary>${en?'Unfinished stories':'Незавершённые истории'} (${leads.length})</summary>${leads.map(q=>`<p>${q.title}<br><small>${t(E.world.locations[q.location].name)}</small></p>`).join('')||`<p>${en?'New threads appear after encounters.':'Новые нити появятся после встреч.'}</p>`}</details>`);
     $('map-note-label').textContent=en?'Personal note · up to 600 characters':'Личная заметка · до 600 символов';$('map-note-save').textContent=en?'Save note':'Сохранить заметку';
     if(s.world.encounter){const scene=E.world.current(s);$('map-intelligence').innerHTML+=h(`<div class="map-horizon"><small>${en?'Current unresolved encounter':'Текущая незавершённая встреча'}</small><strong>${E.world.sceneText(scene,'title',language,s)}</strong><button data-tab="world" id="map-show-encounter">${en?'Return to the encounter':'Вернуться к встрече'}</button></div>`);}
     Array.from($('map-intelligence').querySelectorAll?.('details')||[]).forEach((node,index)=>{if(sidebarOpen[index]!==undefined)node.open=sidebarOpen[index];});
@@ -525,7 +559,8 @@
     if(document.activeElement!==$('map-note-place')){$('map-note-place').innerHTML=h(noteNodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join(''));$('map-note-place').value=noteSelection;}
     $('map-zoom-in').setAttribute?.('aria-label',en?'Zoom in':'Приблизить');$('map-zoom-out').setAttribute?.('aria-label',en?'Zoom out':'Отдалить');
     $('map-help').textContent=en?'Drag the background to move. Use + / − or the mouse wheel to zoom. Icons mark settlements, wilderness and meetings.':'Тяни фон, чтобы перемещаться. Масштаб: + / − или колёсико мыши. Значки обозначают поселения, природу и встречи.';
-    $('map-canvas').innerHTML=h(`<svg class="map-roads" width="${width}" height="${height}" aria-hidden="true">${dragonVeins}${edges}${journeyLine}</svg>${cloudsHtml}${celestialBeaconHtml}${travelerHtml}${roadEventHtml}${secretsHtml}<div class="map-fog-label" aria-hidden="true">${en?'Unknown lands':'Неизведанные земли'}</div>${map.nodes.filter(nodeVisible).map(node=>{
+    $('map-canvas').innerHTML=h(`<svg class="map-roads" width="${width}" height="${height}" aria-hidden="true">${svgDefs}${mountainPaths}${riverVein}${dragonVeins}${edges}${journeyLine}${baguaCompass}</svg>${cloudsHtml}${celestialBeaconHtml}${travelerHtml}${roadEventHtml}${secretsHtml}<div class="map-fog-label" aria-hidden="true">${en?'Unknown lands':'Неизведанные земли'}</div>${map.nodes.filter(nodeVisible).map(node=>{
+      const isSelected = (noteSelection === node.id);
       const place=node.kind==='location',current=place&&s.world.location===node.id,action=place?'travel':'map-inspect';
       const status=current?(en?'You are here':'Ты здесь'):node.locked?(en?'Route blocked':'Путь закрыт'):node.visited?(en?'Discovered':'Исследовано'):(en?'Known route':'Известная дорога');
       const info=(node.pending?node.detail:node.kind==='site'?(en?'A recorded meeting. Return to this area to look for its continuation.':'Известное место встречи. Вернись сюда, чтобы искать продолжение.'):node.reason||node.detail)+(place?placeJournal(node.id):'');
@@ -535,16 +570,16 @@
       const sealStamp=(node.id==='ancient-grotto'||node.pending||node.tier==='forbidden')?`<span class="map-seal-stamp" title="${en?'Ancient Seal':'Древняя печать'}">秘</span>`:'';
       const tierBadge=node.tierLevel!==undefined?`<span class="map-node-tier tier-${node.tier||'mortal'}"><span class="tier-icon" aria-hidden="true">${node.tierIcon||'🟢'}</span> <span class="tier-label">${node.tierLabel||''}</span></span>`:'';
       const pressureBadge=node.spiritualPressure?`<div class="map-node-pressure" title="${en?'Spiritual pressure':'Духовное давление'}"><span class="pressure-glyph">✦</span> <span class="pressure-text">${node.spiritualPressure}</span></div>`:'';
-      const resourceRow=place&&disc.length?`<div class="map-node-resources" title="${en?'Observed resources':'Найденные ресурсы'}"><span class="map-res-label">${en?'Resources:':'Ресурсы:'}</span>${disc.map(r=>{
+      const resourceRow=place&&disc.length?`<div class="map-node-resources" title="${en?'Observed resources':'Найденные ресурсы'}">${disc.map(r=>{
         const iconGlyph={gold:'🪙',herbs:'🌿',qi:'✦',relics:'🔷',wood:'🪵',ore:'🪨',pills:'💊',reputation:'📜',influence:'🏛',supplies:'📦',cosmic:'✧',worlds:'🌐'}[r]||'•';
         const resLabel=en
           ?({gold:'Coins',herbs:'Herbs',qi:'Qi',relics:'Relics',wood:'Wood',ore:'Ore',pills:'Pills',reputation:'Reputation',influence:'Influence',supplies:'Supplies',cosmic:'Essence',worlds:'Worlds'}[r]||r)
           :({gold:'Монеты',herbs:'Травы',qi:'Ци',relics:'Осколки',wood:'Древесина',ore:'Руда',pills:'Пилюли',reputation:'Репутация',influence:'Влияние',supplies:'Припасы',cosmic:'Эссенция',worlds:'Миры'}[r]||r);
-        return `<span class="map-res-pill" title="${resLabel}"><span class="map-res-icon" aria-hidden="true">${iconGlyph}</span><span class="map-res-name">${resLabel}</span></span>`;
-      }).join('')}</div>`:'';
+        return `<span class="map-res-glyph" title="${resLabel}">${iconGlyph}</span>`;
+      }).join(' ')}</div>`:'';
       const travelTimeText=place?` · ${E.world.travelTime(s,node.id)}${en?'s':' сек'}`:'';
       const travelLabel=place?(node.locked?(en?'Approach the gate':'Подойти к проходу'):current?(en?'You are here':'Ты здесь'):(en?`Travel here${travelTimeText}`:`Отправиться${travelTimeText}`)):(en?'Explore route':'Исследовать путь');
-      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''} ${node.pending?'pending':''} ${trail?'known-trail':''} tier-${node.tier||'mortal'}" style="left:${node.x}px;top:${node.y}px">${sealStamp}<strong class="map-node-title"><span class="map-icon" aria-hidden="true">${icon}</span><span class="map-node-name">${node.name}</span></strong>${tierBadge}<small>${current?'● ':node.locked?'⊘ ':'○ '}${status}${pending}${trail?' · −20%':''}</small>${pressureBadge}${resourceRow}<details ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><div>${info}</div>${place?`<p>${E.atlas.details(s,node.id,language).danger}</p><button type="button" class="location-details-btn map-node-details" data-place="${node.id}">${en?'Location details':'Подробнее о месте'}</button>`:''}</details><button data-action="${action}" data-value="${node.id}" class="map-node-action-btn ${place&&!current&&!node.locked?'map-action-ready':''}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${travelLabel}</button><div class="map-node-tools"><button data-map-note="${node.id}" title="${en?'Edit note':'Редактировать заметку'}">${s.atlas.notes[node.id]?'▤':'✎'}</button><button data-action="atlas-pin" data-value="${node.id}" aria-pressed="${s.atlas.pins.includes(node.id)}" title="${en?'Bookmark':'Отметить'}">${s.atlas.pins.includes(node.id)?'★':'☆'}</button></div></article>`;
+      return `<article data-map-node="${node.id}" class="map-node ${node.kind} ${node.locked?'locked':''} ${current?'current':''} ${isSelected?'is-selected':''} ${node.pending?'pending':''} ${trail?'known-trail':''} tier-${node.tier||'mortal'}" style="left:${node.x}px;top:${node.y}px">${sealStamp}<div class="map-node-header"><span class="map-icon" aria-hidden="true">${icon}</span><div class="map-node-meta"><strong class="map-node-title"><span class="map-node-name">${node.name}</span></strong>${tierBadge}</div></div><small>${current?'● ':node.locked?'⊘ ':'○ '}${status}${pending}${trail?' · −20%':''}</small>${pressureBadge}${resourceRow}<div class="map-node-actions"><button data-action="${action}" data-value="${node.id}" class="map-node-action-btn ${place&&!current&&!node.locked?'map-action-ready':''}" ${s.world.journey||current||!place&&!!s.world.encounter||node.kind==='site'&&node.locked?'disabled':''}>${travelLabel}</button><div class="map-node-tools"><button type="button" class="btn-tool-note" data-map-note="${node.id}" title="${en?'Edit note':'Редактировать заметку'}">${s.atlas.notes[node.id]?'▤':'✎'}</button><button type="button" class="btn-tool-pin" data-action="atlas-pin" data-value="${node.id}" aria-pressed="${s.atlas.pins.includes(node.id)}" title="${en?'Bookmark':'Отметить'}">${s.atlas.pins.includes(node.id)?'★':'☆'}</button></div></div><details class="map-node-details-drawer" ${openNodes.includes(node.id)?'open':''}><summary>${en?'Route details':'Об этой дороге'}</summary><div class="map-node-drawer-content">${info}</div>${place?`<button type="button" class="location-details-btn map-node-details" data-place="${node.id}">${en?'Location details':'Подробнее о месте'}</button>`:''}</details></article>`;
     }).join('')}`);
     $('map-status').textContent=(en?`Known routes: ${map.nodes.length}. New encounters leave landmarks on the map.`:`Известных мест: ${map.nodes.length}. Новые встречи оставляют ориентиры на карте.`)+(s.world.encounter?(en?' Resolve your current encounter before exploring a deeper route.':' Заверши текущую встречу, прежде чем исследовать путь вглубь.'):'')+journeyStatus;
     if(focus){const target=Array.from(canvas.querySelectorAll?.(focus.summary?'summary':'button')||[]).find(node=>focus.summary?node.closest('[data-map-node]')?.dataset.mapNode===focus.node:node.dataset.action===focus.action&&node.dataset.value===focus.value);target?.focus?.({preventScroll:true});}
@@ -1597,19 +1632,12 @@
     const nodeCard = e.target.closest?.('.map-node');
     if (nodeCard && !e.target.closest?.('button, details, summary, input, select, textarea, a')) {
       const placeId = nodeCard.dataset.mapNode;
-      if (placeId && E.world.locations[placeId]) {
-        if (placeId !== s.world.location && !s.world.journey && E.world.canTravel(s, placeId)) {
-          if (E.action(s, 'travel', placeId)) {
-            Sound.playCaravanBell?.();
-            save();
-            toast(uiText('Отправился в путь: ', 'Set out for: ') + t(E.world.locations[placeId].name));
-            renderMap();
-            return;
-          }
-        } else if (placeId !== s.world.location) {
-          openLocationDialog(placeId);
-          return;
-        }
+      if (placeId) {
+        noteSelection = placeId;
+        if ($('map-note-place')) $('map-note-place').value = placeId;
+        if ($('map-note-text')) $('map-note-text').value = s.atlas.notes[placeId] || '';
+        renderMap();
+        return;
       }
     }
     const b = e.target.closest('button'); if (!b || b.disabled) return; tick();const placesBefore=E.world.knownLocations(s).length;
