@@ -101,7 +101,7 @@ html[data-interface="data"] .map-roads line{stroke:#778792}
 @keyframes mapDashMarch{from{stroke-dashoffset:28}to{stroke-dashoffset:0}}
 .map-traveler-avatar{position:absolute;transform:translate(-50%,-50%);z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center}
 .traveler-pin{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#1f3b33,#102621);border:1.5px solid #5eead4;box-shadow:0 4px 14px rgba(0,0,0,0.6),0 0 12px rgba(94,234,212,0.4);padding:4px 8px;border-radius:16px;animation:travelerBob 2s ease-in-out infinite alternate}
-.traveler-silhouette{font-size:16px;line-height:1}
+.traveler-icon,.traveler-silhouette{font-size:16px;line-height:1}
 .traveler-badge{font-size:10px;font-weight:700;color:#5eead4;letter-spacing:.03em;white-space:nowrap}
 .traveler-ripple{position:absolute;top:50%;left:50%;width:32px;height:32px;margin-top:-16px;margin-left:-16px;border-radius:50%;border:1.5px solid rgba(94,234,212,0.6);animation:travelerRipple 2s ease-out infinite;pointer-events:none}
 @keyframes travelerBob{0%{transform:translateY(0)}100%{transform:translateY(-4px)}}

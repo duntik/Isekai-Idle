@@ -130,9 +130,11 @@ html:not([data-interface="data"]) .tab-badge{flex-shrink:0;margin-left:6px}
 /* Resource Cards & Icons */
 html:not([data-interface="data"]) .resource-icon{font-size:16px;margin-right:6px;display:inline-block;vertical-align:middle;filter:drop-shadow(0 0 4px rgba(255,255,255,0.2))}
 html:not([data-interface="data"]) .resource.resource-gold{border-top:2px solid #e5c382}
-html:not([data-interface="data"]) .resource.resource-body{border-top:2px solid #2edba2}
-html:not([data-interface="data"]) .resource.resource-stamina{border-top:2px solid #5ca0d3}
-html:not([data-interface="data"]) .resource.resource-xp{border-top:2px solid #e080e0}
+html:not([data-interface="data"]) .resource.resource-herbs{border-top:2px solid #2edba2}
+html:not([data-interface="data"]) .resource.resource-qi{border-top:2px solid #5ca0d3}
+html:not([data-interface="data"]) .resource.resource-relics{border-top:2px solid #c084fc}
+html:not([data-interface="data"]) .resource.resource-pills{border-top:2px solid #f472b6}
+html:not([data-interface="data"]) .resource.resource-reputation{border-top:2px solid #fbbf24}
 
 /* Sect Cards & Emblems */
 html:not([data-interface="data"]) .sect-card-emblem{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;margin-bottom:12px;padding:6px;transition:transform .2s ease,box-shadow .2s ease}

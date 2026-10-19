@@ -278,10 +278,10 @@
     s.atlas.secrets.push(id);
     if(sec.reward.gold)s.resources.gold=(s.resources.gold||0)+sec.reward.gold;
     if(sec.reward.herbs)s.resources.herbs=(s.resources.herbs||0)+sec.reward.herbs;
-    if(sec.reward.qi&&(s.found||s.stage>=1))s.resources.qi=(s.resources.qi||0)+sec.reward.qi;
+    if(sec.reward.qi)s.resources.qi=(s.resources.qi||0)+sec.reward.qi;
     if(sec.reward.calm)s.calm=Math.min(100,(s.calm||0)+sec.reward.calm);
     if(sec.reward.stamina)s.stamina=Math.min(E?.staminaMax?E.staminaMax(s):100,(s.stamina||0)+sec.reward.stamina);
-    if(sec.reward.xp&&s.found)s.xp=Math.min(E?.needed?E.needed(s):100,(s.xp||0)+sec.reward.xp);
+    if(sec.reward.xp)s.xp=Math.min(E?.needed?E.needed(s):100,(s.xp||0)+sec.reward.xp);
     if(E?.log)E.log(s,`Тайник обнаружен: ${sec.name[0]}. ${sec.rewardText[0]}`);
     return true;
   }

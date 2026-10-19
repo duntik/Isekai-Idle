@@ -101,12 +101,15 @@
 
     // 1. Process player action
     if (actionKey === 'thrust') {
-      if (c.playerStamina < 15) {
-        c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 15);
+      const stamCost = 15;
+      const exhausted = c.playerStamina < stamCost;
+      if (exhausted) {
+        c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 10);
       } else {
-        c.playerStamina -= 15;
+        c.playerStamina -= stamCost;
       }
-      const baseDmg = Math.max(8, Math.floor((8 + s.mastery * 2 + s.weapon * 3) * (1.45 ** s.realm) * styleMult));
+      let baseDmg = Math.max(8, Math.floor((8 + (s.mastery || 0) * 2 + (s.weapon || 0) * 3) * (1.45 ** (s.realm || 0)) * styleMult));
+      if (exhausted) baseDmg = Math.max(4, Math.floor(baseDmg * 0.45));
       pDamage = baseDmg;
       pPoiseDmg = Math.floor(baseDmg * 0.6);
       if (c.enemyIntent === 'qi') {
@@ -120,12 +123,14 @@
       }
     } else if (actionKey === 'heavy') {
       const stamCost = 28;
-      if (c.playerStamina >= stamCost) {
-        c.playerStamina -= stamCost;
-      } else {
+      const exhausted = c.playerStamina < stamCost;
+      if (exhausted) {
         c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 10);
+      } else {
+        c.playerStamina -= stamCost;
       }
-      const baseDmg = Math.max(12, Math.floor((14 + s.body * 3 + s.weapon * 4) * (1.45 ** s.realm) * styleMult));
+      let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult));
+      if (exhausted) baseDmg = Math.max(5, Math.floor(baseDmg * 0.4));
       pDamage = baseDmg;
       pPoiseDmg = Math.floor(baseDmg * 1.8);
       if (c.enemyIntent === 'defend') {
@@ -206,6 +211,7 @@
       s.resources.relics += 1;
       s.wins++;
       s.cooldown = 300;
+      if (s.alchemy?.buffs?.evilGodFights > 0) s.alchemy.buffs.evilGodFights--;
       E.taskPractice(s, 'combat');
       E.log(s, `Победа: ${c.foeName}. Твои успехи привлекли внимание более сильных противников.`);
       c.log.unshift({

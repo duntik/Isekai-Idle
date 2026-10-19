@@ -71,6 +71,21 @@
     };
   }
 
+  function trackVoice(primaryNode, allNodes) {
+    if (!primaryNode) return;
+    const unregister = registerVoice(primaryNode);
+    primaryNode.onended = () => {
+      try {
+        if (Array.isArray(allNodes)) {
+          for (const n of allNodes) {
+            if (n && typeof n.disconnect === 'function') n.disconnect();
+          }
+        }
+      } catch (e) {}
+      unregister();
+    };
+  }
+
   // Pre-generate / reuse white noise buffer for organic textures
   let noiseBuffer = null;
   function getNoiseBuffer(ac) {
@@ -223,6 +238,7 @@
       const bassOsc = ac.createOscillator();
       const bassGain = ac.createGain();
       const bassFilter = ac.createBiquadFilter();
+      const allNodes = [bassOsc, bassGain, bassFilter];
 
       bassOsc.type = 'triangle';
       bassOsc.frequency.setValueAtTime(115, t0);
@@ -247,6 +263,7 @@
       [440, 660, 1056].forEach((freq, idx) => {
         const bellOsc = ac.createOscillator();
         const bellGain = ac.createGain();
+        allNodes.push(bellOsc, bellGain);
         bellOsc.type = 'sine';
         bellOsc.frequency.setValueAtTime(freq, t0);
 
@@ -268,6 +285,7 @@
         const noteStart = t0 + 0.12 + (i * 0.075);
         const osc = ac.createOscillator();
         const gain = ac.createGain();
+        allNodes.push(osc, gain);
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, noteStart);
@@ -282,6 +300,8 @@
         osc.start(noteStart);
         osc.stop(noteStart + 1.2);
       });
+
+      trackVoice(bassOsc, allNodes);
     },
 
     // 3. PARCHMENT RUSTLE (Шелест пергамента)
@@ -310,6 +330,7 @@
       filter.connect(gain);
       gain.connect(masterGain);
 
+      trackVoice(noise, [noise, filter, gain]);
       noise.start(t0);
       noise.stop(t0 + 0.22);
     },
@@ -321,12 +342,14 @@
       if (!ac || !masterGain) return;
 
       const t0 = ac.currentTime;
+      const allNodes = [];
 
       // Inharmonic high metallic ringing partials
       const partials = [1820, 2460, 3720, 4890];
       partials.forEach((f, idx) => {
         const osc = ac.createOscillator();
         const gain = ac.createGain();
+        allNodes.push(osc, gain);
         osc.type = 'sine';
         osc.frequency.setValueAtTime(f, t0);
         osc.frequency.exponentialRampToValueAtTime(f * 0.96, t0 + 0.35);
@@ -352,9 +375,11 @@
       snapGain.gain.setValueAtTime(0.25, t0);
       snapGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
 
+      allNodes.push(snap, snapFilter, snapGain);
       snap.connect(snapFilter);
       snapFilter.connect(snapGain);
       snapGain.connect(masterGain);
+      trackVoice(snap, allNodes);
       snap.start(t0);
       snap.stop(t0 + 0.06);
     },
@@ -396,6 +421,7 @@
       filter.connect(noiseGain);
       noiseGain.connect(masterGain);
 
+      trackVoice(osc, [osc, gain, noise, filter, noiseGain]);
       osc.start(t0);
       osc.stop(t0 + 0.16);
       noise.start(t0);
@@ -409,12 +435,17 @@
       if (!ac || !masterGain) return;
 
       const t0 = ac.currentTime;
+      const allNodes = [];
+      let primaryOsc = null;
+
       // Ascending celestial pentatonic notes (G4, C5, D5, E5, G5)
       const chord = [392.00, 523.25, 587.33, 659.25, 783.99];
       chord.forEach((freq, idx) => {
         const noteStart = t0 + (idx * 0.065);
         const osc = ac.createOscillator();
         const gain = ac.createGain();
+        if (!primaryOsc) primaryOsc = osc;
+        allNodes.push(osc, gain);
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, noteStart);
@@ -429,6 +460,8 @@
         osc.start(noteStart);
         osc.stop(noteStart + 1.7);
       });
+
+      trackVoice(primaryOsc, allNodes);
     },
 
     // 7. TENSE / DANGEROUS MOMENTS (Нагнетающий гул ци / Провокация соперника)
@@ -465,6 +498,7 @@
       filter.connect(gain);
       gain.connect(masterGain);
 
+      trackVoice(oscA, [oscA, oscB, filter, gain]);
       oscA.start(t0); oscA.stop(t0 + 2.7);
       oscB.start(t0); oscB.stop(t0 + 2.7);
     },
@@ -489,6 +523,7 @@
       osc.connect(gain);
       gain.connect(masterGain);
 
+      trackVoice(osc, [osc, gain]);
       osc.start(t0);
       osc.stop(t0 + 0.04);
     },

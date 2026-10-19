@@ -333,7 +333,8 @@
       logEn = `【Sky Poison Pearl Purification】 100% pure pill “${r.nameEn}” refined without impurities! ${res.en} (+25 alchemy XP)`;
     } else {
       // Crucible roll
-      const baseChance = 0.70 + (alc.level - r.reqLevel) * 0.05;
+      const rankBonus = (alc.level >= 2) ? 0.10 : 0;
+      const baseChance = Math.min(0.95, 0.70 + (alc.level - r.reqLevel) * 0.05 + rankBonus);
       const roll = Math.random();
       const critThreshold = alc.level >= 5 ? 1.0 : 0.15;
 
@@ -457,8 +458,13 @@
 
   function advance(s, dt) {
     if (!s || !s.alchemy || !s.alchemy.buffs) return;
-    if (s.alchemy.buffs.meditationBoostUntil > 0 && Date.now() > s.alchemy.buffs.meditationBoostUntil) {
-      s.alchemy.buffs.meditationBoostUntil = 0;
+    if (s.alchemy.buffs.meditationBoostUntil > 0) {
+      if (typeof dt === 'number' && dt > 0) {
+        s.alchemy.buffs.meditationBoostUntil -= dt * 1000;
+      }
+      if (Date.now() > s.alchemy.buffs.meditationBoostUntil) {
+        s.alchemy.buffs.meditationBoostUntil = 0;
+      }
     }
   }
 

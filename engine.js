@@ -20,6 +20,7 @@
     { name: 'Хранитель галактики', subtitle: 'Законы мироздания и наследие души', realm: 26, wins: 26, cost: { cosmic: 100000 }, intro: 'Твои миры связаны в галактический союз. Дальнейший путь лежит через понимание законов пространства и новое рождение.' }
   ];
   const names = { gold: 'Монеты', herbs: 'Травы', qi: 'Духовная энергия', relics: 'Осколки', reputation: 'Репутация', wood: 'Древесина', ore: 'Руда', pills: 'Пилюли', influence: 'Влияние', supplies: 'Припасы', cosmic: 'Звёздная эссенция', worlds: 'Миры' };
+  const resourceNamesEn = { gold: 'coins', herbs: 'herbs', qi: 'qi', relics: 'shards', reputation: 'reputation', wood: 'wood', ore: 'ore', pills: 'pills', influence: 'influence', supplies: 'supplies', cosmic: 'stellar essence', worlds: 'worlds' };
   const activities = {
     train: { name: 'Тренировать тело', stage: 0, desc: 'Распорядок Жэня: упражнения без постоянных кликов. Только в деревне или городе; занимает всё внимание и не даёт духовную энергию.' },
     rest: { name: 'Отдыхать', stage: 0, desc: 'Восстанавливает выносливость. Для медитации или освоения техники выбери занятие отдельно.', rates: {} },
@@ -370,8 +371,7 @@
     const en=language==='en',say=(ru,english)=>en?english:ru;
     if(!c)return {intent:'',cost:'',risk:'',benefit:'',relationship:'',requirement:'',available:false};
     const n=v=>Number(v.toFixed(3)).toLocaleString(en?'en-US':'ru-RU');
-    const resourceNames={gold:'coins',herbs:'herbs',qi:'qi',relics:'shards',reputation:'reputation',wood:'wood',ore:'ore',pills:'pills',influence:'influence',supplies:'supplies',cosmic:'stellar essence',worlds:'worlds'};
-    const resourceList=values=>Object.entries(values||{}).map(([k,v])=>`${n(v)} ${en?resourceNames[k]||k:names[k]||k}`).join(', ');
+    const resourceList=values=>Object.entries(values||{}).map(([k,v])=>`${n(v)} ${en?resourceNamesEn[k]||k:names[k]||k}`).join(', ');
     const profile=choicePractice(c),failed=!!c.danger&&power(s)<c.danger;
     let intent=c.skip?say('Отложить эту возможность и продолжить путь.','Put this opportunity aside and continue travelling.'):
       c.danger?say('Решить препятствие силой; проверить свою боевую подготовку.','Overcome the obstacle by force and test your combat preparation.'):
@@ -439,8 +439,7 @@
     const en=language==='en',say=(ru,english)=>en?english:ru;
     const n=value=>Number(value.toFixed(2)).toLocaleString(en?'en-US':'ru-RU');
     const remaining=(target,current)=>n(Math.max(0,target-current));
-    const resourceNames={gold:'coins',herbs:'herbs',qi:'qi',relics:'shards',pills:'pills',reputation:'reputation',influence:'influence',supplies:'supplies',cosmic:'stellar essence',worlds:'worlds'};
-    const missing=cost=>Object.entries(cost).filter(([k,v])=>s.resources[k]<v).map(([k,v])=>`${remaining(v,s.resources[k])} ${en?resourceNames[k]:names[k]}`).join(', ');
+    const missing=cost=>Object.entries(cost).filter(([k,v])=>s.resources[k]<v).map(([k,v])=>`${remaining(v,s.resources[k])} ${en?resourceNamesEn[k]:names[k]}`).join(', ');
     const resourcesHint=cost=>{
       const deficit=missing(cost);if(!deficit)return '';
       const sources=[];
@@ -667,7 +666,8 @@
       const [itemId, countStr] = value.split(':');
       return Alchemy ? Alchemy.buy(s, itemId, countStr ? Number(countStr) : 1) : false;
     } else if (type === 'alchemy-sell') {
-      return Alchemy ? Alchemy.sellPill(s, value || 'standard', 1) : false;
+      const [kind, countStr] = (value || 'standard').split(':');
+      return Alchemy ? Alchemy.sellPill(s, kind || 'standard', countStr ? Number(countStr) : 1) : false;
     } else if (type === 'alchemy-grind') {
       return Alchemy ? Alchemy.grindRelic(s) : false;
     } else if (type === 'weapon') {
@@ -706,7 +706,7 @@
   }
   const achievementActions=s=>[
     ...(A.unlocked(s,'heavy')&&s.employment.order?.kind==='haul'?[{id:'carry',name:['Перенести с устойчивой стойкой','Carry with a steady stance'],description:['Продвигает разгрузку на 1 шаг и укрепляет тело. Расход: 3 выносливости; восстановление 60 сек.','Advances hauling by 1 step and trains the body. Costs 3 stamina; recovery 60 sec.'],enabled:canWorkOrder(s)&&s.employment.order.progress<orders.haul.target&&!s.world.journey&&s.stamina>=3&&!(s.achievements.cooldowns.carry>0)}]:[]),
-    ...(A.unlocked(s,'practice')&&s.cultivation.active?[{id:'practice',name:['Короткая отработка приёма','Short technique practice'],description:['До 5 освоения выбранной техники. Расход: 5 выносливости; восстановление 60 сек.','Up to 5 practice for the active technique. Costs 5 stamina; recovery 60 sec.'],enabled:!s.world.journey&&s.stamina>=5&&!(s.achievements.cooldowns.practice>0)&&s.cultivation.learned[s.cultivation.active].rank<5&&s.cultivation.learned[s.cultivation.active].progress<techniqueNeeded(s.cultivation.learned[s.cultivation.active].rank)}]:[])
+    ...(A.unlocked(s,'practice')&&s.cultivation.active&&s.cultivation.learned?.[s.cultivation.active]?[{id:'practice',name:['Короткая отработка приёма','Short technique practice'],description:['До 5 освоения выбранной техники. Расход: 5 выносливости; восстановление 60 сек.','Up to 5 practice for the active technique. Costs 5 stamina; recovery 60 sec.'],enabled:!s.world.journey&&s.stamina>=5&&!(s.achievements.cooldowns.practice>0)&&s.cultivation.learned[s.cultivation.active].rank<5&&s.cultivation.learned[s.cultivation.active].progress<techniqueNeeded(s.cultivation.learned[s.cultivation.active].rank)}]:[])
   ];
   function action(s,type,value){
     if(type.startsWith('alchemy-')){const result=performAction(s,type,value);if(result)A.sync(s);return result;}
