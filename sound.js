@@ -623,6 +623,159 @@
       noise.stop(t0 + 1.85);
     },
 
+    // 12. GUARD BREAK SHATTER (Сокрушительный раскол стойки / треск защиты)
+    playGuardBreak() {
+      if (!canPlay('guard-break', 150)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const allNodes = [];
+
+      // Descending shattering glass / resonant metal frequencies
+      [1450, 980, 640, 290].forEach((freq, idx) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        allNodes.push(osc, gain);
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t0);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.45, t0 + 0.45);
+
+        const amp = 0.28 / (idx + 1);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(amp, t0 + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(t0);
+        osc.stop(t0 + 0.52);
+      });
+
+      // Sharp shattering transient
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+      const filter = ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2800, t0);
+      filter.frequency.exponentialRampToValueAtTime(800, t0 + 0.3);
+      filter.Q.value = 3.0;
+
+      const noiseGain = ac.createGain();
+      noiseGain.gain.setValueAtTime(0.35, t0);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+
+      allNodes.push(noise, filter, noiseGain);
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(masterGain);
+      trackVoice(noise, allNodes);
+      noise.start(t0);
+      noise.stop(t0 + 0.38);
+    },
+
+    // 13. EVIL GOD CRIMSON FLAME SURGE (Рёв пламени Врат Злого Бога)
+    playEvilGodFlame() {
+      if (!canPlay('evil-god-flame', 300)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const allNodes = [];
+
+      // Sub-bass ominous pulse
+      const subOsc = ac.createOscillator();
+      const subGain = ac.createGain();
+      allNodes.push(subOsc, subGain);
+
+      subOsc.type = 'sawtooth';
+      subOsc.frequency.setValueAtTime(95, t0);
+      subOsc.frequency.exponentialRampToValueAtTime(42, t0 + 0.9);
+
+      const subFilter = ac.createBiquadFilter();
+      subFilter.type = 'lowpass';
+      subFilter.frequency.setValueAtTime(220, t0);
+      subFilter.frequency.exponentialRampToValueAtTime(75, t0 + 0.9);
+
+      subGain.gain.setValueAtTime(0, t0);
+      subGain.gain.linearRampToValueAtTime(0.38, t0 + 0.08);
+      subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.95);
+
+      subOsc.connect(subFilter);
+      subFilter.connect(subGain);
+      subGain.connect(masterGain);
+      subOsc.start(t0);
+      subOsc.stop(t0 + 1.0);
+
+      // Roaring filtered fire rush
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+      const fireFilter = ac.createBiquadFilter();
+      fireFilter.type = 'bandpass';
+      fireFilter.frequency.setValueAtTime(180, t0);
+      fireFilter.frequency.linearRampToValueAtTime(680, t0 + 0.35);
+      fireFilter.frequency.exponentialRampToValueAtTime(120, t0 + 1.1);
+      fireFilter.Q.value = 2.2;
+
+      const fireGain = ac.createGain();
+      fireGain.gain.setValueAtTime(0, t0);
+      fireGain.gain.linearRampToValueAtTime(0.32, t0 + 0.1);
+      fireGain.gain.exponentialRampToValueAtTime(0.001, t0 + 1.15);
+
+      allNodes.push(noise, fireFilter, fireGain);
+      noise.connect(fireFilter);
+      fireFilter.connect(fireGain);
+      fireGain.connect(masterGain);
+      trackVoice(subOsc, allNodes);
+      noise.start(t0);
+      noise.stop(t0 + 1.2);
+    },
+
+    // 14. CRITICAL BURST (Критический сокрушительный удар в комбо)
+    playCrit() {
+      if (!canPlay('crit-burst', 120)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const allNodes = [];
+
+      // Heavy punch impact + metallic resonant snap
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(260, t0);
+      osc.frequency.exponentialRampToValueAtTime(45, t0 + 0.16);
+
+      gain.gain.setValueAtTime(0.55, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.22);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      allNodes.push(osc, gain);
+      osc.start(t0);
+      osc.stop(t0 + 0.24);
+
+      // Crisp metallic harmonic snap
+      [1800, 3200].forEach((freq) => {
+        const hOsc = ac.createOscillator();
+        const hGain = ac.createGain();
+        allNodes.push(hOsc, hGain);
+        hOsc.type = 'triangle';
+        hOsc.frequency.setValueAtTime(freq, t0);
+        hOsc.frequency.exponentialRampToValueAtTime(freq * 0.8, t0 + 0.15);
+        hGain.gain.setValueAtTime(0.2, t0);
+        hGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
+        hOsc.connect(hGain);
+        hGain.connect(masterGain);
+        hOsc.start(t0);
+        hOsc.stop(t0 + 0.2);
+      });
+
+      trackVoice(osc, allNodes);
+    },
+
     // Method aliases for extended naming compatibility
     playSingingBowl(f, d) { return this.playBowl(f, d); },
     playSwordClash() { return this.playClash(); },

@@ -86,6 +86,7 @@
           row(uiText('Раунд поединка','Duel round'),c.round,`${c.foeName} (${c.foeType}); ${uiText('Намерение:','Intent:')} ${(Combat?.intents?.[c.enemyIntent]?.[root.IsekaiLocale?.language==='en'?'en':'ru'])||c.enemyIntent}`);
           row(uiText('Здоровье героя','Hero health'),`${c.playerHp}/${c.playerMaxHp}`,`${uiText('Стойка:','Poise:')} ${c.playerPoise}/${c.playerMaxPoise}; ${uiText('Выносливость:','Stamina:')} ${c.playerStamina}/${c.playerMaxStamina}`);
           row(uiText('Здоровье врага','Foe health'),`${c.enemyHp}/${c.enemyMaxHp}`,`${uiText('Стойка:','Poise:')} ${c.enemyPoise}/${c.enemyMaxPoise}${c.enemyStunned?(' · '+uiText('Стойка пробита!','Guard broken!')):''}`);
+          row(uiText('Боевой импульс','Combat Momentum'),`${c.momentum||0}/3`,c.evilGodAwakened?uiText('Врата Злого Бога пробуждены (+35% урона)','Evil God Gate awakened (+35% damage)'):uiText('Накапливай контрударами','Build with counter strikes'));
           row(uiText('Действия поединка','Duel actions'),'—',uiText('Выбери приём против замысла врага','Choose technique against enemy intent'),
             btn('combat-act','thrust',uiText('Быстрый выпад','Swift thrust'))+' '+
             btn('combat-act','heavy',uiText('Тяжёлый удар','Heavy strike'))+' '+

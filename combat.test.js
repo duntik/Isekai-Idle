@@ -145,3 +145,68 @@ test('Combat engine: tactical retreat upon defeat', () => {
   assert.equal(s.cooldown, 60);
   assert.match(s.combat.log[0].ru, /Твои силы иссякли/);
 });
+
+test('Combat engine: momentum accumulation and full momentum critical burst', () => {
+  const s = E.fresh();
+  s.combat = Combat.freshCombat(s, E);
+  s.combat.enemyHp = 200;
+  s.combat.enemyMaxHp = 200;
+  s.combat.momentum = 3;
+
+  // With 3 momentum, next thrust or heavy consumes all momentum and deals critical burst
+  Combat.act(s, 'thrust', E);
+  assert.equal(s.combat.momentum, 0);
+  const hasCritLog = s.combat.log.some(l => l.ru.includes('БОЕВОЙ КУРАЖ: РЕШАЮЩИЙ ВЫПАД'));
+  assert.equal(hasCritLog, true);
+});
+
+test('Combat engine: Evil God Gate awakening when battered below 35% HP', () => {
+  const s = E.fresh();
+  s.combat = Combat.freshCombat(s, E);
+  s.combat.playerHp = Math.floor(s.combat.playerMaxHp * 0.3); // Low HP trigger
+  assert.equal(s.combat.evilGodAwakened, false);
+
+  Combat.act(s, 'parry', E);
+  assert.equal(s.combat.evilGodAwakened, true);
+  const hasAwakeningLog = s.combat.log.some(l => l.ru.includes('ПРОБУЖДЕНИЕ ВРАТ ЗЛОГО БОГА'));
+  assert.equal(hasAwakeningLog, true);
+});
+
+test('Combat engine: technique-specific profiles (stance, cloud, grove)', () => {
+  const s = E.fresh();
+  s.resources.qi = 50;
+
+  // Stance: sets guardBuff for mitigating enemy attack
+  s.cultivation.active = 'stance';
+  s.combat = Combat.freshCombat(s, E);
+  Combat.act(s, 'technique', E);
+  const hasStanceLog = s.combat.log.some(l => l.ru.includes('Корни камня'));
+  assert.equal(hasStanceLog, true);
+
+  // Cloud: dodges enemy attack via evasion
+  s.cultivation.active = 'cloud';
+  s.combat = Combat.freshCombat(s, E);
+  Combat.act(s, 'technique', E);
+  const hasEvasionLog = s.combat.log.some(l => l.ru.includes('рассекает лишь остаточный силуэт в воздухе'));
+  assert.equal(hasEvasionLog, true);
+
+  // Grove: heals player HP
+  s.cultivation.active = 'grove';
+  s.combat = Combat.freshCombat(s, E);
+  s.combat.playerHp = 20;
+  Combat.act(s, 'technique', E);
+  assert.equal(s.combat.playerHp > 20, true);
+});
+
+test('Combat engine: boss enrage trigger at 50% HP', () => {
+  const s = E.fresh();
+  s.combat = Combat.freshCombat(s, E);
+  s.combat.enemyHp = Math.floor(s.combat.enemyMaxHp * 0.45);
+  assert.equal(s.combat.bossPhaseTriggered, false);
+
+  Combat.act(s, 'parry', E);
+  assert.equal(s.combat.bossPhaseTriggered, true);
+  const hasEnrageLog = s.combat.log.some(l => l.ru.includes('ЯРОСТЬ СОПЕРНИКА'));
+  assert.equal(hasEnrageLog, true);
+});
+

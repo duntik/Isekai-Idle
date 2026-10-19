@@ -925,6 +925,16 @@
       ? uiText('Враг ошеломлён и пропускает ход!', 'Foe is staggered and skips turn!')
       : (intentDef ? (en ? intentDef.descEn : intentDef.descRu) : '');
 
+    const counterHint = c.enemyStunned
+      ? uiText('Враг беззащитен — атакуй!', 'Foe is defenseless — strike!')
+      : c.enemyIntent === 'qi'
+      ? uiText('Контратака: Быстрый выпад срывает ци!', 'Counter: Swift thrust ruptures qi!')
+      : c.enemyIntent === 'defend'
+      ? uiText('Контратака: Тяжёлый удар раскалывает щит!', 'Counter: Heavy strike shatters guard!')
+      : c.enemyIntent === 'swift'
+      ? uiText('Контратака: Парирование отражает серию!', 'Counter: Parry repels flurry!')
+      : uiText('Угроза: Парируй или используй технику!', 'Danger: Parry or use technique!');
+
     let bannerHtml = '';
     if (c.finished) {
       if (c.victory) {
@@ -934,13 +944,20 @@
       }
     }
 
+    const heroBuffs = [];
+    if (c.evilGodAwakened) heroBuffs.push(`<span class="status-buff-badge buff-crimson">🔥 ${uiText('Врата Злого Бога (+35%)', 'Evil God Gate (+35%)')}</span>`);
+    if (c.guardBuff) heroBuffs.push(`<span class="status-buff-badge buff-gold">🛡 ${uiText('Каменный покров (-50%)', 'Stone Mantle (-50%)')}</span>`);
+    if (c.evasion) heroBuffs.push(`<span class="status-buff-badge buff-azure">💨 ${uiText('Шаг уклонения', 'Evasive Step')}</span>`);
+    const heroBuffsHtml = heroBuffs.length ? `<div class="duel-status-row">${heroBuffs.join(' ')}</div>` : '';
+
     const heroCard = `
-      <div class="duel-card duel-card-hero">
+      <div class="duel-card duel-card-hero ${c.evilGodAwakened ? 'card-evil-god' : ''}">
         <div class="duel-card-header">
           <span class="duel-card-badge">${uiText('Твой герой', 'Your Hero')}</span>
           <h4>${s.playerName || uiText('Культиватор', 'Cultivator')}</h4>
           <small>${E.realmName(s.realm)} · ${uiText('Тело', 'Body')} ${fmt(s.body)}</small>
         </div>
+        ${heroBuffsHtml}
         <div class="duel-gauges">
           <div class="gauge-group">
             <div class="gauge-label"><span>${uiText('Здоровье', 'Health')}</span><strong>${c.playerHp} / ${c.playerMaxHp}</strong></div>
@@ -957,13 +974,19 @@
         </div>
       </div>`;
 
+    const foeBuffs = [];
+    if (c.bossPhaseTriggered) foeBuffs.push(`<span class="status-buff-badge buff-crimson">⚡ ${uiText('Ярость соперника', 'Rival Enrage')}</span>`);
+    if (c.enemyStunned) foeBuffs.push(`<span class="status-buff-badge buff-gold">💥 ${uiText('Стойка пробита', 'Guard Broken')}</span>`);
+    const foeBuffsHtml = foeBuffs.length ? `<div class="duel-status-row">${foeBuffs.join(' ')}</div>` : '';
+
     const foeCard = `
-      <div class="duel-card duel-card-foe">
+      <div class="duel-card duel-card-foe ${c.bossPhaseTriggered ? 'card-foe-enraged' : ''} ${c.enemyStunned ? 'card-foe-stunned' : ''}">
         <div class="duel-card-header">
           <span class="duel-card-badge badge-foe">${archetypes[c.foeType] || c.foeType}</span>
           <h4>${c.foeName}</h4>
           <small>${uiText('Базовая сила', 'Base Power')} ${fmt(c.foePower)}</small>
         </div>
+        ${foeBuffsHtml}
         <div class="duel-gauges">
           <div class="gauge-group">
             <div class="gauge-label"><span>${uiText('Здоровье', 'Health')}</span><strong>${c.enemyHp} / ${c.enemyMaxHp}</strong></div>
@@ -979,8 +1002,24 @@
               <strong>${uiText('Замысел врага:', 'Foe intent:')} ${intentTitle}</strong>
             </div>
             <p class="intent-desc">${intentDesc}</p>
+            <div class="intent-hint"><small>${counterHint}</small></div>
           </div>
         </div>
+      </div>`;
+
+    const momentumCount = c.momentum || 0;
+    const momentumHtml = `
+      <div class="duel-momentum-strip">
+        <div class="momentum-header">
+          <span class="momentum-title">⚡ ${uiText('Боевой импульс', 'Combat Momentum')}</span>
+          <span class="momentum-value ${momentumCount === 3 ? 'momentum-val-max' : ''}">${momentumCount} / 3</span>
+        </div>
+        <div class="momentum-pips">
+          <span class="momentum-pip ${momentumCount >= 1 ? 'pip-lit' : ''}">✦</span>
+          <span class="momentum-pip ${momentumCount >= 2 ? 'pip-lit' : ''}">✦</span>
+          <span class="momentum-pip ${momentumCount >= 3 ? 'pip-lit pip-max' : ''}">✦</span>
+        </div>
+        ${momentumCount === 3 ? `<div class="momentum-cue">🔥 ${uiText('БОЕВОЙ РАЖ МАКСИМАЛЕН: Следующий выпад или удар станет сокрушающим критическим!', 'FULL MOMENTUM BURST: Next thrust or heavy strike triggers an explosive critical!')}</div>` : ''}
       </div>`;
 
     let deckHtml = '';
@@ -1026,9 +1065,10 @@
 
     return `
       <h2>${s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path')}</h2>
-      <div class="duel-arena">
+      <div class="duel-arena ${c.evilGodAwakened ? 'evil-god-active' : ''}">
         <div class="duel-top-bar">
           <div class="duel-eyebrow">${uiText('РАУНД', 'ROUND')} ${c.round} · ${uiText('ТАКТИЧЕСКИЙ ПОЕДИНОК', 'TACTICAL DUEL')}</div>
+          ${c.evilGodAwakened ? `<span class="evil-god-pill">🔥 ${uiText('Врата Злого Бога (+35%)', 'Evil God Gate (+35%)')}</span>` : ''}
           ${counterMatches ? `<span class="style-advantage-pill">✦ ${uiText('Преимущество стиля (+35%)', 'Style Advantage (+35%)')}</span>` : ''}
         </div>
         ${bannerHtml}
@@ -1037,6 +1077,7 @@
           <div class="duel-vs-divider"><span class="vs-emblem">⚔</span></div>
           ${foeCard}
         </div>
+        ${momentumHtml}
         ${deckHtml}
         ${logHtml}
       </div>`;
@@ -1918,6 +1959,7 @@
     }
     const realmBefore=s.realm;
     const winsBefore=s.wins;
+    const wasEvilGodBefore=s.combat?.evilGodAwakened;
     if (b.dataset.action) {
       if (b.dataset.action === 'rebirth') { if (!confirm(t(view === 'data' ? 'Начать новый цикл? Показатели и объекты сбросятся. Накопленный коэффициент сохранится.' : 'Начать новую жизнь? Все ресурсы и владения сбросятся; души сохранятся.'))) return; saves?.backup('Перед новым циклом'); }
       if (E.action(s,b.dataset.action,b.dataset.value)) {
@@ -1931,11 +1973,28 @@
           if (s.wins > winsBefore) Sound.playVictory();
           else Sound.playClash();
         }
-        if (b.dataset.action?.startsWith('combat-')) {
-          if (['combat-strike', 'combat-technique'].includes(b.dataset.action)) Sound.playClash();
-          else if (b.dataset.action === 'combat-parry') Sound.playClash();
-          else if (b.dataset.action === 'combat-poison') Sound.playPunch();
-          if (s.combat?.result === 'win' || s.wins > winsBefore) Sound.playVictory();
+        if (b.dataset.action === 'combat-act') {
+          const actVal = b.dataset.value;
+          if (s.combat?.victory || s.wins > winsBefore) {
+            Sound.playVictory();
+          } else if (s.combat?.enemyStunned) {
+            Sound.playGuardBreak?.();
+          } else if (s.combat?.evilGodAwakened && !wasEvilGodBefore) {
+            Sound.playEvilGodFlame?.();
+          } else if (['thrust', 'heavy'].includes(actVal) && (s.combat?.log?.[0]?.ru?.includes('БОЕВОЙ КУРАЖ') || s.combat?.log?.[1]?.ru?.includes('БОЕВОЙ КУРАЖ'))) {
+            Sound.playCrit?.();
+          } else if (actVal === 'parry' || actVal === 'technique') {
+            Sound.playClash();
+          } else if (actVal === 'pearl') {
+            Sound.playEvilGodFlame?.();
+          } else if (actVal === 'pill') {
+            Sound.playBowl(360, 0.8);
+          } else {
+            Sound.playPunch();
+          }
+        } else if (b.dataset.action?.startsWith('combat-')) {
+          if (s.combat?.victory || s.wins > winsBefore) Sound.playVictory();
+          else Sound.playClash();
         }
         if(s.realm>realmBefore){
           const modal=$('breakthrough-modal');

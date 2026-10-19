@@ -17,6 +17,9 @@ test('sound module loads and provides safe procedural audio API in headless envi
   assert.equal(typeof Sound.playVictory, 'function');
   assert.equal(typeof Sound.playTenseDrone, 'function');
   assert.equal(typeof Sound.playClick, 'function');
+  assert.equal(typeof Sound.playGuardBreak, 'function');
+  assert.equal(typeof Sound.playEvilGodFlame, 'function');
+  assert.equal(typeof Sound.playCrit, 'function');
 
   // Verify volume clamping
   Sound.setVolume(0.75);
@@ -37,6 +40,9 @@ test('sound module loads and provides safe procedural audio API in headless envi
   assert.doesNotThrow(() => Sound.playVictory());
   assert.doesNotThrow(() => Sound.playTenseDrone());
   assert.doesNotThrow(() => Sound.playClick());
+  assert.doesNotThrow(() => Sound.playGuardBreak());
+  assert.doesNotThrow(() => Sound.playEvilGodFlame());
+  assert.doesNotThrow(() => Sound.playCrit());
 });
 
 test('sound module connects procedural audio graph correctly when AudioContext is present', () => {

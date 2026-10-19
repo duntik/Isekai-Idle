@@ -42,6 +42,11 @@
       enemyIntent: randomIntent(foe.type),
       enemyStunned: false,
       pearlUsed: false,
+      momentum: 0,
+      evilGodAwakened: false,
+      bossPhaseTriggered: false,
+      guardBuff: 0,
+      evasion: false,
       log: [
         {
           round: 1,
@@ -76,6 +81,11 @@
       enemyIntent: intentKeys.includes(input.enemyIntent) ? input.enemyIntent : 'heavy',
       enemyStunned: !!input.enemyStunned,
       pearlUsed: !!input.pearlUsed,
+      momentum: Math.min(3, Math.max(0, Math.floor(input.momentum || 0))),
+      evilGodAwakened: !!input.evilGodAwakened,
+      bossPhaseTriggered: !!input.bossPhaseTriggered,
+      guardBuff: Math.max(0, Number(input.guardBuff) || 0),
+      evasion: !!input.evasion,
       log: Array.isArray(input.log) ? input.log.slice(0, 15).map(e => ({
         round: Number(e.round) || 1,
         ru: String(e.ru || '').slice(0, 300),
@@ -89,15 +99,23 @@
   function act(s, actionKey, E) {
     if (!s.combat || s.combat.finished) return false;
     const c = s.combat;
-    const lang = root.IsekaiLocale?.language || 'ru';
     const counterMatches = (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[c.foeType] === s.style);
     const styleMult = counterMatches ? 1.35 : 1.0;
+    const evilGodMult = c.evilGodAwakened ? 1.35 : 1.0;
+    const momentumMult = 1.0 + (c.momentum || 0) * 0.1;
 
     let pDamage = 0;
     let pPoiseDmg = 0;
     let pLogRu = '';
     let pLogEn = '';
     let interrupt = false;
+    let critBurst = false;
+
+    // Trigger full momentum critical burst if 3 stacks accumulated
+    if ((actionKey === 'thrust' || actionKey === 'heavy') && (c.momentum || 0) >= 3) {
+      critBurst = true;
+      c.momentum = 0;
+    }
 
     // 1. Process player action
     if (actionKey === 'thrust') {
@@ -108,16 +126,24 @@
       } else {
         c.playerStamina -= stamCost;
       }
-      let baseDmg = Math.max(8, Math.floor((8 + (s.mastery || 0) * 2 + (s.weapon || 0) * 3) * (1.45 ** (s.realm || 0)) * styleMult));
+      let baseDmg = Math.max(8, Math.floor((8 + (s.mastery || 0) * 2 + (s.weapon || 0) * 3) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult));
       if (exhausted) baseDmg = Math.max(4, Math.floor(baseDmg * 0.45));
-      pDamage = baseDmg;
-      pPoiseDmg = Math.floor(baseDmg * 0.6);
-      if (c.enemyIntent === 'qi') {
+
+      if (critBurst) {
+        pDamage = Math.floor(baseDmg * 1.85);
+        pPoiseDmg = Math.floor(baseDmg * 1.3);
+        pLogRu = `【БОЕВОЙ КУРАЖ: РЕШАЮЩИЙ ВЫПАД!】 Поймав ритм поединка, ты обрушиваешь взрывной критический выпад в уязвимое сочленение! Нанесено ${pDamage} урона (сбито ${pPoiseDmg} стойкости)!`;
+        pLogEn = `【FULL MOMENTUM: CRITICAL THRUST!】 Seizing the duel’s flawless tempo, you unleash an explosive critical thrust into a vital seam! Dealt ${pDamage} damage (${pPoiseDmg} poise shattered)!`;
+      } else if (c.enemyIntent === 'qi') {
         interrupt = true;
-        pDamage = Math.floor(pDamage * 1.5);
-        pLogRu = `Быстрый выпад в уязвимое сочленение! Ты срываешь концентрацию ци соперника: вспышка backfire наносит ${pDamage} урона!`;
-        pLogEn = `Swift thrust to a vital joint! You rupture foe’s qi concentration: violent backfire inflicts ${pDamage} damage!`;
+        pDamage = Math.floor(baseDmg * 1.5);
+        pPoiseDmg = Math.floor(baseDmg * 0.8);
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        pLogRu = `Быстрый выпад в уязвимое сочленение! Ты срываешь концентрацию ци соперника: вспышка backfire наносит ${pDamage} урона (импульс +1)!`;
+        pLogEn = `Swift thrust to a vital joint! You rupture foe’s qi concentration: violent backfire inflicts ${pDamage} damage (momentum +1)!`;
       } else {
+        pDamage = baseDmg;
+        pPoiseDmg = Math.floor(baseDmg * 0.6);
         pLogRu = `Молниеносный выпад пронзает защиту: нанесено ${pDamage} урона (сбито ${pPoiseDmg} стойкости).`;
         pLogEn = `Lightning thrust pierces the guard: dealt ${pDamage} damage (${pPoiseDmg} poise shattered).`;
       }
@@ -129,27 +155,36 @@
       } else {
         c.playerStamina -= stamCost;
       }
-      let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult));
+      let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult));
       if (exhausted) baseDmg = Math.max(5, Math.floor(baseDmg * 0.4));
-      pDamage = baseDmg;
-      pPoiseDmg = Math.floor(baseDmg * 1.8);
-      if (c.enemyIntent === 'defend') {
-        pPoiseDmg = Math.floor(pPoiseDmg * 1.6);
-        pLogRu = `Сокрушающий силовой удар всем весом тела! Каменный треск — щит врага расколот (${pDamage} урона, ${pPoiseDmg} пробоя стойки)!`;
-        pLogEn = `Crushing heavy strike with full body momentum! Stone shatter — foe’s guard is cracked (${pDamage} damage, ${pPoiseDmg} poise damage)!`;
+
+      if (critBurst) {
+        pDamage = Math.floor(baseDmg * 1.9);
+        pPoiseDmg = Math.floor(baseDmg * 2.8);
+        pLogRu = `【БОЕВОЙ КУРАЖ: СОКРУШЕНИЕ НЕБЕС!】 Накопленный импульс взрывается чудовищным ударом! Оружие проламывает стойку на ${pDamage} урона (${pPoiseDmg} пробоя стойки)!`;
+        pLogEn = `【FULL MOMENTUM: HEAVEN SHATTER!】 Surging momentum erupts into a monstrous crushing blow! Your weapon pulverizes foe’s stance for ${pDamage} damage (${pPoiseDmg} poise damage)!`;
+      } else if (c.enemyIntent === 'defend') {
+        pDamage = baseDmg;
+        pPoiseDmg = Math.floor(baseDmg * 2.5);
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        pLogRu = `Сокрушающий силовой удар всем весом тела! Каменный треск — щит врага расколот (${pDamage} урона, ${pPoiseDmg} пробоя стойки, импульс +1)!`;
+        pLogEn = `Crushing heavy strike with full body momentum! Stone shatter — foe’s guard is cracked (${pDamage} damage, ${pPoiseDmg} poise damage, momentum +1)!`;
       } else {
+        pDamage = baseDmg;
+        pPoiseDmg = Math.floor(baseDmg * 1.8);
         pLogRu = `Тяжёлый сокрушающий раскол сотрясает кости врага: нанесён тяжелейший удар на ${pDamage} урона!`;
         pLogEn = `Heavy crushing blow rattles the opponent’s bones: a devastating strike dealt ${pDamage} damage!`;
       }
     } else if (actionKey === 'parry') {
       c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 28);
       c.playerPoise = Math.min(c.playerMaxPoise, c.playerPoise + 25);
-      pDamage = Math.max(4, Math.floor(s.body * 1.5 + 5));
+      pDamage = Math.max(4, Math.floor((s.body * 1.5 + 5) * evilGodMult));
       pPoiseDmg = 10;
       if (c.enemyIntent === 'swift') {
         pDamage = Math.floor(pDamage * 2.5);
-        pLogRu = `Идеальное парирование! Вражеский выпад со свистом соскальзывает по гарде. Встречный контрудар локтем наносит ${pDamage} урона!`;
-        pLogEn = `Perfect parry! The enemy flurry glances off your guard. Your counter elbow strike strikes back for ${pDamage} damage!`;
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        pLogRu = `Идеальное парирование! Вражеский выпад со свистом соскальзывает по гарде. Встречный контрудар локтем наносит ${pDamage} урона (импульс +1)!`;
+        pLogEn = `Perfect parry! The enemy flurry glances off your guard. Your counter elbow strike strikes back for ${pDamage} damage (momentum +1)!`;
       } else {
         pLogRu = `Защитная стойка принята: дыхание выровнено (+28 выносливости), входящий урон будет значительно снижен.`;
         pLogEn = `Defensive posture adopted: breath stabilized (+28 stamina), incoming damage heavily mitigated.`;
@@ -158,22 +193,75 @@
       const qiCost = Math.min(s.resources.qi, 15);
       s.resources.qi = Math.max(0, s.resources.qi - qiCost);
       c.playerStamina = Math.max(0, c.playerStamina - 12);
-      const techDmg = Math.max(16, Math.floor(E.battlePower(s) * 0.9 + qiCost * 2));
-      pDamage = techDmg;
-      pPoiseDmg = Math.floor(techDmg * 1.2);
-      const techName = E.techniques[s.cultivation?.active]?.name || 'Сутра Злого Неба';
-      pLogRu = `Боевая техника «${techName}» активирована! Багровые волны истинной ци прожигают барьер соперника на ${pDamage} урона!`;
-      pLogEn = `Martial technique “${techName}” unleashed! Crimson shockwaves of profound qi scorch through foe’s barrier for ${pDamage} damage!`;
+      const techBase = Math.max(16, Math.floor((E.battlePower(s) * 0.95 + qiCost * 2.2) * evilGodMult));
+      const activeTech = s.cultivation?.active;
+      const techName = E.techniques[activeTech]?.name || 'Сутра Злого Неба';
+
+      if (activeTech === 'sky') {
+        // Evil God Sutra: Pure flame pierces armor directly to HP and burns enemy stamina
+        pDamage = Math.floor(techBase * 1.35);
+        pPoiseDmg = Math.floor(techBase * 0.4);
+        c.enemyStamina = Math.max(0, (c.enemyStamina || 100) - 25);
+        pLogRu = `Боевая техника «${techName}»! Багровые волны яростной ци Злого Бога обходят броню противника, испепеляя жизненные силы (${pDamage} чистого урона) и выжигая дыхание врага!`;
+        pLogEn = `Martial technique “${techName}”! Crimson shockwaves of Evil God profound qi bypass foe’s guard, incinerating vitality (${pDamage} pure damage) and scorching their breath!`;
+      } else if (activeTech === 'stance') {
+        // Stone Roots: Seismic stance damage and half damage reduction next turn
+        pDamage = techBase;
+        pPoiseDmg = Math.floor(techBase * 1.8);
+        c.playerPoise = Math.min(c.playerMaxPoise, c.playerPoise + 35);
+        c.guardBuff = 0.5;
+        pLogRu = `Боевая техника «${techName}»! Стопы врастают в базальт, порождая сейсмический раскол стойки (${pDamage} урона, ${pPoiseDmg} пробоя стойки)! Каменный покров поглотит 50% следующего урона!`;
+        pLogEn = `Martial technique “${techName}”! Your stance roots into basalt, triggering a seismic stance shockwave (${pDamage} damage, ${pPoiseDmg} poise damage)! Stone mantle will absorb 50% of next damage!`;
+      } else if (activeTech === 'cloud') {
+        // Cloud Reach: Evasive feint guarantees dodging next attack and gains momentum
+        pDamage = Math.floor(techBase * 1.25);
+        pPoiseDmg = techBase;
+        c.evasion = true;
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        pLogRu = `Боевая техника «${techName}»! Силуэт растворяется в лазурном тумане: рассекающий выпад поражает врага (${pDamage} урона), а ответный удар противника рассечёт лишь воздух!`;
+        pLogEn = `Martial technique “${techName}”! Your silhouette dissolves into azure mist: a slicing flash strikes the foe (${pDamage} damage), while their retaliation will strike only empty air!`;
+      } else if (activeTech === 'grove') {
+        // Jade Circle: Life drain siphons HP and stamina
+        pDamage = techBase;
+        pPoiseDmg = techBase;
+        const heal = Math.floor(pDamage * 0.35);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
+        c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 20);
+        pLogRu = `Боевая техника «${techName}»! Изумрудное кольцо ци опутывает врага (${pDamage} урона), а очищенная жизненная роса восстанавливает +${heal} HP и +20 выносливости!`;
+        pLogEn = `Martial technique “${techName}”! Emerald qi binds the foe (${pDamage} damage), siphoning vital dew back to restore +${heal} HP and +20 stamina!`;
+      } else if (activeTech === 'sword') {
+        // Mountain Pass Sword: Severe counter attack against heavy/swift
+        let swordMult = 1.35;
+        if (c.enemyIntent === 'heavy' || c.enemyIntent === 'swift') swordMult = 1.7;
+        pDamage = Math.floor(techBase * swordMult);
+        pPoiseDmg = Math.floor(techBase * 1.2);
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        pLogRu = `Боевая техника «${techName}»! Холодная сталь перехватывает остриё вражеского выпада: сокрушительный встречный удар рассекает плоть на ${pDamage} урона!`;
+        pLogEn = `Martial technique “${techName}”! Cold steel intercepts the foe’s trajectory: a lethal counter riposte cuts deep for ${pDamage} damage!`;
+      } else if (activeTech === 'seal') {
+        // Void Seal: Rune locks enemy intent
+        pDamage = techBase;
+        pPoiseDmg = Math.floor(techBase * 1.5);
+        interrupt = true;
+        pLogRu = `Боевая техника «${techName}»! Мерцающие знаки древней печати сковывают меридианы врага (${pDamage} урона): замысел противника развеян, а ци запечатана!`;
+        pLogEn = `Martial technique “${techName}”! Shimmering void runes bind the foe’s meridians (${pDamage} damage): enemy intent is nullified and qi sealed!`;
+      } else {
+        pDamage = techBase;
+        pPoiseDmg = Math.floor(techBase * 1.2);
+        pLogRu = `Боевая техника «${techName}» активирована! Багровые волны истинной ци прожигают барьер соперника на ${pDamage} урона!`;
+        pLogEn = `Martial technique “${techName}” unleashed! Crimson shockwaves of profound qi scorch through foe’s barrier for ${pDamage} damage!`;
+      }
     } else if (actionKey === 'pearl') {
       if (c.pearlUsed) return false;
       c.pearlUsed = true;
       const pearlDmg = Math.max(20, Math.floor(c.enemyHp * 0.35 + 15));
       pDamage = pearlDmg;
       pPoiseDmg = c.enemyPoise; // Shatters all poise!
+      c.momentum = Math.min(3, (c.momentum || 0) + 2);
       c.playerHp = Math.min(c.playerMaxHp, c.playerHp + Math.floor(c.playerMaxHp * 0.25));
       c.playerStamina = c.playerMaxStamina;
-      pLogRu = `【Вспышка Небесной Жемчужины Яда】 Багрово-изумрудный свет из левой ладони ослепляет врага! Яд растворяет ${pDamage} стойкости, сокрушая баланс противника!`;
-      pLogEn = `【Sky Poison Pearl Burst】 Emerald-crimson radiance erupts from your left palm! Divine toxic miasma melts away ${pDamage} vitality, completely shattering foe’s poise!`;
+      pLogRu = `【Вспышка Небесной Жемчужины Яда】 Багрово-изумрудный свет из левой ладони ослепляет врага! Яд растворяет ${pDamage} стойкости, сокрушая баланс противника (импульс +2)!`;
+      pLogEn = `【Sky Poison Pearl Burst】 Emerald-crimson radiance erupts from your left palm! Divine toxic miasma melts away ${pDamage} vitality, completely shattering foe’s poise (momentum +2)!`;
     } else if (actionKey === 'pill') {
       if (s.resources.pills < 1) return false;
       s.resources.pills--;
@@ -194,6 +282,7 @@
     if (c.enemyPoise <= 0 && !c.enemyStunned) {
       c.enemyStunned = true;
       c.enemyPoise = Math.floor(c.enemyMaxPoise * 0.5);
+      c.momentum = Math.min(3, (c.momentum || 0) + 1);
       pLogRu += ' 【СТОЙКА ПРОБИТА! Враг ошеломлён и пропускает ход!】';
       pLogEn += ' 【GUARD BROKEN! Foe is staggered and loses their turn!】';
     }
@@ -222,11 +311,16 @@
       return true;
     }
 
-    // 2. Process enemy attack (if not stunned or interrupted)
+    // 2. Process enemy attack (if not stunned, interrupted, or evaded)
     if (c.enemyStunned) {
       c.enemyStunned = false; // Recovers from stun next round
     } else if (interrupt) {
       // Interrupted: enemy fails to attack
+    } else if (c.evasion) {
+      c.evasion = false;
+      const eLogRu = `${c.foeName} атакует со свирепой силой, но твой шаг уклонения безупречен — клинок рассекает лишь остаточный силуэт в воздухе!`;
+      const eLogEn = `${c.foeName} strikes with fierce fury, but your evasive footwork is flawless — the blade cuts only an afterimage in the air!`;
+      c.log.unshift({ round: c.round, ru: eLogRu, en: eLogEn });
     } else {
       let eDmg = Math.max(6, Math.floor(c.foePower * 0.35 + (c.round * 1.5)));
       if (actionKey === 'parry') {
@@ -234,6 +328,10 @@
       }
       if (c.enemyIntent === 'heavy') eDmg = Math.floor(eDmg * 1.4);
       if (c.enemyIntent === 'qi') eDmg = Math.floor(eDmg * 1.6);
+      if (c.guardBuff) {
+        eDmg = Math.max(1, Math.floor(eDmg * (1 - c.guardBuff)));
+        c.guardBuff = 0;
+      }
 
       c.playerHp = Math.max(0, c.playerHp - eDmg);
       const eLogRu = `${c.foeName} отвечает свирепой атакой (${intents[c.enemyIntent].ru}): получено ${eDmg} урона.`;
@@ -254,10 +352,43 @@
       }
     }
 
+    // 3. Evil God Gate Awakening check (when player is battered below 35% HP)
+    if (!c.evilGodAwakened && c.playerHp > 0 && c.playerHp <= Math.floor(c.playerMaxHp * 0.35)) {
+      c.evilGodAwakened = true;
+      c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 25);
+      c.playerPoise = Math.min(c.playerMaxPoise, c.playerPoise + 20);
+      c.log.unshift({
+        round: c.round,
+        ru: '【ПРОБУЖДЕНИЕ ВРАТ ЗЛОГО БОГА!】 В глубине меридианов с грохотом распахиваются Врата Злой Души! Багровое пламя вырывается наружу, искажая пространство: урон возрастает на +35%, а раны запечатываются яростной ци!',
+        en: '【EVIL GOD GATES UNSEALED!】 The Gate of Evil Soul violently erupts within your meridians! Raging crimson flames warp space: damage surges by +35%, sealing wounds with furious qi!'
+      });
+    }
+
+    // 4. Boss Enrage / Phase Transition check (at <= 50% HP)
+    let nextIntent = randomIntent(c.foeType);
+    if (!c.bossPhaseTriggered && c.enemyHp > 0 && c.enemyHp <= Math.floor(c.enemyMaxHp * 0.5)) {
+      c.bossPhaseTriggered = true;
+      if (c.foeName.includes('Белого Клыка') || c.foeName.includes('разбойник') || c.foeName.includes('Bandit') || c.foeName.includes('Fang')) {
+        nextIntent = 'heavy';
+        c.log.unshift({
+          round: c.round,
+          ru: `【ЯРОСТЬ СОПЕРНИКА】 ${c.foeName} сплёвывает кровь и выхватывает зазубренный тесак: «Щенок, ты заставил меня драться всерьёз! Отведай Кровавый Коготь!» Враг готовит сокрушительный удар!`,
+          en: `【FOE ENRAGED】 ${c.foeName} spits blood and unsheathes a serrated cleaver: “Whelp, you forced me to fight for real! Taste my Blood Claw!” The foe readies a devastating heavy blow!`
+        });
+      } else {
+        nextIntent = 'qi';
+        c.log.unshift({
+          round: c.round,
+          ru: `【ЯРОСТЬ СОПЕРНИКА】 ${c.foeName} с рычанием высвобождает скрытую ци: «Ты посмел ранить меня перед толпой?! Прими силу моего истинного искусства!» Пространство дрожит от всплеска энергии!`,
+          en: `【FOE ENRAGED】 ${c.foeName} roars, unleashing latent qi: “You dare wound me before the crowd?! Taste the might of my true art!” The air trembles from an impending energy blast!`
+        });
+      }
+    }
+
     // Prep next round
     c.round++;
     c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 14);
-    c.enemyIntent = randomIntent(c.foeType);
+    c.enemyIntent = nextIntent;
     c.log = c.log.slice(0, 15);
     return true;
   }
