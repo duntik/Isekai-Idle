@@ -528,6 +528,101 @@
       osc.stop(t0 + 0.04);
     },
 
+    // 9. SILK / PARCHMENT MAP SCROLL UNFOLD (Разворачивание свитка карты)
+    playScrollOpen() {
+      if (!canPlay('scroll', 120)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+
+      const filter = ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1900, t0);
+      filter.frequency.linearRampToValueAtTime(1400, t0 + 0.35);
+      filter.Q.value = 1.4;
+
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.12, t0 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.38);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      trackVoice(noise, [noise, filter, gain]);
+      noise.start(t0);
+      noise.stop(t0 + 0.4);
+    },
+
+    // 10. ROAD CARAVAN BELL (Колокольчик повозки и дорожного каравана)
+    playCaravanBell() {
+      if (!canPlay('caravan-bell', 150)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const osc1 = ac.createOscillator();
+      const osc2 = ac.createOscillator();
+      const gain1 = ac.createGain();
+      const gain2 = ac.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(1540, t0);
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(3120, t0);
+
+      gain1.gain.setValueAtTime(0.08, t0);
+      gain1.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.65);
+
+      gain2.gain.setValueAtTime(0.04, t0);
+      gain2.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.45);
+
+      osc1.connect(gain1);
+      osc2.connect(gain2);
+      gain1.connect(masterGain);
+      gain2.connect(masterGain);
+
+      trackVoice(osc1, [osc1, osc2, gain1, gain2]);
+      osc1.start(t0); osc1.stop(t0 + 0.7);
+      osc2.start(t0); osc2.stop(t0 + 0.5);
+    },
+
+    // 11. HIGH MOUNTAIN WIND WHISPER (Шёпот горного ветра)
+    playWindWhisper() {
+      if (!canPlay('wind-whisper', 300)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+
+      const t0 = ac.currentTime;
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+
+      const filter = ac.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(380, t0);
+      filter.frequency.linearRampToValueAtTime(720, t0 + 0.8);
+      filter.frequency.linearRampToValueAtTime(320, t0 + 1.7);
+      filter.Q.value = 2.0;
+
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(0.07, t0 + 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.0005, t0 + 1.8);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      trackVoice(noise, [noise, filter, gain]);
+      noise.start(t0);
+      noise.stop(t0 + 1.85);
+    },
+
     // Method aliases for extended naming compatibility
     playSingingBowl(f, d) { return this.playBowl(f, d); },
     playSwordClash() { return this.playClash(); },

@@ -452,6 +452,15 @@ root.IsekaiLocale.add([
   ['Система Прозрения: ', 'Insight System: '],
   ['Прибытие на постоялый двор Мэй. Тело продрогло и истощено от голода; Мэй предлагает миску горячей похлёбки за расчистку двора.', 'Arrival at Mei’s inn. Vessel frozen and starving; Mei offers a bowl of hot stew for clearing the yard.'],
   ['Госпожа Мэй подаёт дымящуюся мясную похлёбку и рис. Голод утолён, выносливость полностью восстановлена!', 'Lady Mei serves steaming meat stew and rice. Hunger sated, stamina fully restored!'],
-  ['【Система Прозрения】 Очищение меридианов +1%. Истощение снято, циркуляция выносливости разблокирована (+0.4/сек).', '【Insight System】 Profound channels cleansed +1%. Starvation removed, stamina circulation unlocked (+0.4/s).']
+  ['【Система Прозрения】 Очищение меридианов +1%. Истощение снято, циркуляция выносливости разблокирована (+0.4/сек).', '【Insight System】 Profound channels cleansed +1%. Starvation removed, stamina circulation unlocked (+0.4/s).'],
+  ['Найден древний обрывок карты: Руины Алтаря (1/3).', 'Found an ancient map fragment: Altar Ruins (1/3).'],
+  ['Найден древний обрывок карты: Корни Дракона (2/3).', 'Found an ancient map fragment: Dragon Roots (2/3).'],
+  ['Найден древний обрывок карты: Городской Архив (3/3).', 'Found an ancient map fragment: City Archive (3/3).'],
+  ['Древняя карта сокровищ собрана воедино! На карте проявился вход в Тайный Грот Древнего Мастера.', 'The ancient treasure map is assembled! Entrance to the Ancient Master’s Secret Grotto has been revealed on the map.'],
+  ['Тайник обнаружен: Тайный Грот Древнего Мастера. Первозданная ци +20, понимание +15, травы +15, спокойствие +5', 'Landmark discovered: Ancient Master’s Secret Grotto. Primordial qi +20, insight +15, herbs +15, calm +5'],
+  ['Дорожное событие: Придорожная чайная у ручья. Выносливость +25, спокойствие +2.', 'Road encounter: Wayside Teahouse by Stream. Stamina +25, calm +2.'],
+  ['Дорожное событие: Камнепад на перевале. Монеты +8.', 'Road encounter: Mountain Pass Rockslide. Coins +8.'],
+  ['Дорожное событие: Степной зверь у тракта. Травы +5.', 'Road encounter: Steppe Beast by the Verge. Herbs +5.'],
+  ['Дорожное событие: Забытый тюк торговца. Монеты +6, травы +3.', 'Road encounter: Lost Traveler’s Bundle. Coins +6, herbs +3.']
 ]);
 })(globalThis);

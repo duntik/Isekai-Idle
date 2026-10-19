@@ -2,7 +2,7 @@
   'use strict';
   const places=['village','forest','city','ruins','mountains'];
   const journalPlaces=[...places,'village-mill','forest-garden','ruins-observatory','city-apothecary','mountains-cliff'],resourceKeys=['gold','herbs','qi','relics','wood','ore','pills','reputation','influence','supplies','cosmic','worlds'];
-  const fresh=()=>({notes:{},pins:[],surveys:{},cooldown:0,discoveries:{},secrets:[]});
+  const fresh=()=>({notes:{},pins:[],surveys:{},cooldown:0,discoveries:{},secrets:[],fragments:[],assembledMap:false});
   const labels={village:['Окрестности деревни','Village surroundings'],forest:['Светлая опушка','Bright forest edge'],city:['Торговые проходы','Market passages'],ruins:['Внешняя стена храма','Outer temple wall'],mountains:['Нижняя тропа перевала','Lower pass trail'],'village-mill':['Старая мельница','Old mill'],'forest-garden':['Скрытый сад','Hidden garden'],'ruins-observatory':['Обсерватория под плющом','Ivy observatory'],'city-apothecary':['Алхимическая лаборатория Хо','Huo’s alchemy lab'],'mountains-cliff':['Облачный утёс Юнь','Yun’s Cloud Cliff']};
   const danger={village:['Безопасная деревенская дорога.','A safe village road.'],forest:['Опушка безопасна; в тёмной чаще видны звериные глаза.','The edge is safe; animal eyes watch from the dark thicket.'],city:['Стража проверяет право входа. Конфликт с учениками опасен.','Guards check entry rights. Conflicts with disciples are dangerous.'],ruins:['Внешний двор безопасен. Печати под алтарём требуют подготовки.','The outer yard is safe. Seals beneath the altar require preparation.'],mountains:['Нижний склон доступен. Верхнюю тропу охраняет страж.','The lower slope is accessible. A guard protects the upper trail.'],'village-mill':['Безопасная мельница мастера Туна.','Fastening craftsman Tong’s safe mill.'],'forest-garden':['Уединённый лекарственный сад Суй.','Sui’s secluded medicinal garden.'],'ruins-observatory':['Башня обсерватории за внешней стеной храма.','Observatory tower behind the outer temple wall.'],'city-apothecary':['Запах трав и горящих углей. Безопасная мастерская.','Smell of herbs and burning embers. A safe workshop.'],'mountains-cliff':['Сильный горный ветер над обрывом. Нужна устойчивая стойка.','Strong mountain wind over the chasm. Requires steady stance.']};
   function validate(input){const a=fresh();if(!input||typeof input!=='object')return a;
@@ -12,6 +12,8 @@
     for(const k of journalPlaces)if(Array.isArray(input.discoveries?.[k]))a.discoveries[k]=[...new Set(input.discoveries[k].filter(v=>resourceKeys.includes(v)))].sort();
     if(Number.isFinite(input.cooldown)&&input.cooldown>=0)a.cooldown=Math.min(300,input.cooldown);
     a.secrets=Array.isArray(input.secrets)?[...new Set(input.secrets.filter(id=>typeof id==='string'&&id.length<=80))].slice(0,50):[];
+    a.fragments=Array.isArray(input.fragments)?[...new Set(input.fragments.filter(id=>typeof id==='string'&&id.length<=80))].slice(0,10):[];
+    a.assembledMap=Boolean(input.assembledMap);
     return a;
   }
   const trail=(s,place)=>(s.atlas.surveys[place]||0)>=2;
@@ -29,6 +31,17 @@
     else if(place==='forest')s.resources.herbs+=2;
     else if(place==='ruins'){s.resources.herbs+=1;if(!s.found){s.explored=Math.min(600,s.explored+15);if(s.explored>=600)s.found=true;}}
     else s.resources.ore+=1;
+    if(!Array.isArray(s.atlas.fragments))s.atlas.fragments=[];
+    if(place==='ruins'&&!s.atlas.fragments.includes('fragment-ruins')){
+      s.atlas.fragments.push('fragment-ruins');
+      if(E?.log)E.log(s,'Найден древний обрывок карты: Руины Алтаря (1/3).');
+    }else if(place==='forest'&&!s.atlas.fragments.includes('fragment-forest')){
+      s.atlas.fragments.push('fragment-forest');
+      if(E?.log)E.log(s,'Найден древний обрывок карты: Корни Дракона (2/3).');
+    }else if(place==='city'&&!s.atlas.fragments.includes('fragment-city')){
+      s.atlas.fragments.push('fragment-city');
+      if(E?.log)E.log(s,'Найден древний обрывок карты: Городской Архив (3/3).');
+    }
     observe(s,place,place==='village'||place==='city'?{gold:3}:place==='forest'||place==='ruins'?{herbs:1}:{ore:1});s.calm=Math.min(100,s.calm+.1);return true;
   }
   function rumors(s,lang='ru'){const en=lang==='en',out=[],add=(id,place,ru,english,source)=>out.push({id,place,text:en?english:ru,source:en?source:({Mei:'Мэй',Ren:'Жэнь',Lin:'Линь',Wei:'Вэй',Carters:'Возчики',Yun:'Юнь',Ho:'Хо'}[source]||source),confirmed:trail(s,place)});
@@ -254,8 +267,41 @@
       reward:{herbs:8},
       rewardText:['Редкие травы +8','Rare herbs +8'],
       ready:s=>((s.world?.visits?.forest||0)>0||(s.atlas?.surveys?.forest||0)>=1)
+    },
+    {
+      id:'ancient-grotto',
+      name:['Тайный Грот Древнего Мастера','Ancient Master’s Secret Grotto'],
+      desc:['Сокрытая завесой иллюзий пещера, найденная по древней карте. Здесь струится первозданная энергия ци.','A cavern veiled in illusion wards, revealed by the ancient assembled map. Primordial qi flows within.'],
+      icon:'🌌',
+      x:820, y:220,
+      reward:{qi:20,xp:15,herbs:15,calm:5},
+      rewardText:['Первозданная ци +20, понимание +15, травы +15, спокойствие +5','Primordial qi +20, insight +15, herbs +15, calm +5'],
+      ready:s=>Boolean(s.atlas?.assembledMap)
     }
   ];
+  const fragmentsCatalog={
+    'fragment-ruins':{id:'fragment-ruins',name:['Обрывок карты: Руины Алтаря','Map Fragment: Altar Ruins'],desc:['Пожелтевший пергамент со схемой подземных вен храма.','Yellowed parchment charting underground spiritual veins beneath the temple.'],icon:'📜',place:'ruins'},
+    'fragment-forest':{id:'fragment-forest',name:['Обрывок карты: Корни Дракона','Map Fragment: Dragon Roots'],desc:['Кусок шёлка с нанесённым руслом духовного ручья в чащах.','Silk fragment tracing the spiritual creek’s flow in the forest deeps.'],icon:'📜',place:'forest'},
+    'fragment-city':{id:'fragment-city',name:['Обрывок карты: Городской Архив','Map Fragment: City Archive'],desc:['Страница из книги Вэя с координатами запечатанных гротов.','Leaf from Wei’s tome marking coordinates of sealed ancient grottoes.'],icon:'📜',place:'city'}
+  };
+  function fragments(s,lang='ru'){
+    const en=lang==='en',held=s.atlas?.fragments||[];
+    return Object.values(fragmentsCatalog).map(f=>({
+      id:f.id,
+      name:f.name[en?1:0],
+      desc:f.desc[en?1:0],
+      icon:f.icon,
+      place:f.place,
+      found:held.includes(f.id)
+    }));
+  }
+  const canAssembleMap=s=>(s.atlas?.fragments?.length||0)>=3&&!s.atlas?.assembledMap;
+  function assembleMap(s,E){
+    if(!canAssembleMap(s))return false;
+    s.atlas.assembledMap=true;
+    if(E?.log)E.log(s,'Древняя карта сокровищ собрана воедино! На карте проявился вход в Тайный Грот Древнего Мастера.');
+    return true;
+  }
   function secrets(s,lang='ru'){
     const en=lang==='en';
     return secretsCatalog.filter(sec=>sec.ready(s)).map(sec=>({
@@ -285,5 +331,5 @@
     if(E?.log)E.log(s,`Тайник обнаружен: ${sec.name[0]}. ${sec.rewardText[0]}`);
     return true;
   }
-  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,overview,locationKnowledge:overview,observe,migrate,journal,secretsCatalog,secrets,claimSecret};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={fresh,validate,trail,hint,canSurvey,survey,rumors,details,overview,locationKnowledge:overview,observe,migrate,journal,secretsCatalog,secrets,claimSecret,fragmentsCatalog,fragments,canAssembleMap,assembleMap};root.IsekaiAtlas=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

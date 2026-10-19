@@ -154,6 +154,55 @@
   const pendingQuests=s=>Object.entries(s.world.director.pending).map(([id,deed])=>{const location=id.split(':')[0];return {scene:encounters[location].find(e=>e.id===id),location,...deed};});
   const canChoice=(s,c,E)=>!!c&&!s.world.journey&&(!(current(s)?.generated||current(s)?.once)||c.skip||eligible(s,current(s)))&&(!c.requires||c.requires(s))&&E.affordable(s,c.cost||{})&&(!c.recognition||!!s.world.director.pending[c.recognition]);
   const current=s=>{const e=s.world.encounter;return e?(e.id?encounters[e.location].find(scene=>scene.id===e.id):encounters[e.location][e.index]):null;};
+  const celestialPhenomena=[
+    {id:'twin-suns',name:['Зенит Двух Солнц','Zenith of the Twin Suns'],desc:['Два бледных солнца сближаются в зените. Открытые горные вершины и руины наполняются чистой энергией (+50% к пониманию при медитации).','Two pale suns align at their zenith. High mountain crests and ruins surge with pure spiritual energy (+50% meditation insight).'],bonusText:['Медитация в горах и храме +50%','Mountain & temple meditation +50%'],icon:'☀️☀️',affected:['mountains','ruins']},
+    {id:'lunar-dew',name:['Ночь Лунной Росы','Night of Lunar Dew'],desc:['Холодный серебряный свет пробуждает скрытые свойства трав. Сбор растений в лесу и скрытом саду удваивается (+100%).','Cold silver radiance awakens hidden botanical vitality. Herb gathering in the forest and hidden garden is doubled (+100%).'],bonusText:['Сбор трав в лесу +100%','Forest herb gathering +100%'],icon:'🌙',affected:['forest','forest-garden']},
+    {id:'thunder-ridge',name:['Грозовой Фронт Ци','Qi Thunderfront'],desc:['Над перевалом бушуют духовные молнии. Энергия грозы закаляет тело практиков (+25% к тренировкам) и насыщает жилы руды (+50%).','Spiritual lightning storms across the pass. Thunder qi tempers the physical body (+25% training) and enriches ore veins (+50%).'],bonusText:['Закалка тела +25%, руда +50%','Body tempering +25%, ore +50%'],icon:'⚡',affected:['mountains','mountains-cliff']},
+    {id:'yin-mist',name:['Прилив Тумана Инь','Yin Mist Tide'],desc:['Древние охранные печати храма смягчаются под покровом тумана. Исследование руин ускоряется (+50%), древние осколки легче извлечь.','Ancient temple warding seals soften beneath the veil of mist. Ruins exploration accelerates (+50%) and relic shards surface with ease.'],bonusText:['Исследование храма +50%, осколки +50%','Temple exploration +50%, shards +50%'],icon:'🌫️',affected:['ruins','ruins-observatory']},
+    {id:'calm-sky',name:['Чистое Небо Долины','Clear Valley Sky'],desc:['Гармоничное течение духовной ци без бурь и возмущений. Восстановление спокойствия духа ускоряется (+25%).','Harmonious flow of spiritual qi without storms or upheavals. Mental tranquility recovery is accelerated (+25%).'],bonusText:['Восстановление спокойствия +25%','Calm recovery +25%'],icon:'🌤',affected:['village','village-mill']}
+  ];
+  function celestialPhenomenon(s,language='ru'){
+    const en=language==='en',age=s?.age||0,idx=Math.floor(age/150)%celestialPhenomena.length,item=celestialPhenomena[idx],rem=150-(age%150);
+    return {id:item.id,name:item.name[en?1:0],desc:item.desc[en?1:0],effect:item.bonusText[en?1:0],bonusText:item.bonusText[en?1:0],icon:item.icon,aura:'aura-'+item.id,affected:item.affected,remaining:rem};
+  }
+  const dangerTiers={
+    village:{tier:0,level:'mortal',label:['Смертные земли','Mortal lands'],icon:'🟢',minRealm:0},
+    'village-mill':{tier:0,level:'mortal',label:['Смертные земли','Mortal lands'],icon:'🟢',minRealm:0},
+    forest:{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    'forest-garden':{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    city:{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    'city-apothecary':{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    ruins:{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    'ruins-observatory':{tier:1,level:'foundation',label:['Рубеж основы','Foundation trail'],icon:'🟡',minRealm:0},
+    mountains:{tier:2,level:'perilous',label:['Опасная глушь','Perilous wilderness'],icon:'🔴',minRealm:1},
+    'mountains-cliff':{tier:2,level:'perilous',label:['Опасная глушь','Perilous wilderness'],icon:'🔴',minRealm:1},
+    'dark-forest':{tier:2,level:'perilous',label:['Опасная глушь','Perilous wilderness'],icon:'🔴',minRealm:1},
+    'sealed-crypt':{tier:2,level:'perilous',label:['Опасная глушь','Perilous wilderness'],icon:'🔴',minRealm:1},
+    'upper-pass':{tier:3,level:'forbidden',label:['Запретный рубеж','Forbidden pass'],icon:'🟣',minRealm:3},
+    'ancient-grotto':{tier:3,level:'forbidden',label:['Древний тайный грот','Ancient secret grotto'],icon:'🟣',minRealm:2}
+  };
+  const roadEvents=[
+    {id:'teahouse',title:['Придорожная чайная у ручья','Wayside Teahouse by Stream'],desc:['Обозы остановились на привал. Горячий настой чая восстанавливает силы (+25 выносливости, +2 спокойствия).','Caravans halted for a rest. Steaming herbal tea restores vitality (+25 stamina, +2 calm).'],icon:'🍵',reward:{stamina:25,calm:2},rewardText:['Выносливость +25, спокойствие +2','Stamina +25, calm +2']},
+    {id:'rockslide',title:['Камнепад на перевале','Mountain Pass Rockslide'],desc:['Обвал завалил колею. Помощь возчикам в расчистке приносит благодарность и 8 монет.','A rockfall blocked the wagon ruts. Assisting carters in clearing stones earns 8 coins.'],icon:'🪨',reward:{gold:8},rewardText:['Монеты +8','Coins +8']},
+    {id:'wolf',title:['Степной зверь у тракта','Steppe Beast by the Verge'],desc:['Хищный зверь выскочил к дороге, но отступил перед аурой Жемчужины Яда, обронив 5 целебных трав.','A predator sprang toward the road but recoiled before the Poison Pearl, dropping 5 herbs.'],icon:'🐺',reward:{herbs:5},rewardText:['Травы +5','Herbs +5']},
+    {id:'bundle',title:['Забытый тюк торговца','Lost Traveler’s Bundle'],desc:['На обочине найден брошенный дорожный тюк с припасами (+6 монет, +3 травы).','An abandoned traveler’s pack was found by the road (+6 coins, +3 herbs).'],icon:'📦',reward:{gold:6,herbs:3},rewardText:['Монеты +6, травы +3','Coins +6, herbs +3']}
+  ];
+  function roadEvent(s,language='ru'){
+    if(!s.world?.journey)return null;const en=language==='en',j=s.world.journey;
+    const key=(Math.abs(s.world.seed+(j.total||j.remaining||0)+(j.destination?.length||0)))%roadEvents.length;
+    const ev=roadEvents[key];
+    return {id:ev.id,title:ev.title[en?1:0],desc:ev.desc[en?1:0],icon:ev.icon,rewardText:ev.rewardText[en?1:0],reward:ev.reward,claimed:Boolean(j.claimedEvent)};
+  }
+  function claimRoadEvent(s,E){
+    if(!s.world?.journey||s.world.journey.claimedEvent)return false;const ev=roadEvent(s,'ru');if(!ev)return false;
+    s.world.journey.claimedEvent=true;
+    if(ev.reward.stamina)s.stamina=Math.min(E?.staminaMax?E.staminaMax(s):100,(s.stamina||0)+ev.reward.stamina);
+    if(ev.reward.calm)s.calm=Math.min(100,(s.calm||0)+ev.reward.calm);
+    if(ev.reward.gold)s.resources.gold=(s.resources.gold||0)+ev.reward.gold;
+    if(ev.reward.herbs)s.resources.herbs=(s.resources.herbs||0)+ev.reward.herbs;
+    if(E?.log)E.log(s,`Дорожное событие: ${ev.title}. ${ev.rewardText}.`);
+    return true;
+  }
   const frontiers={
     'dark-forest':{base:'forest',name:'Тёмная чаща',en:'Dark thicket',x:5,y:1,scene:'forest:1',ready:s=>s.body>=8&&s.calm>=5||s.realm>=1,reason:'Из темноты смотрят звериные глаза. Ноги не слушаются: ты отступаешь к светлой опушке. Укрепи тело до 8 и накопи 5 спокойствия или достигни первого духовного уровня.',reasonEn:'Animal eyes watch from the darkness. Your legs refuse to move: you retreat to the bright forest edge. Train your body to 8 and gain 5 calm, or reach spiritual realm 1.'},
     'sealed-crypt':{base:'ruins',name:'Запечатанный склеп',en:'Sealed crypt',x:1,y:0,scene:'ruins:1',ready:s=>s.found&&s.realm>=1,reason:'Печать давит на грудь. Пока ты не нашёл наследие и не достиг первого духовного уровня, тело не выдержит даже подхода к двери.',reasonEn:'The seal presses against your chest. Discover the legacy and reach spiritual realm 1 before approaching this door.'},
@@ -213,6 +262,15 @@
     for(const node of ordinary){if(frontierCoords[node.id])[node.x,node.y]=frontierCoords[node.id];node.x=40+node.x*245;node.y=40+node.y*245;}
     const bottom=Math.max(70,...ordinary.map(n=>n.y))+300;
     for(const[index,node]of nodes.filter(n=>n.kind==='site').entries()){node.x=40+index%4*245;node.y=bottom+Math.floor(index/4)*245;}
+    for(const node of nodes){
+      const dt=dangerTiers[node.id]||{tier:0,level:'mortal',label:['Смертные земли','Mortal lands'],icon:'🟢',minRealm:0};
+      node.tier=dt.level;
+      node.tierLevel=dt.tier;
+      node.tierLabel=dt.label[language==='en'?1:0];
+      node.tierIcon=dt.icon;
+      node.spiritualPressure=dt.minRealm>(s.realm||0)?(language==='en'?`Pressure: Realm ${dt.minRealm}`:`Давление: Ступень ${dt.minRealm}`):'';
+      node.minRealm=dt.minRealm;
+    }
     return {nodes,edges:[...known.filter(id=>id!=='village').map(id=>({from:locations[id].parent||'village',to:id})),...nodes.filter(n=>n.base).map(n=>({from:n.base,to:n.id}))],fogCount:Math.max(1,8-known.length),width:Math.max(1180,...nodes.map(n=>n.x+260)),height:Math.max(660,...nodes.map(n=>n.y+260))};
   }
   const canEncounter=s=>!s.world.journey&&!s.world.encounter&&s.world.encounterCooldown<=0;
@@ -255,7 +313,8 @@
       if(f&&!w.map.explored.includes(value))w.map.explored.push(value);
       if(!scene.remote)M?.recordMeeting(s,scene);w.encounter={location:base,index:encounters[base].indexOf(scene),id:scene.id};E.log(s,`Ты осмотрел местность: ${f?.name||scene.title}.`);
     }
-    else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;w.journey={destination:value,remaining:travelTime(s,value)};E.log(s,`Ты отправился: ${locations[value].name}.`);}
+    else if(type==='travel'){if(!canTravel(s,value))return false;w.encounter=null;const t=travelTime(s,value);w.journey={destination:value,remaining:t,total:t,origin:w.location,claimedEvent:false};E.log(s,`Ты отправился: ${locations[value].name}.`);}
+    else if(type==='claim-road-event'){return claimRoadEvent(s,E);}
     else if(type==='encounter'){if(!canEncounter(s))return false;offer(s,E);}
     else if(type==='choice'){
       const c=current(s)?.choices.find(c=>c.id===value);if(!canChoice(s,c,E))return false;
@@ -306,10 +365,10 @@
     for(const k of Object.keys(locations)){const n=input.visits?.[k]??(Q.locations[k]?0:undefined);if(!Number.isSafeInteger(n)||n<0)throw Error('Неверные посещения');w.visits[k]=n;}
     if(!Array.isArray(input.mentors)||input.mentors.some(k=>!Object.hasOwn(mentorNames,k))||new Set(input.mentors).size!==input.mentors.length)throw Error('Неверный наставник');w.mentors=[...input.mentors];
     if(!Array.isArray(input.contacts)||input.contacts.some(k=>k!=='scholar')||input.contacts.length>1)throw Error('Неверные связи');w.contacts=[...input.contacts];
-    if(input.journey!==null){const j=input.journey;if(!j||!locations[j.destination]||locations[j.destination].stage>stage||!Number.isFinite(j.remaining)||j.remaining<=0||j.remaining>locations[j.destination].time)throw Error('Неверный маршрут');w.journey={destination:j.destination,remaining:j.remaining};}
+    if(input.journey!==null){const j=input.journey;if(!j||!locations[j.destination]||locations[j.destination].stage>stage||!Number.isFinite(j.remaining)||j.remaining<=0||j.remaining>locations[j.destination].time)throw Error('Неверный маршрут');w.journey={destination:j.destination,remaining:j.remaining,...(Number.isFinite(j.total)?{total:j.total}:{total:j.remaining}),origin:j.origin||w.location,claimedEvent:Boolean(j.claimedEvent)};}
     if(input.encounter!==null){const e=input.encounter;if(!e||e.location!==w.location||!Number.isInteger(e.index)||w.journey)throw Error('Неверная встреча');const index=e.id===undefined?e.index:encounters[e.location]?.findIndex(scene=>scene.id===e.id);if(index===undefined||index<0||!encounters[e.location]?.[index])throw Error('Неверная встреча');w.encounter={location:e.location,index,...(e.id===undefined?{}:{id:e.id})};}
     w.people=M?.validate(input.people,{stage,world:w})||{};return w;
   }
   const causalLeads=(s,language='ru')=>Object.entries(encounters).flatMap(([location,list])=>list.filter(scene=>(scene.causal||scene.school)&&eligible(s,scene)).map(scene=>({id:scene.id,location,title:sceneText(scene,'title',language,s)})));
-  const api={questPlaces:Q,travelTime,causalLeads,memory:M,eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,developmentPaths,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  const api={questPlaces:Q,travelTime,causalLeads,memory:M,eligible,admissions,canApply,locations,encounters,mentorNames,physical,fresh,current,knownLocations,travelReason,map,frontiers,canTravel,canEncounter,canChoice,sceneText,pathNames,developmentPaths,pendingQuests,recognition,recognitionNeeded,action,advance,bonus,validate,celestialPhenomena,celestialPhenomenon,dangerTiers,roadEvents,roadEvent,claimRoadEvent};root.IsekaiWorld=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

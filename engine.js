@@ -559,7 +559,7 @@
     if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
     if(type==='learn-technique'){if(!canLearn(s,value))return false;spend(s,techniqueCost(s,value));const t=s.cultivation.learned[value]||(s.cultivation.learned[value]={rank:0,progress:0});if(t.rank)t.progress-=techniqueNeeded(t.rank);t.rank++;if(!s.cultivation.active)s.cultivation.active=value;log(s,`Изучена техника: ${techniques[value].name}, ранг ${t.rank}.`);return true;}
     if(type==='equip-technique'){if(!Object.hasOwn(s.cultivation.learned,value))return false;s.cultivation.active=value;return true;}
-    if (['travel','encounter','choice','apply-sect','map-inspect','forest-search'].includes(type)) {
+    if (['travel','encounter','choice','apply-sect','map-inspect','forest-search','claim-road-event'].includes(type)) {
       const choice=type==='choice'?W.current(s)?.choices.find(c=>c.id===value):null;
       const result=W.action(s,type,value,api);
       if(result&&(type==='travel'||(type==='choice'&&choice&&!choice.skip)))interruptActivity(s);
@@ -713,6 +713,8 @@
     if(type==='choose-vow')return A.chooseVow(s,value);
     if(type==='atlas-survey'){const result=Atlas.survey(s,api);if(result)A.sync(s);return result;}
     if(type==='atlas-secret')return Atlas.claimSecret(s,value,api);
+    if(type==='atlas-assemble')return Atlas.assembleMap(s,api);
+    if(type==='claim-road-event')return W.action(s,type,value,api);
     if(type==='atlas-note'){
       if(!value||typeof value.id!=='string'||typeof value.text!=='string'||!W.map(s).nodes.some(n=>n.id===value.id))return false;
       const note=value.text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,600).trim();if(note)s.atlas.notes[value.id]=note;else delete s.atlas.notes[value.id];return true;
