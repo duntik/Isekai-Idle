@@ -415,8 +415,34 @@
       return `
         <div class="fate-branches-list">
           ${allBranches.map(b => {
+            const isLocked = b.status === 'locked';
             const statusClass = b.status === 'completed' ? 'fate-step-completed' : (b.status === 'current' ? 'fate-step-current' : 'fate-step-locked');
-            const statusLabel = b.status === 'completed' ? (en ? '✓ Completed' : '✓ Завершено') : (b.status === 'current' ? (en ? '● Current' : '● Текущий шаг') : (en ? '🔒 Future' : '🔒 Впереди'));
+            const statusLabel = b.status === 'completed' ? (en ? '✓ Completed' : '✓ Завершено') : (b.status === 'current' ? (en ? '● Current' : '● Текущий шаг') : (en ? '🔒 Veiled' : '🔒 Сокрыто'));
+            const cardTitle = isLocked ? (en ? `${b.chapter} · Veiled by Destiny` : `${b.chapter} · Сокрыто туманом судьбы`) : b.title;
+            const cardSummary = isLocked ? (en ? 'The threads of karma are not yet woven. Advance your cultivation to pierce the veil.' : 'Нити кармы ещё не сплетены. Продвигайся вперёд по пути культивации, чтобы прозреть грядущее.') : b.summary;
+
+            if (isLocked) {
+              return `
+                <div class="fate-step-card ${statusClass}">
+                  <div class="fate-step-header">
+                    <div class="fate-step-badge">${b.chapter}</div>
+                    <h3 class="fate-step-title">${cardTitle}</h3>
+                    <span class="fate-step-status">${statusLabel}</span>
+                  </div>
+                  <p class="fate-step-summary">${cardSummary}</p>
+                  <div class="fate-options-grid fate-options-veiled">
+                    <div class="fate-option-card locked fate-veiled-card">
+                      <div class="fate-option-top">
+                        <strong class="fate-option-title">${en ? '✦ Veiled Crossroads' : '✦ Сокрытый перекрёсток'}</strong>
+                        <span class="fate-option-badge">${en ? '🔒 Unknown' : '🔒 Неведомо'}</span>
+                      </div>
+                      <p class="fate-option-desc">${en ? 'Choices and karmic consequences will manifest once you arrive at this milestone.' : 'Выборы и их кармические последствия проявятся, когда ты достигнешь этого рубежа.'}</p>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+
             return `
               <div class="fate-step-card ${statusClass}">
                 <div class="fate-step-header">

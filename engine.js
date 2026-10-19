@@ -534,7 +534,7 @@
       if(['sweep','haul'].includes(key))return guidance(s,'claim-order','',language);
     }
     if(action==='fight'){
-      if(s.stage===0&&(s.storyStep!==6||s.realm<1||s.world.location!=='village'))return say('Первый бой откроется в деревне на последнем шаге сюжета, после первого прорыва.','The first fight opens in the village at the last story step, after your first breakthrough.');
+      if(s.stage===0&&(s.storyStep!==6||s.realm<1||s.world.location!=='village'))return say('Пока меридианы спят, вступать в бой невозможно. Укрепи тело, изучи технику и открой каналы ци, чтобы встретить грядущую угрозу.','Entering battle is impossible while meridians slumber. Strengthen your body, learn techniques, and unseal qi channels to face the coming threat.');
       if(s.world.journey)return say('Дождись окончания перехода.','Wait until your journey ends.');
       if(s.cooldown>0)return say(`Отдых после боя: ещё ${Math.ceil(s.cooldown)} сек.`,`Rest after battle: ${Math.ceil(s.cooldown)} sec remaining.`);
       if(battlePower(s)<enemy(s).power)return say(`Сила ${n(battlePower(s))}/${n(enemy(s).power)}. Тренируй тело кликами, изучай техники и совершай прорывы.`,`Power ${n(battlePower(s))}/${n(enemy(s).power)}. Train your body through clicks, learn techniques and break through.`);

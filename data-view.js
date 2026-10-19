@@ -73,7 +73,11 @@
     if(['hero','world'].includes(tab))for(const a of E.techniqueActions?.(s,root.IsekaiLocale?.language||'ru')||[])row(a.name,a.hint,`${E.techniques[a.technique].name}. ${a.description}`,btn('technique-action',a.id,uiText('Выполнить приём','Use method'),a.enabled)+(s.cultivation.active!==a.technique?btn('equip-technique',a.technique,uiText('Выбрать эту технику','Equip this technique')):''));
     if(tab==='combat') {
       const Combat = typeof module !== 'undefined' && module.exports ? require('./combat.js') : (root.IsekaiCombat || E.combat);
-      if(s.stage===0)row(uiText('Первый бой','First fight'),uiText('Деревня','Village'),uiText('После прорыва и перед финалом первой арки. Можно завершить арку без боя.','After breakthrough and before first arc finale. Can be completed peacefully.'));
+      const isShrouded = s.stage === 0 && (s.storyStep || 0) < 6;
+      if(s.stage===0) {
+        if(isShrouded) row(uiText('Боевое предчувствие','Martial intuition'),uiText('Завеса тумана','Shroud of mist'),uiText('Опасности сокрыты до пробуждения ци.','Perils remain veiled until qi awakens.'));
+        else row(uiText('Тревога на мосту','Bridge alarm'),uiText('Белый Клык','White Fang'),uiText('Повозка заблокирована у моста бандитами.','Cart blocked at the bridge by bandits.'));
+      }
       if(s.combat) {
         const c=s.combat;
         if(c.finished) {
@@ -94,10 +98,19 @@
           );
         }
       } else {
-        row(uiText('Соперник','Rival'),E.enemy(s).name,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('combat-start','',uiText('Вступить в поединок','Enter tactical duel'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power)+' '+btn('fight','',uiText('Быстрый бой','Quick fight'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
-        row(uiText('Подходящий стиль','Recommended style'),{swift:uiText('Быстрый шаг','Swift Step'),armored:uiText('Пробивающий удар','Piercing Strike'),mystic:uiText('Духовный заслон','Spirit Ward')}[E.enemy(s).type],uiText('Соответствие даёт +35%','Matching style grants +35%'));
-        row(uiText('Интервал','Interval'),`${Math.ceil(s.cooldown)} сек`,uiText('Пять минут после победы','Five minutes after a victory'));
-        row(uiText('Результат','Reward'),s.wins,`Монеты +${f(30*1.8**s.wins)}; травы +${(s.wins+1)*10}; осколки +1`);
+        if(isShrouded) {
+          row(uiText('Соперник','Rival'),uiText('Неведомая опасность','Unknown Peril'),`Порог: ???; результат: ${f(E.battlePower(s))}`,btn('combat-start','',uiText('Вступить в поединок','Enter tactical duel'),false)+' '+btn('fight','',uiText('Быстрый бой','Quick fight'),false));
+          row(uiText('Подходящий стиль','Recommended style'),uiText('Неизвестно','Unknown'),uiText('Раскроется при столкновении','Revealed upon encounter'));
+          row(uiText('Интервал','Interval'),`${Math.ceil(s.cooldown)} сек`,uiText('Пять минут после победы','Five minutes after a victory'));
+          row(uiText('Результат','Reward'),s.wins,uiText('Раскроется в схватке','Revealed in battle'));
+        } else {
+          let foeName = E.enemy(s).name;
+          if (s.stage === 0 && s.storyStep === 6 && foeName === 'Дорожный разбойник') foeName = uiText('Головорез Белого Клыка', 'White Fang Thug');
+          row(uiText('Соперник','Rival'),foeName,`Порог: ${f(E.enemy(s).power)}; результат: ${f(E.battlePower(s))}`,btn('combat-start','',uiText('Вступить в поединок','Enter tactical duel'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power)+' '+btn('fight','',uiText('Быстрый бой','Quick fight'),!s.cooldown&&E.battlePower(s)>=E.enemy(s).power));
+          row(uiText('Подходящий стиль','Recommended style'),{swift:uiText('Быстрый шаг','Swift Step'),armored:uiText('Пробивающий удар','Piercing Strike'),mystic:uiText('Духовный заслон','Spirit Ward')}[E.enemy(s).type],uiText('Соответствие даёт +35%','Matching style grants +35%'));
+          row(uiText('Интервал','Interval'),`${Math.ceil(s.cooldown)} сек`,uiText('Пять минут после победы','Five minutes after a victory'));
+          row(uiText('Результат','Reward'),s.wins,`Монеты +${f(30*1.8**s.wins)}; травы +${(s.wins+1)*10}; осколки +1`);
+        }
       }
     }
     if(tab==='world') {

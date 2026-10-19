@@ -1000,6 +1000,7 @@
             ${button('combat-act', 'technique', uiText('Боевая техника', 'Martial technique'))}
             ${button('combat-act', 'pearl', uiText('Жемчужина', 'Pearl'), !c.pearlUsed)}
             ${button('combat-act', 'pill', uiText('Пилюля', 'Pill'), s.resources.pills >= 1)}
+            ${s.resources.pills === 0 ? `<button type="button" class="combat-alchemy-shortcut" id="combat-alchemy-btn">🧪 ${uiText('Котёл алхимии (0 пилюль)', 'Alchemy cauldron (0 pills)')}</button>` : ''}
           </div>
           <div class="deck-secondary">
             ${button('combat-retreat', '', uiText('Отступить', 'Retreat'))}
@@ -1088,8 +1089,17 @@
     }).join(' ');
     if ($('hero-compact-resources')) $('hero-compact-resources').innerHTML = h(compactResHtml);
     if ($('hud-resources')) $('hud-resources').innerHTML = h(compactResHtml);
-    const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['world', 'Путешествия', 0], ['sect', 'Секта', 2], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
+    const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['world', 'Путешествия', 0], ['sect', 'Секта', 1], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
     $('navigation').innerHTML = h(tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''} tab-${id}" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : `<span class="tab-glyph">${tabGlyphs[id] || '✦'}</span><span class="tab-label">${title}</span>` + tabBadgeHtml(id)}</button>`).join(''));
+    if ($('aside-tools')) {
+      const showAlchemy = s.stage >= 1 || (s.alchemy?.recipes?.length > 0);
+      $('aside-tools').innerHTML = h(`
+        <div class="aside-tools-header">${uiText('ИНСТРУМЕНТЫ', 'TOOLS')}</div>
+        <button type="button" class="aside-tool-btn" id="aside-map"><span class="tool-icon">🗺️</span><span class="tool-label">${uiText('Карта мира', 'World Map')}</span></button>
+        <button type="button" class="aside-tool-btn" id="aside-fate"><span class="tool-icon">✦</span><span class="tool-label">${uiText('Древо Судьбы', 'Fate Tree')}</span></button>
+        ${showAlchemy ? `<button type="button" class="aside-tool-btn" id="aside-alchemy"><span class="tool-icon">🧪</span><span class="tool-label">${uiText('Алхимия', 'Alchemy')}</span></button>` : ''}
+      `);
+    }
     let html = '';
     if (tab === 'hero') {
       const need = E.needed(s), bc = E.breakthroughCost(s);
@@ -1218,7 +1228,8 @@
       const work=order?`<section class="hero-current-order" data-hero-section="order">${employmentView()}${E.workMastered(s,order.kind)?button('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')):''}${!E.canWorkOrder(s)&&!s.world.journey?button('travel',order.place||'village',uiText('Вернуться к месту работы','Return to the workplace'),E.world.canTravel(s,order.place||'village')):''}</section>`:'';
       const scene=E.world.current(s);
       const meeting=scene?`<section class="hero-meeting"><strong>${E.world.sceneText(scene,'title',L?.language||'ru',s)}</strong><p>${uiText('Встреча ждёт твоего решения.','An encounter awaits your decision.')}</p><button data-tab="world">${uiText('Вернуться к встрече','Return to encounter')}</button></section>`:'';
-      html=overview+work+meeting+heroStory+`<section data-hero-section="actions">${heroTraining}${heroActivities}${techniqueActionsView()}</section>`+heroProgress+heroTechniques+heroEquipment+nextChapterHtml;
+      const pausedBanner = !E.activityRunning(s) ? `<div class="activity-paused-banner"><span>⏸ ${uiText('Занятие приостановлено (ручное действие, путь или бой).', 'Activity paused (manual action, journey or combat).')}</span><button type="button" class="quick-resume-btn" data-quick-action="activity" data-quick-value="${s.activity}">▶ ${uiText('Возобновить: ', 'Resume: ') + t(E.activities[s.activity]?.name || '')}</button></div>` : '';
+      html=overview+work+meeting+heroStory+`<section data-hero-section="actions">${pausedBanner}${heroTraining}${heroActivities}${techniqueActionsView()}</section>`+heroProgress+heroTechniques+heroEquipment+nextChapterHtml;
       html+=fold('paths',uiText('Способы развития','Ways to grow'),developmentView());
       html+=!order?fold('work',uiText('Доступная работа','Available work'),employmentView()):'';
       html+=fold('achievements',uiText('Маленькие победы','Small victories'),achievementsView());
@@ -1229,10 +1240,36 @@
 
     if (tab === 'combat') {
       const foe = E.enemy(s), counter = { swift: uiText('Быстрый шаг', 'Swift Step'), armored: uiText('Пробивающий удар', 'Piercing Strike'), mystic: uiText('Духовный заслон', 'Spirit Ward') };
+      const isShrouded = s.stage === 0 && (s.storyStep || 0) < 6;
       if (s.combat) {
         html = combatArenaView(s, foe);
+      } else if (isShrouded) {
+        html = `<h2>${uiText('Испытания пути · Завеса тумана', 'Trials of the Path · Shroud of Mist')}</h2>
+        <p class="intro">${uiText('Твои меридианы скованы, а духовное восприятие ещё дремлет. Пока ты слаб и держишься очага, опасности внешнего мира сокрыты пеленой. Закали тело и открой каналы ци, чтобы встретить грядущую угрозу.', 'Your meridians are sealed and spiritual perception slumbers. While you remain frail by the hearth, the world’s perils remain veiled. Temper your body and unseal your qi channels to face the looming danger.')}</p>
+        <div class="rebirth combat-duel combat-shrouded">
+          <div class="eyebrow">${uiText('СОКРЫТАЯ УГРОЗА', 'VEILED THREAT')}</div>
+          <h2>${uiText('Неведомая опасность', 'Unknown Peril')}</h2>
+          <p>${uiText('Сила соперника:', 'Rival power:')} <strong>???</strong></p>
+          <p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${uiText('Неизвестно', 'Unknown')}.</p>
+          <p>${uiText('Награда:', 'Reward:')} ${uiText('Раскроется в схватке', 'Revealed in battle')}.</p>
+          <div class="combat-actions-row">
+            ${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), false)}
+            ${button('fight', '', uiText('Быстрый бой', 'Quick fight'), false)}
+          </div>
+          <p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('Противник проявит себя, когда ты столкнёшься с угрозой на пути.', 'The adversary will reveal themselves when a threat blocks your path.')}</p>
+        </div>`;
       } else {
-        html = `<h2>${s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path')}</h2>${s.stage===0?`<p class="intro">${uiText('Первый бой: в деревне, после прорыва и перед финалом первой арки. Можно завершить арку без боя.', 'First fight opens in the village after your breakthrough and before the first arc finale. Can be completed peacefully.')}</p>`:''}<p class="intro">${uiText('Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.', 'Train your body, techniques and weapons to overcome stronger rivals. Outcomes are predictable; randomness does not take your rewards away.')}</p><div class="rebirth combat-duel"><div class="eyebrow">${uiText('СЛЕДУЮЩИЙ СОПЕРНИК', 'NEXT RIVAL')}</div><h2>${foe.name}</h2><p>${uiText('Сила соперника:', 'Rival power:')} <strong>${fmt(foe.power)}</strong></p><p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${counter[foe.type]}.</p><p>${uiText('Награда:', 'Reward:')} ${fmt(30 * 1.8 ** s.wins)} ${uiText('монет', 'coins')} · ${(s.wins + 1) * 10} ${uiText('трав', 'herbs')} · 1 ${uiText('осколок', 'shard')}.</p><div class="combat-actions-row">${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), s.cooldown === 0 && E.battlePower(s) >= foe.power)} ${button('fight', '', s.cooldown > 0 ? `${uiText('Отдых: ', 'Rest: ')}${duration(s.cooldown)}` : uiText('Быстрый бой', 'Quick fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}</div><p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('После боя — 5 минут отдыха.', 'Rest for 5 minutes after a fight.')}</p></div>`;
+        let foeTitle = foe.name;
+        let alertBanner = '';
+        if (s.stage === 0 && s.storyStep === 6) {
+          if (foeTitle === 'Дорожный разбойник') foeTitle = uiText('Головорез Белого Клыка', 'White Fang Thug');
+          alertBanner = `<div class="combat-alert-banner">⚔ ${uiText('ОПАСНОСТЬ У ДЕРЕВЕНСКОГО МОСТА · Засада банды Белого Клыка', 'DANGER AT VILLAGE BRIDGE · White Fang Bandits Ambush')}</div>`;
+        } else if (s.stage === 1 && s.chapterTwoStep === 6 && E.chapterTwo) {
+          const scion = E.chapterTwo.beats?.[6]?.scionName ? E.chapterTwo.beats[6].scionName(s, L?.language || 'ru') : null;
+          if (scion) foeTitle = scion;
+        }
+        const heading = s.stage === 1 ? uiText('Арена чести и турниры секты', 'Honor Arena and Sect Tournaments') : (s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path'));
+        html = `${alertBanner}<h2>${heading}</h2><p class="intro">${uiText('Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.', 'Train your body, techniques and weapons to overcome stronger rivals. Outcomes are predictable; randomness does not take your rewards away.')}</p><div class="rebirth combat-duel"><div class="eyebrow">${uiText('СЛЕДУЮЩИЙ СОПЕРНИК', 'NEXT RIVAL')}</div><h2>${foeTitle}</h2><p>${uiText('Сила соперника:', 'Rival power:')} <strong>${fmt(foe.power)}</strong></p><p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${counter[foe.type]}.</p><p>${uiText('Награда:', 'Reward:')} ${fmt(30 * 1.8 ** s.wins)} ${uiText('монет', 'coins')} · ${(s.wins + 1) * 10} ${uiText('трав', 'herbs')} · 1 ${uiText('осколок', 'shard')}.</p><div class="combat-actions-row">${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), s.cooldown === 0 && E.battlePower(s) >= foe.power)} ${button('fight', '', s.cooldown > 0 ? `${uiText('Отдых: ', 'Rest: ')}${duration(s.cooldown)}` : uiText('Быстрый бой', 'Quick fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}</div><p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('После боя — 5 минут отдыха.', 'Rest for 5 minutes after a fight.')}</p></div>`;
       }
     }
     if (tab === 'sect') {
@@ -1258,7 +1295,11 @@
       const journey=s.world.journey?(uiText('В пути: ','Travelling: ')+t(E.world.locations[s.world.journey.destination]?.name||'')+` · ${Math.ceil(s.world.journey.remaining)} `+uiText('сек.','s')):t(place);
       if($('hud-realm'))$('hud-realm').textContent=`✧ ${E.realmName(s.realm)}`;
       if($('hud-location'))$('hud-location').textContent=journey;
-      if($('hud-activity'))$('hud-activity').textContent=`● ${t(E.activities[s.activity]?.name||'')}`;
+      const running = E.activityRunning(s);
+      if($('hud-activity')) {
+        $('hud-activity').textContent = running ? `● ${t(E.activities[s.activity]?.name||'')}` : `⏸ ${uiText('На паузе: ','Paused: ')}${t(E.activities[s.activity]?.name||'')}`;
+        $('hud-activity').className = `hud-item hud-activity ${running ? 'activity-active' : 'activity-paused'}`;
+      }
       if($('hud-stamina-lbl'))$('hud-stamina-lbl').textContent=uiText('Выносливость','Stamina');
       if($('hud-stamina-val'))$('hud-stamina-val').textContent=`${fmt(s.stamina)} / ${E.staminaMax(s)}`;
       if($('hud-stamina-fill')?.style){
@@ -1911,6 +1952,9 @@
     }
     if(b.dataset.action==='choice'&&E.world.knownLocations(s).length>placesBefore&&s.events[0]?.text.startsWith('Открыта дорога:'))toast(s.events[0].text);
     if (b.id === 'save') save(true);
+    if (b.id === 'aside-map') { Sound.playClick(); openMapDialog(); return; }
+    if (b.id === 'aside-fate') { Sound.playClick(); openFateTreeDialog(); return; }
+    if (b.id === 'aside-alchemy' || b.id === 'combat-alchemy-btn') { Sound.playClick(); openAlchemyDialog(); return; }
     if (b.id === 'export') { const value = typeof IsekaiSaveCode !== 'undefined' ? IsekaiSaveCode.envelope(s) : s; const url = URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})); const a = document.createElement('a'); a.href = url; a.download = `${view === 'data' ? 'data-snapshot' : 'isekai-idle'}-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
     if (s.stage === 0 && !['hero','combat','world','roadmap'].includes(tab)) tab = 'hero'; render();
   });
