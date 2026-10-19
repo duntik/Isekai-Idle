@@ -606,6 +606,18 @@
         actions = `<button type="button" class="quick-action-btn" data-quick-action="click" data-quick-value="squat" ${E.canClick(s, 'squat') ? '' : 'disabled'}>${uiText('✦ Присесть (-3)', '✦ Squat (-3)')}</button> <button type="button" class="quick-action-btn" data-quick-action="click" data-quick-value="run" ${E.canClick(s, 'run') ? '' : 'disabled'}>${uiText('✦ Пробежка (-5)', '✦ Run (-5)')}</button>`;
       } else if (step === 2) {
         const qiVal = s.resources?.qi || 0;
+        const xpVal = s.xp || 0;
+        const learnedCount = Object.keys(s.cultivation?.learned || {}).length;
+        const isMet = qiVal >= 15 || learnedCount >= 2 || xpVal >= 30;
+        const isMeditating = s.activity === 'meditate' && E.activityRunning(s);
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="15" value="${Math.min(15, qiVal)}" aria-label="${uiText('Ци', 'Qi')}"></progress><span>${uiText('Ци: ', 'Qi: ')}${fmt(qiVal)} / 15 ${qiVal >= 15 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="30" value="${Math.min(30, xpVal)}" aria-label="${uiText('Понимание', 'Insight')}"></progress><span>${uiText('Понимание: ', 'Insight: ')}${fmt(xpVal)} / 30 ${isMet ? '✓' : ''}</span></div></div>`;
+        if (!isMeditating) {
+          actions = `<button type="button" class="quick-action-btn" data-quick-action="activity" data-quick-value="meditate" ${E.canActivity(s, 'meditate') ? '' : 'disabled'}>${uiText('☯ Постигать основы (медитация)', '☯ Study foundation (meditation)')}</button>`;
+        } else {
+          actions = `<span class="story-goal-note">${uiText('Постижение свитков идёт', 'Studying scriptures active')}</span>`;
+        }
+      } else if (step === 3) {
+        const qiVal = s.resources?.qi || 0;
         const realmVal = s.realm || 0;
         const isMeditating = s.activity === 'meditate' && E.activityRunning(s);
         const readyBt = s.realm < 2 && s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
@@ -617,34 +629,49 @@
         } else {
           actions = `<span class="story-goal-note">${uiText('Медитация активна (+ци)', 'Meditation active (+qi)')}</span>`;
         }
-      } else if (step === 3) {
+      } else if (step === 4) {
+        const herbsVal = s.resources?.herbs || 0;
+        const brewsCount = s.alchemy?.stats?.brews || 0;
+        const pillsCount = s.resources?.pills || 0;
+        const isMet = brewsCount >= 1 || herbsVal >= 15 || pillsCount >= 1;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="15" value="${Math.min(15, herbsVal)}" aria-label="${uiText('Травы', 'Herbs')}"></progress><span>${uiText('Травы: ', 'Herbs: ')}${fmt(herbsVal)} / 15 ${herbsVal >= 15 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><span class="story-goal-status ${isMet ? 'active' : 'paused'}">${isMet ? '● ' + uiText('Сварено пилюль: ', 'Pills brewed: ') + Math.max(brewsCount, pillsCount, 1) + ' ✓' : '⚠ ' + uiText('Сварено пилюль: ', 'Pills brewed: ') + '0'}</span></div></div>`;
+        actions = `<button type="button" class="quick-action-btn golden-btn" data-quick-action="alchemy">${uiText('🧪 Открыть Алхимический котёл', '🧪 Open Alchemy Crucible')}</button>`;
+      } else if (step === 5) {
+        const wepVal = s.weapon || 0;
+        const styleVal = s.style || 'balanced';
+        const isMet = wepVal >= 1 || (s.mastery || 0) >= 1 || styleVal !== 'balanced' || (s.world?.visits?.mountains > 0);
+        const styleName = { balanced: uiText('Равновесие', 'Balanced'), swift: uiText('Быстрый шаг', 'Swift step'), piercing: uiText('Пробивающий удар', 'Piercing strike'), ward: uiText('Духовный заслон', 'Spiritual ward') }[styleVal] || styleVal;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="1" value="${Math.min(1, wepVal)}" aria-label="${uiText('Оружие: ', 'Weapon: ')}"></progress><span>${uiText('Оружие: ', 'Weapon: ')}${wepVal} / 1 ${wepVal >= 1 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><span class="story-goal-status ${isMet ? 'active' : 'paused'}">${uiText('Боевой стиль: ', 'Combat style: ')}${styleName} ${isMet ? '✓' : ''}</span></div></div>`;
+        actions = `<button type="button" class="quick-action-btn" data-quick-action="style" data-quick-value="${styleVal === 'balanced' ? 'swift' : 'balanced'}">${uiText('⚔ Закалить оружие', '⚔ Temper weapon')}</button>`;
+      } else if (step === 6) {
         const winsVal = s.wins || 0;
         const pwrVal = E.power(s);
-        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="1" value="${Math.min(1, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 1 ${winsVal >= 1 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="24" value="${Math.min(24, pwrVal)}" aria-label="${uiText('Боевая мощь', 'Power')}"></progress><span>${uiText('Боевая мощь: ', 'Power: ')}${fmt(pwrVal)} / 24 ${pwrVal >= 24 ? '✓' : ''}</span></div></div>`;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="2" value="${Math.min(2, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 2 ${winsVal >= 2 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="36" value="${Math.min(36, pwrVal)}" aria-label="${uiText('Боевая мощь', 'Power')}"></progress><span>${uiText('Боевая мощь: ', 'Power: ')}${fmt(pwrVal)} / 36 ${pwrVal >= 36 ? '✓' : ''}</span></div></div>`;
         actions = `<button type="button" class="quick-action-btn golden-btn" data-tab="combat">${uiText('⚔ Выйти на арену чести', '⚔ Enter arena of honor')}</button>`;
-      } else if (step === 4) {
+      } else if (step === 7) {
         const xpVal = s.xp || 0;
+        const relicsVal = s.resources?.relics || 0;
         const isMeditating = s.activity === 'meditate' && E.activityRunning(s);
-        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="50" value="${Math.min(50, xpVal)}" aria-label="${uiText('Понимание', 'Insight')}"></progress><span>${uiText('Понимание: ', 'Insight: ')}${fmt(xpVal)} / 50 ${xpVal >= 50 ? '✓' : ''}</span></div></div>`;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="50" value="${Math.min(50, xpVal)}" aria-label="${uiText('Понимание', 'Insight')}"></progress><span>${uiText('Понимание: ', 'Insight: ')}${fmt(xpVal)} / 50 ${xpVal >= 50 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, relicsVal)}" aria-label="${uiText('Реликвии', 'Relics')}"></progress><span>${uiText('Реликвии: ', 'Relics: ')}${relicsVal} / 3</span></div></div>`;
         if (xpVal < 50) {
           if (!isMeditating) {
-            actions = `<button type="button" class="quick-action-btn" data-quick-action="activity" data-quick-value="meditate" ${E.canActivity(s, 'meditate') ? '' : 'disabled'}>${uiText('☯ Постигать основы (медитация)', '☯ Study foundation (meditation)')}</button>`;
+            actions = `<button type="button" class="quick-action-btn" data-quick-action="activity" data-quick-value="meditate" ${E.canActivity(s, 'meditate') ? '' : 'disabled'}>${uiText('☯ Медитировать для расшифровки', '☯ Meditate for decryption')}</button>`;
           } else {
             actions = `<span class="story-goal-note">${uiText('Постижение свитков идёт', 'Studying scriptures active')}</span>`;
           }
         }
-      } else if (step === 5) {
+      } else if (step === 8) {
         const realmVal = s.realm || 0;
         const winsVal = s.wins || 0;
         const goldVal = s.resources?.gold || 0;
-        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, realmVal)}" aria-label="${uiText('Ступень', 'Realm')}"></progress><span>${uiText('Ступень: ', 'Realm: ')}${realmVal} / 3</span></div><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 3</span></div><div class="story-goal-progress-row"><progress max="150" value="${Math.min(150, goldVal)}" aria-label="${uiText('Монеты', 'Gold')}"></progress><span>${uiText('Монеты: ', 'Gold: ')}${fmt(goldVal)} / 150</span></div></div>`;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, realmVal)}" aria-label="${uiText('Ступень', 'Realm')}"></progress><span>${uiText('Ступень: ', 'Realm: ')}${realmVal} / 3 ${realmVal >= 3 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="3" value="${Math.min(3, winsVal)}" aria-label="${uiText('Победы', 'Victories')}"></progress><span>${uiText('Победы: ', 'Victories: ')}${winsVal} / 3 ${winsVal >= 3 ? '✓' : ''}</span></div><div class="story-goal-progress-row"><progress max="150" value="${Math.min(150, goldVal)}" aria-label="${uiText('Монеты', 'Gold')}"></progress><span>${uiText('Монеты: ', 'Gold: ')}${fmt(goldVal)} / 150 ${goldVal >= 150 ? '✓' : ''}</span></div></div>`;
         if (realmVal < 3) {
           const readyBt = s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
           if (readyBt) {
             actions = `<button type="button" class="quick-action-btn golden-btn" data-quick-action="breakthrough" data-quick-value="">${uiText('⚡ Совершить Прорыв меридианов', '⚡ Perform Meridian Breakthrough')}</button>`;
           }
         } else if (winsVal < 3) {
-          actions = `<button type="button" class="quick-action-btn golden-btn" data-tab="combat">${uiText('⚔ Сразиться в турнире внешних учеников', '⚔ Fight in outer disciples’ tournament')}</button>`;
+          actions = `<button type="button" class="quick-action-btn golden-btn" data-tab="combat">${uiText('⚔ Сразиться на арене турнира', '⚔ Fight in tournament arena')}</button>`;
         }
       }
       if (!tracker && !actions) return '';
@@ -851,17 +878,17 @@
     return `<div class="story-goal system-box ${boxClass}"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${headerTitle}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${promptMsg}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
   }
   function renderArchiveList(s) {
-    const isCh2 = s.stage === 1;
+    const isCh2 = s.stage >= 1;
     const ch1Html = E.story.slice(0, isCh2 ? E.story.length : s.storyStep).map((_, i) => {
       const b = E.storyBeat(s, i), d = stepDecisionInfo(s, i);
-      const openBtn = !isCh2 ? `<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу', '📖 Open this chapter')}</button></p>` : '';
+      const openBtn = s.stage === 0 ? `<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть эту главу', '📖 Open this chapter')}</button></p>` : '';
       return `<h3>${uiText('Глава', 'Chapter')} ${i + 1} · ${b.title}</h3><p>${b.text}</p>${d ? `<p><strong>${uiText('Выбор: ', 'Choice: ')}</strong>${d.title}. ${d.desc}</p>` : ''}${b.chronicle ? `<p class="story-chronicle-past"><em>${b.chronicle}</em></p>` : ''}${openBtn}`;
     }).join('');
 
     let ch2Html = '';
     if (isCh2) {
       const ch2Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : (globalThis.IsekaiChapterTwo || (typeof window !== 'undefined' ? window.IsekaiChapterTwo : null));
-      const ch2Step = s.chapterTwoStep || 0;
+      const ch2Step = s.stage > 1 ? (ch2Mod?.beats?.length || 9) : (s.chapterTwoStep || 0);
       if (ch2Mod && ch2Mod.beats) {
         ch2Html = ch2Mod.beats.slice(0, ch2Step).map((b, i) => {
           const beatLocalized = ch2Mod.getBeat(s, i, L?.language || 'ru');
@@ -1709,7 +1736,7 @@
     if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
     if(b.id==='open-map'){openMapDialog();return;}
     if(b.id==='close-map'){$('world-map-dialog')?.close?.();return;}
-    if(b.id==='open-alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
+    if(b.id==='open-alchemy'||b.dataset?.quickAction==='alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
     if(b.id==='close-alchemy'){$('alchemy-dialog')?.close?.();return;}
     if(b.dataset?.alchemyTab){activeAlchemyTab=b.dataset.alchemyTab;renderAlchemy();return;}
     if(b.dataset?.alchemyAction){

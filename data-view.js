@@ -33,7 +33,7 @@
       }
       if(s.stage === 1) {
         const beat = E.chapterTwoBeat ? E.chapterTwoBeat(s, s.chapterTwoStep, root.IsekaiLocale?.language || 'ru') : null;
-        if(beat) row(beat.title, `${(s.chapterTwoStep || 0) + 1}/6`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        if(beat) row(beat.title, `${(s.chapterTwoStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
         else row(uiText('Глава 2: Врата секты', 'Chapter 2: Sect Gates'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
       }
       const journey=s.world.journey;
