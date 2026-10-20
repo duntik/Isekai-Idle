@@ -300,6 +300,22 @@
     return true;
   }
 
+  function maxBrew(s, recipeId, mode = 'crucible') {
+    if (!canBrew(s, recipeId, mode)) return 0;
+    const r = RECIPES[recipeId];
+    if (!r) return 0;
+    let maxCount = 999;
+    for (const [ingId, count] of Object.entries(r.ingredients)) {
+      const has = s.alchemy.ingredients[ingId] || 0;
+      maxCount = Math.min(maxCount, Math.floor(has / count));
+    }
+    if (mode === 'pearl') {
+      const qi = s.resources.qi || 0;
+      maxCount = Math.min(maxCount, Math.floor(qi / (r.pearlQi || 1)));
+    }
+    return Math.max(0, maxCount);
+  }
+
   function brew(s, recipeId, mode = 'crucible', E = null) {
     if (!canBrew(s, recipeId, mode)) return false;
     const r = RECIPES[recipeId];
@@ -475,6 +491,7 @@
     fresh,
     validate,
     canBrew,
+    maxBrew,
     brew,
     buy,
     sellPill,

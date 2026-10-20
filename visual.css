@@ -455,6 +455,448 @@ html:not([data-interface="data"]) .inspector-travel-btn:hover:not(:disabled){tra
 html:not([data-interface="data"]) .inspector-details-btn{padding:8px 10px;font-size:11px;background:rgba(20,36,32,0.8);border:1px solid rgba(46,219,162,0.4);color:var(--spirit-jade);border-radius:6px;cursor:pointer}
 html:not([data-interface="data"]) .inspector-details-btn:hover{background:rgba(46,219,162,0.15);border-color:var(--spirit-jade)}
 
+/* ══════════════════════════════════════════════════════════════
+   THREE PILLARS OF CULTIVATION CHAMBER (ТРИ СТОЛПА КУЛЬТИВАЦИИ)
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .cultivation-chamber {
+  margin: 1.5rem 0 1rem;
+  padding: 1.25rem 1.4rem;
+  background: linear-gradient(180deg, rgba(18, 34, 38, 0.92) 0%, rgba(12, 23, 28, 0.98) 100%);
+  border: 1px solid rgba(48, 67, 72, 0.85);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(229, 195, 130, 0.15);
+}
+
+html:not([data-interface="data"]) .three-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+html:not([data-interface="data"]) .pillar-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(14, 26, 30, 0.85);
+  border: 1px solid rgba(48, 67, 72, 0.9);
+  border-radius: 9px;
+  padding: 1rem 1.15rem;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+html:not([data-interface="data"]) .pillar-card:hover {
+  transform: translateY(-2px);
+}
+
+html:not([data-interface="data"]) .pillar-spirit {
+  border-top: 3px solid var(--spirit-jade);
+}
+html:not([data-interface="data"]) .pillar-spirit:hover {
+  box-shadow: 0 6px 20px rgba(46, 219, 162, 0.18);
+  border-color: rgba(46, 219, 162, 0.45);
+}
+
+html:not([data-interface="data"]) .pillar-body {
+  border-top: 3px solid #f59e0b;
+}
+html:not([data-interface="data"]) .pillar-body:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+html:not([data-interface="data"]) .pillar-dao {
+  border-top: 3px solid #38bdf8;
+}
+html:not([data-interface="data"]) .pillar-dao:hover {
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+html:not([data-interface="data"]) .pillar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+html:not([data-interface="data"]) .pillar-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html:not([data-interface="data"]) .pillar-spirit .pillar-icon {
+  color: var(--spirit-jade);
+  border-color: rgba(46, 219, 162, 0.3);
+}
+html:not([data-interface="data"]) .pillar-body .pillar-icon {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+html:not([data-interface="data"]) .pillar-dao .pillar-icon {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+html:not([data-interface="data"]) .pillar-tag {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+html:not([data-interface="data"]) .pillar-title {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+html:not([data-interface="data"]) .pillar-gauge {
+  margin-bottom: 0.75rem;
+}
+
+html:not([data-interface="data"]) .pillar-gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  margin-bottom: 3px;
+  color: #cbd5e1;
+}
+
+html:not([data-interface="data"]) .pillar-gauge progress {
+  width: 100%;
+  height: 9px;
+  border-radius: 5px;
+}
+
+html:not([data-interface="data"]) .pillar-substats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin: 0.4rem 0 0.65rem;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+html:not([data-interface="data"]) .pillar-substat strong {
+  color: #e2e8f0;
+}
+
+html:not([data-interface="data"]) .pillar-hint {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #8da1a3;
+  margin: 0 0 0.85rem;
+  flex-grow: 1;
+}
+
+html:not([data-interface="data"]) .pillar-action {
+  margin-top: auto;
+}
+
+html:not([data-interface="data"]) .pillar-action button {
+  width: 100%;
+  font-weight: 700;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+html:not([data-interface="data"]) .pillar-styles-block {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(48, 67, 72, 0.7);
+}
+
+html:not([data-interface="data"]) .pillar-subhead {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 5px;
+}
+
+html:not([data-interface="data"]) .pillar-styles-block .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+html:not([data-interface="data"]) .pillar-styles-block .actions button {
+  flex: 1 1 calc(50% - 4px);
+  padding: 4px 6px;
+  font-size: 10.5px;
+}
+
+html:not([data-interface="data"]) .pillar-weapon-block {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+html:not([data-interface="data"]) .pillar-weapon-block button {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+html:not([data-interface="data"]) .pillar-cost {
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INTERACTIVE GOAL NAVIGATION & SMART ROUTINE
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .hero-overview-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+html:not([data-interface="data"]) .goal-direct-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(229, 195, 130, 0.2), rgba(200, 150, 75, 0.15));
+  border: 1px solid rgba(229, 195, 130, 0.5);
+  color: var(--gold);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+html:not([data-interface="data"]) .goal-direct-btn:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(229, 195, 130, 0.35), rgba(200, 150, 75, 0.25));
+  box-shadow: 0 0 10px rgba(229, 195, 130, 0.35);
+}
+
+html:not([data-interface="data"]) .auto-resume-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  margin-left: 8px;
+  user-select: none;
+}
+
+html:not([data-interface="data"]) .auto-resume-toggle input {
+  accent-color: var(--spirit-jade);
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMBAT ARENA STYLE BAR
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .combat-style-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  padding: 7px 12px;
+  background: rgba(14, 24, 28, 0.85);
+  border: 1px solid rgba(48, 67, 72, 0.85);
+  border-radius: 8px;
+}
+
+html:not([data-interface="data"]) .combat-style-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+html:not([data-interface="data"]) .combat-style-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+html:not([data-interface="data"]) .combat-style-btn {
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(22, 38, 44, 0.8);
+  border: 1px solid #304348;
+  border-radius: 6px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html:not([data-interface="data"]) .combat-style-btn:hover {
+  border-color: var(--gold);
+  color: #fff;
+}
+
+html:not([data-interface="data"]) .combat-style-btn.is-active {
+  background: linear-gradient(135deg, #d4955a, #8c5d2e);
+  border-color: var(--gold);
+  color: #fff8e7;
+  box-shadow: 0 0 10px rgba(229, 195, 130, 0.35);
+}
+
+html:not([data-interface="data"]) .combat-style-btn.is-counter {
+  border-color: #38bdf8;
+  color: #7dd3fc;
+}
+
+html:not([data-interface="data"]) .combat-style-btn.is-counter.is-active {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border-color: #38bdf8;
+  color: #f0f9ff;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BATCH ALCHEMY CONTROLS
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .alchemy-batch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: rgba(14, 26, 30, 0.85);
+  border: 1px solid rgba(48, 67, 72, 0.75);
+  border-radius: 8px;
+}
+
+html:not([data-interface="data"]) .alchemy-batch-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+html:not([data-interface="data"]) .alchemy-batch-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+html:not([data-interface="data"]) .batch-btn {
+  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 5px;
+  background: rgba(22, 38, 44, 0.8);
+  border: 1px solid #304348;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html:not([data-interface="data"]) .batch-btn:hover {
+  color: #f8fafc;
+  border-color: var(--spirit-jade);
+}
+
+html:not([data-interface="data"]) .batch-btn.active {
+  background: linear-gradient(135deg, #10b981, #047857);
+  border-color: var(--spirit-jade);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(46, 219, 162, 0.35);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INTEGRATED WORLD MAP PORTAL IN TRAVEL TAB
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .world-map-portal-card {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(20, 40, 36, 0.95), rgba(12, 24, 22, 0.98));
+  border: 1px solid rgba(229, 195, 130, 0.45);
+  border-top: 3px solid var(--gold);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+html:not([data-interface="data"]) .portal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+html:not([data-interface="data"]) .portal-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--gold);
+}
+
+html:not([data-interface="data"]) .portal-expand-btn {
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d4955a, #8c5d2e);
+  border: 1px solid var(--gold);
+  color: #fff8e7;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+html:not([data-interface="data"]) .portal-expand-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(229, 195, 130, 0.45);
+}
+
+html:not([data-interface="data"]) .portal-location-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+html:not([data-interface="data"]) .portal-dot {
+  color: var(--spirit-jade);
+  font-size: 14px;
+}
+
+html:not([data-interface="data"]) .portal-journey-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #7dd3fc;
+}
+
+html:not([data-interface="data"]) .portal-hint {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #a5b6b5;
+  margin: 0;
+}
+
+
 
 
 

@@ -70,6 +70,10 @@
   let novelSerif = getUiPref('isekai-novel-serif') === 'true';
   let novelLarge = getUiPref('isekai-novel-large') === 'true';
   let novelViewStep = null;
+  let lastMaintainedActivity = 'meditate';
+  let autoResumeRoutine = getUiPref('isekai-auto-resume') === 'true';
+  let autoResumeTimer = null;
+  let alchemyBatch = 1;
   function applyHeroCollapse() {
     const hero = document.querySelector ? document.querySelector('.hero') : null;
     const toggle = $('hero-collapse-toggle');
@@ -385,7 +389,7 @@
   let toastTimer;
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
   function save(manual = false) { try { localStorage.setItem(KEY, JSON.stringify(s)); if (manual) toast('Прогресс сохранён'); } catch { if (manual) toast('Не удалось сохранить. Используй экспорт.'); } }
-  function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0,before=elapsed>=60&&!pending&&!awaySnapshot?E.returnReport.snapshot(s):null;E.advance(s,pending?0:elapsed);s.last=now;if(before)returnSummary={before,after:E.returnReport.snapshot(s),elapsed};return pending?0:elapsed; }
+  function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0,before=elapsed>=60&&!pending&&!awaySnapshot?E.returnReport.snapshot(s):null;E.advance(s,pending?0:elapsed);s.last=now;if(s.activity&&s.activity!=='rest')lastMaintainedActivity=s.activity;if(before)returnSummary={before,after:E.returnReport.snapshot(s),elapsed};return pending?0:elapsed; }
   function returnSummaryView(){
     if(!returnSummary)return '';const r=E.returnReport.describe(E,returnSummary.before,returnSummary.after,returnSummary.elapsed,L?.language||'ru'),escape=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),num=v=>v.toLocaleString(L?.locale||'ru-RU',{maximumFractionDigits:3}),time=v=>`${Math.ceil(v/60)} ${uiText('мин','min')}`;
     return `<section class="return-report" aria-label="${uiText('Отчёт после возвращения','Return report')}"><div class="section-head"><h2>${uiText('Пока тебя не было','While you were away')}</h2><button id="dismiss-return-report">${uiText('Понятно','Dismiss')}</button></div><p>${escape(r.activity)} · ${time(r.elapsed)}${r.elapsed-r.simulated>1?` · ${uiText('Учтено','Simulated')}: ${time(r.simulated)} (${uiText('до 24 ч за один офлайн-период','up to 24 h per offline period')})`:''}</p><details open><summary>${uiText('Изменения запасов и развития','Resource and progression changes')}</summary>${r.changes.length?`<table class="data-table"><tbody>${r.changes.map(c=>`<tr><th scope="row">${escape(c.label)}</th><td>${c.delta>0?'+':''}${num(c.delta)}</td></tr>`).join('')}</tbody></table>`:`<p>${uiText('Запасы и развитие не изменились.','Resources and progression did not change.')}</p>`}</details><p>${r.reasons.map(escape).join(' ')}</p>${r.opportunities.length?`<details open><summary>${uiText('Возможности к возвращению','Opportunities on return')}</summary><ul>${r.opportunities.map(v=>`<li>${escape(v)}</li>`).join('')}</ul></details>`:''}<small>${r.safety}</small></section>`;
@@ -1063,6 +1067,23 @@
         <div class="combat-log-stream">${logItems}</div>
       </div>`;
 
+    const styleSelectorHtml = (s.stage >= 1 || (s.stage === 0 && s.storyStep >= 6)) ? `
+      <div class="combat-style-bar">
+        <span class="combat-style-label">${uiText('Стойка стиля:', 'Combat stance:')}</span>
+        <div class="combat-style-pills">
+          ${[
+            ['balanced', uiText('☯ Равновесие', '☯ Balanced'), ''],
+            ['swift', uiText('💨 Быстрый шаг', '💨 Swift Step'), 'swift'],
+            ['piercing', uiText('🗡 Пробивающий удар', '🗡 Piercing Strike'), 'armored'],
+            ['ward', uiText('🛡 Духовный заслон', '🛡 Spirit Ward'), 'mystic']
+          ].map(([stId, stName, matchesEnemyType]) => {
+            const isActive = s.style === stId;
+            const isOptimal = foe && foe.type === matchesEnemyType;
+            return `<button type="button" class="combat-style-btn ${isActive ? 'is-active' : ''} ${isOptimal ? 'is-counter' : ''}" data-quick-action="style" data-quick-value="${stId}" title="${isOptimal ? uiText('Контр-стиль против этого врага (+35%)', 'Counter-style against this foe (+35%)') : ''}">${stName}${isOptimal ? ' ✦' : ''}</button>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
     return `
       <h2>${s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path')}</h2>
       <div class="duel-arena ${c.evilGodAwakened ? 'evil-god-active' : ''}">
@@ -1078,6 +1099,7 @@
           ${foeCard}
         </div>
         ${momentumHtml}
+        ${styleSelectorHtml}
         ${deckHtml}
         ${logHtml}
       </div>`;
@@ -1143,11 +1165,122 @@
     }
     let html = '';
     if (tab === 'hero') {
+      if (['meditate', 'train', 'technique', 'work', 'explore', 'laws'].includes(s.activity)) lastMaintainedActivity = s.activity;
       const need = E.needed(s), bc = E.breakthroughCost(s);
-      heroProgress = `<div class="progress-box"><div class="section-head"><h3>${E.realmName(s.realm)}</h3><small>${fmt(s.xp)} / ${fmt(need)} понимания</small></div><progress max="${need}" value="${s.xp}" aria-label="Понимание для прорыва"></progress><p class="intro">${s.found ? `Для прорыва: ${costs(bc)}. На пределе понимание перестаёт накапливаться.` : `Исследуй руины: ${duration(s.explored)} / 10 мин до первой находки.`}</p>${button('breakthrough', '', 'Совершить прорыв', s.found && s.xp >= need && E.affordable(s, bc))}</div>`;
-      heroActivities = `<h3>Одно занятие — один путь</h3><p class="intro">Занятие продолжается офлайн до 24 часов. Его можно сменить в любой момент.</p><div class="cards">${Object.entries(E.activities).filter(([k]) => E.activityVisible(s,k)).map(([k, a]) => card(a.name, a.desc + ' '+E.taskPracticeText(k,L?.language||'ru') + (['meditate', 'train', 'technique', 'laws'].includes(k) ? ` Скорость развития ×${fmt(E.speed(s))}.` : ''), button('activity', k, s.activity === k ? '● Текущее занятие' : 'Выбрать занятие', s.activity !== k))).join('')}</div>`;
-      heroEquipment = `<div class="workers"><h3>Тело ${fmt(s.body)} / ${(s.realm + 1) * 10} · Техника ${fmt(s.mastery)} / ${(s.realm + 1) * 10}</h3><p class="intro">${uiText("Тело растёт от физических действий, работы и двигательных техник. Медитация развивает спокойствие, понимание и энергию, но не тело.","The body grows through physical actions, work and movement techniques. Meditation develops calm, understanding and energy, but not the body.")}</p>${s.stage >= 1 ? `<p class="intro">Стиль даёт +35% силы против подходящего противника.</p><div class="actions">${Object.entries({ balanced: 'Равновесие', swift: 'Быстрый шаг', piercing: 'Пробивающий удар', ward: 'Духовный заслон' }).map(([k, v]) => button('style', k, (s.style === k ? '● ' : '') + v)).join('')}</div>${button('weapon', '', `Улучшить оружие · ур. ${s.weapon}`, s.weapon < (s.realm + 1) * 2 && E.affordable(s, { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) }))}<p class="intro">Цена: ${costs({gold:Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? {ore:Math.ceil(10 * 1.4 ** s.weapon)} : {})})}</p>` : ''}</div>`;
-      if (s.stage < 7) nextChapterHtml = `<div class="rebirth"><div class="eyebrow">БЛИЖАЙШАЯ ЦЕЛЬ · ${E.stages[s.stage + 1].name}</div><p>Ступень ${s.realm} / ${next.realm} · ${s.stage===0?'Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.':`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`}</p><p>Требуется: ${costs(next.cost)}${!s.found ? ' · найти древнюю технику' : ''}</p>${button('advance', '', 'Начать следующую главу', E.canAdvance(s))}</div>`;
+      const pillar1Html = `
+        <div class="pillar-card pillar-spirit">
+          <div class="pillar-header">
+            <span class="pillar-icon">✧</span>
+            <div>
+              <span class="pillar-tag">${uiText('СТОЛП 1 · ДУХ И ДАНЬТЯНЬ', 'PILLAR 1 · SPIRIT & DANTIAN')}</span>
+              <h3 class="pillar-title">${E.realmName(s.realm)}</h3>
+            </div>
+          </div>
+          <div class="pillar-gauge">
+            <div class="pillar-gauge-labels">
+              <span>${uiText('Понимание ци', 'Qi Insight')}</span>
+              <strong>${fmt(s.xp)} / ${fmt(need)}</strong>
+            </div>
+            <progress max="${need}" value="${s.xp}" aria-label="${uiText('Понимание для прорыва', 'Insight for breakthrough')}"></progress>
+          </div>
+          <div class="pillar-substats">
+            <span class="pillar-substat">✦ ${uiText('Скорость развития: ', 'Cultivation speed: ')}<strong>×${fmt(E.speed(s))}</strong></span>
+            <span class="pillar-substat">✧ ${uiText('Спокойствие разума: ', 'Mind tranquility: ')}<strong>${fmt(s.calm)} / 100</strong></span>
+          </div>
+          <p class="pillar-hint">${s.found ? uiText(`Для прорыва: ${costs(bc)}. На пределе понимание перестаёт накапливаться.`, `For breakthrough: ${costs(bc)}. At the cap, insight ceases to accumulate.`) : uiText(`Исследуй руины: ${duration(s.explored)} / 10 мин до первой находки.`, `Explore ruins: ${duration(s.explored)} / 10 min to first find.`)}</p>
+          <div class="pillar-action">
+            ${button('breakthrough', '', uiText('Совершить прорыв', 'Perform breakthrough'), s.found && s.xp >= need && E.affordable(s, bc))}
+          </div>
+        </div>`;
+
+      const bodyCap = (s.realm + 1) * 10;
+      const stamMax = E.staminaMax(s);
+      const stamRec = E.staminaRecovery(s);
+      const pillar2Html = `
+        <div class="pillar-card pillar-body">
+          <div class="pillar-header">
+            <span class="pillar-icon">🫀</span>
+            <div>
+              <span class="pillar-tag">${uiText('СТОЛП 2 · ТЕЛО И СОСУД', 'PILLAR 2 · BODY & VESSEL')}</span>
+              <h3 class="pillar-title">${uiText('Закалка сосуда', 'Vessel Tempering')}</h3>
+            </div>
+          </div>
+          <div class="pillar-gauge">
+            <div class="pillar-gauge-labels">
+              <span>${uiText('Тело', 'Body')}</span>
+              <strong>${fmt(s.body)} / ${bodyCap}</strong>
+            </div>
+            <progress max="${bodyCap}" value="${Math.min(bodyCap, s.body)}" aria-label="${uiText('Закалка тела', 'Body tempering')}"></progress>
+          </div>
+          <div class="pillar-gauge">
+            <div class="pillar-gauge-labels">
+              <span>${uiText('Выносливость', 'Stamina')}</span>
+              <strong>${fmt(s.stamina)} / ${stamMax}</strong>
+            </div>
+            <progress max="${stamMax}" value="${Math.min(stamMax, s.stamina)}" aria-label="${uiText('Выносливость', 'Stamina')}"></progress>
+          </div>
+          <div class="pillar-substats">
+            <span class="pillar-substat">⚡ +${fmt(stamRec)} ${uiText('выносл./сек', 'stam./s')}</span>
+            <span class="pillar-substat">🏛 ${uiText('Заказов: ', 'Contracts: ')}<strong>${s.employment.completed}</strong></span>
+          </div>
+          <p class="pillar-hint">${uiText("Тело растёт от физических действий, работы и двигательных техник. Медитация развивает спокойствие, понимание и энергию, но не тело.", "The body grows through physical actions, work and movement techniques. Meditation develops calm, understanding and energy, but not the body.")}</p>
+        </div>`;
+
+      const masteryCap = (s.realm + 1) * 10;
+      const activeTech = s.cultivation.active ? E.techniques[s.cultivation.active] : null;
+      const activeTechName = activeTech ? t(activeTech.name) : uiText('Нет активной техники', 'No active technique');
+      const weaponCost = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
+      const canUpgradeWeapon = s.weapon < (s.realm + 1) * 2 && E.affordable(s, weaponCost);
+      const styleControls = s.stage >= 1 ? `
+        <div class="pillar-styles-block">
+          <span class="pillar-subhead">${uiText('Боевой стиль (+35%):', 'Combat style (+35%):')}</span>
+          <div class="actions">
+            ${Object.entries({ balanced: uiText('Равновесие', 'Balanced'), swift: uiText('Быстрый шаг', 'Swift step'), piercing: uiText('Пробивающий удар', 'Piercing strike'), ward: uiText('Духовный заслон', 'Spiritual ward') }).map(([k, v]) => button('style', k, (s.style === k ? '● ' : '') + v)).join('')}
+          </div>
+        </div>
+        <div class="pillar-weapon-block">
+          ${button('weapon', '', uiText(`Улучшить оружие · ур. ${s.weapon}`, `Upgrade weapon · lvl ${s.weapon}`), canUpgradeWeapon)}
+          <small class="pillar-cost">${uiText('Цена: ', 'Cost: ')}${costs(weaponCost)}</small>
+        </div>` : '';
+
+      const pillar3Html = `
+        <div class="pillar-card pillar-dao">
+          <div class="pillar-header">
+            <span class="pillar-icon">⚔</span>
+            <div>
+              <span class="pillar-tag">${uiText('СТОЛП 3 · БОЕВОЕ ДАО', 'PILLAR 3 · MARTIAL DAO')}</span>
+              <h3 class="pillar-title">${uiText('Мастерство и Оружие', 'Mastery & Arsenal')}</h3>
+            </div>
+          </div>
+          <div class="pillar-gauge">
+            <div class="pillar-gauge-labels">
+              <span>${uiText('Техника', 'Mastery')}</span>
+              <strong>${fmt(s.mastery)} / ${masteryCap}</strong>
+            </div>
+            <progress max="${masteryCap}" value="${Math.min(masteryCap, s.mastery)}" aria-label="${uiText('Мастерство техник', 'Technique mastery')}"></progress>
+          </div>
+          <div class="pillar-substats">
+            <span class="pillar-substat">🗡 ${uiText('Оружие: ', 'Weapon: ')}<strong>ур. ${s.weapon}</strong></span>
+            <span class="pillar-substat">📜 ${uiText('Активно: ', 'Active: ')}<strong>${activeTechName}</strong></span>
+          </div>
+          ${styleControls}
+        </div>`;
+
+      heroProgress = `
+        <section class="cultivation-chamber">
+          <div class="section-head">
+            <h3>${uiText('Три Столпа Культивации', 'Three Pillars of Cultivation')}</h3>
+            <small>${uiText('Гармония Духа, Тела и Боевого Дао', 'Harmony of Spirit, Vessel & Martial Dao')}</small>
+          </div>
+          <div class="three-pillars-grid">
+            ${pillar1Html}
+            ${pillar2Html}
+            ${pillar3Html}
+          </div>
+        </section>`;
+      heroEquipment = '';
+      heroActivities = `<h3>${uiText('Одно занятие — один путь', 'Choose your idle activity')}</h3><p class="intro">${uiText('Занятие продолжается офлайн до 24 часов. Его можно сменить в любой момент.', 'Your activity continues offline for up to 24 hours. You can change it at any time.')}</p><div class="cards">${Object.entries(E.activities).filter(([k]) => E.activityVisible(s,k)).map(([k, a]) => card(a.name, a.desc + ' '+E.taskPracticeText(k,L?.language||'ru') + (['meditate', 'train', 'technique', 'laws'].includes(k) ? ` ${uiText('Скорость развития', 'Development speed')} ×${fmt(E.speed(s))}.` : ''), button('activity', k, s.activity === k ? uiText('● Текущее занятие', '● Current activity') : uiText('Выбрать занятие', 'Choose activity'), s.activity !== k))).join('')}</div>`;
+      if (s.stage < 7) nextChapterHtml = `<div class="rebirth"><div class="eyebrow">${uiText('БЛИЖАЙШАЯ ЦЕЛЬ', 'NEXT CHAPTER')} · ${E.stages[s.stage + 1].name}</div><p>${uiText('Ступень', 'Realm')} ${s.realm} / ${next.realm} · ${s.stage===0?uiText('Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.', 'Personal breakthrough and helping cart: victory, 3 recognitions or Wei’s recommendation.'):uiText(`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`, `Victories ${s.wins} / ${next.wins} or recognition ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`)}</p><p>${uiText('Требуется: ', 'Required: ')}${costs(next.cost)}${!s.found ? uiText(' · найти древнюю технику', ' · find ancient technique') : ''}</p>${button('advance', '', uiText('Начать следующую главу', 'Start next chapter'), E.canAdvance(s))}</div>`;
       if(s.stage===0 || s.stage===1) {
         const isCh2 = s.stage === 1;
         const curStep = isCh2 ? (s.chapterTwoStep || 0) : s.storyStep;
@@ -1264,12 +1397,14 @@
       const fold=(id,title,body)=>body?`<details class="hero-fold" data-panel="${id}"><summary>${title}</summary><div class="hero-fold-body">${body}</div></details>`:'';
       const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep));
       const hint=E.guidance(s,isStoryActive?'story':'advance','',L?.language||'ru');
-      const overview=`<section class="hero-overview" data-hero-section="overview"><div class="hero-overview-inner"><span class="hero-overview-badge">${uiText('Ближайшая цель','Current goal')}</span><span class="hero-overview-goal">${hint||t(E.stages[s.stage].subtitle)}</span></div></section>`;
+      const quickGoalBtn = `<button type="button" class="goal-direct-btn" id="goal-quick-nav" title="${uiText('Перейти к текущей директиве', 'Jump to current directive')}">🎯 ${uiText('К цели', 'To goal')}</button>`;
+      const overview=`<section class="hero-overview" data-hero-section="overview"><div class="hero-overview-inner"><span class="hero-overview-badge">${uiText('Ближайшая цель','Current goal')}</span><span class="hero-overview-goal">${hint||t(E.stages[s.stage].subtitle)}</span>${quickGoalBtn}</div></section>`;
       const order=s.employment.order;
       const work=order?`<section class="hero-current-order" data-hero-section="order">${employmentView()}${E.workMastered(s,order.kind)?button('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')):''}${!E.canWorkOrder(s)&&!s.world.journey?button('travel',order.place||'village',uiText('Вернуться к месту работы','Return to the workplace'),E.world.canTravel(s,order.place||'village')):''}</section>`:'';
       const scene=E.world.current(s);
       const meeting=scene?`<section class="hero-meeting"><strong>${E.world.sceneText(scene,'title',L?.language||'ru',s)}</strong><p>${uiText('Встреча ждёт твоего решения.','An encounter awaits your decision.')}</p><button data-tab="world">${uiText('Вернуться к встрече','Return to encounter')}</button></section>`:'';
-      const pausedBanner = !E.activityRunning(s) ? `<div class="activity-paused-banner"><span>⏸ ${uiText('Занятие приостановлено (ручное действие, путь или бой).', 'Activity paused (manual action, journey or combat).')}</span><button type="button" class="quick-resume-btn" data-quick-action="activity" data-quick-value="${s.activity}">▶ ${uiText('Возобновить: ', 'Resume: ') + t(E.activities[s.activity]?.name || '')}</button></div>` : '';
+      const resumeAct = (s.activity === 'rest' && lastMaintainedActivity && lastMaintainedActivity !== 'rest') ? lastMaintainedActivity : s.activity;
+      const pausedBanner = !E.activityRunning(s) ? `<div class="activity-paused-banner"><span>⏸ ${uiText('Занятие приостановлено (ручное действие, путь или бой).', 'Activity paused (manual action, journey or combat).')}</span><button type="button" class="quick-resume-btn" data-quick-action="activity" data-quick-value="${resumeAct}">▶ ${uiText('Возобновить: ', 'Resume: ') + t(E.activities[resumeAct]?.name || '')}</button><label class="auto-resume-toggle" title="${uiText('Автоматически возвращаться к медитации после упражнений', 'Automatically resume routine after manual training')}"><input type="checkbox" id="auto-resume-cb" ${autoResumeRoutine ? 'checked' : ''}> ${uiText('Авто-возврат', 'Auto-resume')}</label></div>` : '';
       html=overview+work+meeting+heroStory+`<section data-hero-section="actions">${pausedBanner}${heroTraining}${heroActivities}${techniqueActionsView()}</section>`+heroProgress+heroTechniques+heroEquipment+nextChapterHtml;
       html+=fold('paths',uiText('Способы развития','Ways to grow'),developmentView());
       html+=!order?fold('work',uiText('Доступная работа','Available work'),employmentView()):'';
@@ -1310,7 +1445,23 @@
           if (scion) foeTitle = scion;
         }
         const heading = s.stage === 1 ? uiText('Арена чести и турниры секты', 'Honor Arena and Sect Tournaments') : (s.stage === 2 ? uiText('Турнир и соперники', 'Tournament and rivals') : uiText('Испытания пути', 'Trials of the path'));
-        html = `${alertBanner}<h2>${heading}</h2><p class="intro">${uiText('Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.', 'Train your body, techniques and weapons to overcome stronger rivals. Outcomes are predictable; randomness does not take your rewards away.')}</p><div class="rebirth combat-duel"><div class="eyebrow">${uiText('СЛЕДУЮЩИЙ СОПЕРНИК', 'NEXT RIVAL')}</div><h2>${foeTitle}</h2><p>${uiText('Сила соперника:', 'Rival power:')} <strong>${fmt(foe.power)}</strong></p><p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${counter[foe.type]}.</p><p>${uiText('Награда:', 'Reward:')} ${fmt(30 * 1.8 ** s.wins)} ${uiText('монет', 'coins')} · ${(s.wins + 1) * 10} ${uiText('трав', 'herbs')} · 1 ${uiText('осколок', 'shard')}.</p><div class="combat-actions-row">${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), s.cooldown === 0 && E.battlePower(s) >= foe.power)} ${button('fight', '', s.cooldown > 0 ? `${uiText('Отдых: ', 'Rest: ')}${duration(s.cooldown)}` : uiText('Быстрый бой', 'Quick fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}</div><p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('После боя — 5 минут отдыха.', 'Rest for 5 minutes after a fight.')}</p></div>`;
+        const stanceBarHtml = (s.stage >= 1 || (s.stage === 0 && s.storyStep >= 6)) ? `
+          <div class="combat-style-bar">
+            <span class="combat-style-label">${uiText('Стойка стиля:', 'Combat stance:')}</span>
+            <div class="combat-style-pills">
+              ${[
+                ['balanced', uiText('☯ Равновесие', '☯ Balanced'), ''],
+                ['swift', uiText('💨 Быстрый шаг', '💨 Swift Step'), 'swift'],
+                ['piercing', uiText('🗡 Пробивающий удар', '🗡 Piercing Strike'), 'armored'],
+                ['ward', uiText('🛡 Духовный заслон', '🛡 Spirit Ward'), 'mystic']
+              ].map(([stId, stName, matchesEnemyType]) => {
+                const isActive = s.style === stId;
+                const isOptimal = foe && foe.type === matchesEnemyType;
+                return `<button type="button" class="combat-style-btn ${isActive ? 'is-active' : ''} ${isOptimal ? 'is-counter' : ''}" data-quick-action="style" data-quick-value="${stId}" title="${isOptimal ? uiText('Контр-стиль против этого врага (+35%)', 'Counter-style against this foe (+35%)') : ''}">${stName}${isOptimal ? ' ✦' : ''}</button>`;
+              }).join('')}
+            </div>
+          </div>` : '';
+        html = `${alertBanner}<h2>${heading}</h2><p class="intro">${uiText('Соперники остаются сильными, пока ты не подготовишь тело, технику и оружие. Результат предсказуем: случайность не отнимает награды.', 'Train your body, techniques and weapons to overcome stronger rivals. Outcomes are predictable; randomness does not take your rewards away.')}</p><div class="rebirth combat-duel"><div class="eyebrow">${uiText('СЛЕДУЮЩИЙ СОПЕРНИК', 'NEXT RIVAL')}</div><h2>${foeTitle}</h2><p>${uiText('Сила соперника:', 'Rival power:')} <strong>${fmt(foe.power)}</strong></p><p>${uiText('Твоя сила в этом бою:', 'Your power in this fight:')} ${fmt(E.battlePower(s))}. ${uiText('Подходящий стиль:', 'Recommended style:')} ${counter[foe.type]}.</p><p>${uiText('Награда:', 'Reward:')} ${fmt(30 * 1.8 ** s.wins)} ${uiText('монет', 'coins')} · ${(s.wins + 1) * 10} ${uiText('трав', 'herbs')} · 1 ${uiText('осколок', 'shard')}.</p>${stanceBarHtml}<div class="combat-actions-row">${button('combat-start', '', uiText('Вступить в поединок', 'Enter tactical duel'), s.cooldown === 0 && E.battlePower(s) >= foe.power)} ${button('fight', '', s.cooldown > 0 ? `${uiText('Отдых: ', 'Rest: ')}${duration(s.cooldown)}` : uiText('Быстрый бой', 'Quick fight'), s.cooldown === 0 && E.battlePower(s) >= foe.power)}</div><p class="intro">${uiText('Побед:', 'Victories:')} ${s.wins}. ${uiText('После боя — 5 минут отдыха.', 'Rest for 5 minutes after a fight.')}</p></div>`;
       }
     }
     if (tab === 'sect') {
@@ -1515,12 +1666,38 @@
         <div class="section-head"><h3>${uiText('Ингредиенты в сумке','Ingredients in Pouch')}</h3></div>
         <div class="alchemy-ingredients-grid">${ingCards}</div>`;
 
+      const maxCrucibleForRecipe = (rId) => Alc.maxBrew ? Alc.maxBrew(s, rId, 'crucible') : 1;
+      const maxPearlForRecipe = (rId) => Alc.maxBrew ? Alc.maxBrew(s, rId, 'pearl') : 1;
+
+      const batchToolbar = `
+        <div class="alchemy-batch-toolbar">
+          <span class="alchemy-batch-label">${uiText('Количество варки:', 'Brew batch quantity:')}</span>
+          <div class="alchemy-batch-buttons">
+            <button type="button" class="batch-btn ${alchemyBatch === 1 ? 'active' : ''}" data-alchemy-batch="1">×1</button>
+            <button type="button" class="batch-btn ${alchemyBatch === 5 ? 'active' : ''}" data-alchemy-batch="5">×5</button>
+            <button type="button" class="batch-btn ${alchemyBatch === 'max' ? 'active' : ''}" data-alchemy-batch="max">${uiText('Макс', 'Max')}</button>
+          </div>
+        </div>`;
+
       const unlocked=alc.unlockedRecipes||['vigor_broth'];
       const recipesHtml=unlocked.map(rId=>{
         const r=Alc.RECIPES[rId];
         if(!r)return '';
         const canCrucible=Alc.canBrew(s,rId,'crucible');
         const canPearl=Alc.canBrew(s,rId,'pearl');
+
+        const maxC = maxCrucibleForRecipe(rId);
+        const maxP = maxPearlForRecipe(rId);
+        const countC = alchemyBatch === 'max' ? maxC : Math.min(Number(alchemyBatch) || 1, maxC);
+        const countP = alchemyBatch === 'max' ? maxP : Math.min(Number(alchemyBatch) || 1, maxP);
+
+        const crucibleText = (alchemyBatch !== 1 && countC > 1)
+          ? `${uiText('Сварить в котле', 'Brew in crucible')} (×${countC})`
+          : uiText('Сварить в котле', 'Brew in crucible');
+
+        const pearlText = (alchemyBatch !== 1 && countP > 1)
+          ? `${uiText('Очистить Жемчужиной', 'Purify with Pearl')} (×${countP}, ${r.pearlQi * countP} ${uiText('Ци', 'Qi')})`
+          : uiText(`Очистить Жемчужиной (${r.pearlQi} Ци)`, `Purify with Pearl (${r.pearlQi} Qi)`);
 
         const reqsHtml=Object.entries(r.ingredients).map(([ingId,needed])=>{
           const ing=Alc.INGREDIENTS[ingId];
@@ -1530,10 +1707,10 @@
         }).join(' ');
 
         const crucibleBtn=!r.requiresPearl
-          ? `<button type="button" class="btn-crucible" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="false" ${canCrucible?'':'disabled'}>${uiText('Сварить в котле','Brew in crucible')}</button>`
+          ? `<button type="button" class="btn-crucible" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="false" ${canCrucible?'':'disabled'}>${crucibleText}</button>`
           : `<span class="alchemy-req-pill unmet">${uiText('Только очищение Жемчужиной','Pearl purification only')}</span>`;
 
-        const pearlBtn=`<button type="button" class="btn-pearl" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="true" ${canPearl?'':'disabled'}>${uiText(`Очистить Жемчужиной (${r.pearlQi} Ци)`,`Purify with Pearl (${r.pearlQi} Qi)`)}</button>`;
+        const pearlBtn=`<button type="button" class="btn-pearl" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="true" ${canPearl?'':'disabled'}>${pearlText}</button>`;
 
         return `
           <div class="alchemy-recipe-card ${r.requiresPearl?'requires-pearl':''}">
@@ -1553,6 +1730,7 @@
 
       const recipesSection=`
         <div class="section-head"><h3>${uiText('Рецепты снадобий','Medicine Recipes')}</h3></div>
+        ${batchToolbar}
         <div class="alchemy-recipes-list">${recipesHtml}</div>`;
 
       let logHtml='';
@@ -1699,7 +1877,27 @@
   }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
-    let html=`<h2>Дороги другого мира</h2><p class="intro">Сейчас: ${W.locations[w.location].name}. ${w.journey?`В пути: ${W.locations[w.journey.destination].name}, осталось ${Math.ceil(w.journey.remaining)} сек.`:'Можно выбрать маршрут или поискать встречу на месте.'}</p>`;
+    const mapPortalCard = `
+      <div class="world-map-portal-card">
+        <div class="portal-header">
+          <div class="portal-eyebrow">
+            <span class="portal-glyph">🧭</span>
+            <span>${uiText('КАРТА ДОЛИНЫ ПЛЫВУЩИХ ОБЛАКОВ', 'MAP OF FLOATING CLOUD VALLEY')}</span>
+          </div>
+          <button type="button" class="portal-expand-btn" id="world-tab-open-map">
+            <span>🗺️ ${uiText('Развернуть свиток карты', 'Open Scroll Map')}</span>
+          </button>
+        </div>
+        <div class="portal-body">
+          <div class="portal-location-status">
+            <span class="portal-dot">●</span>
+            <strong>${uiText('Текущее место: ', 'Current location: ')}${t(W.locations[w.location].name)}</strong>
+            ${w.journey ? `<span class="portal-journey-tag">🐎 ${uiText('В пути: ', 'Traveling: ')}${t(W.locations[w.journey.destination].name)} (${Math.ceil(w.journey.remaining)} ${uiText('сек', 's')})</span>` : ''}
+          </div>
+          <p class="portal-hint">${uiText('Исследуй тайники, древние руины и короткие тропы на древнем свитке.', 'Discover hidden caches, ancient ruins, and secret shortcuts on the ancient scroll.')}</p>
+        </div>
+      </div>`;
+    let html = mapPortalCard + `<h2>${uiText('Дороги другого мира', 'Roads of another world')}</h2><p class="intro">${uiText('Сейчас: ', 'Current: ')}${t(W.locations[w.location].name)}. ${w.journey ? (uiText('В пути: ', 'Travelling: ') + t(W.locations[w.journey.destination].name) + uiText(', осталось ', ', remaining ') + Math.ceil(w.journey.remaining) + uiText(' сек.', ' s.')) : uiText('Можно выбрать маршрут или поискать встречу на месте.', 'Choose a destination or look for an encounter here.')}</p>`;
     html+=techniqueActionsView();
     if(s.stage===1)html+=`<section class="story-panel"><h3>${uiText('Школа определяет твой путь','Your school shapes your path')}</h3><p>${E.sects.progress(s,'gates',L?.language||'ru')}</p><div class="cards">${Object.keys(E.sects.schools).map(k=>schoolView(k)).join('')}</div></section>`;
     if(s.stage>=2&&w.admission)html+=schoolView(w.admission);
@@ -1821,15 +2019,47 @@
     if(b.id==='open-alchemy'||b.dataset?.quickAction==='alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
     if(b.id==='close-alchemy'){$('alchemy-dialog')?.close?.();return;}
     if(b.dataset?.alchemyTab){activeAlchemyTab=b.dataset.alchemyTab;renderAlchemy();return;}
+    if(b.dataset?.alchemyBatch){
+      const val = b.dataset.alchemyBatch;
+      alchemyBatch = val === 'max' ? 'max' : (parseInt(val, 10) || 1);
+      renderAlchemy();
+      return;
+    }
     if(b.dataset?.alchemyAction){
       const act = b.dataset.alchemyAction;
       if (act === 'craft') {
         const recipeId = b.dataset.recipe;
         const usePearl = b.dataset.pearl === 'true';
-        if (E.action(s, 'alchemy-craft', recipeId, { usePearl })) {
+        const mode = usePearl ? 'pearl' : 'crucible';
+        const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
+        const maxAvailable = Alc.maxBrew ? Alc.maxBrew(s, recipeId, mode) : 1;
+        const desiredCount = alchemyBatch === 'max' ? maxAvailable : (Number(alchemyBatch) || 1);
+        const batchCount = Math.max(1, Math.min(desiredCount, maxAvailable || 1));
+
+        let successes = 0, crits = 0, fails = 0;
+        let anyBrewed = false;
+
+        for (let i = 0; i < batchCount; i++) {
+          const statsBefore = { ...(s.alchemy?.stats || {}) };
+          if (E.action(s, 'alchemy-craft', recipeId, { usePearl })) {
+            anyBrewed = true;
+            const statsAfter = s.alchemy?.stats || {};
+            if (statsAfter.crit > (statsBefore.crit || 0)) crits++;
+            else if (statsAfter.fail > (statsBefore.fail || 0)) fails++;
+            else successes++;
+          } else {
+            break;
+          }
+        }
+
+        if (anyBrewed) {
           if (usePearl) Sound.playBreakthrough();
           else Sound.playBowl();
           save();
+          if (batchCount > 1) {
+            const summary = `${uiText('Сварено пилюль: ', 'Pills brewed: ')}${successes + crits + fails} (${successes} ${uiText('успешно', 'success')}, ${crits} ${uiText('критических', 'critical')}, ${fails} ${uiText('неудач', 'failures')})`;
+            toast(summary);
+          }
         } else {
           toast(uiText('Не хватает сырья или уровня!', 'Missing ingredients or level!'));
         }
@@ -1863,6 +2093,19 @@
       render();
       return;
     }
+    if(b.id==='goal-quick-nav'||b.closest?.('#goal-quick-nav')){
+      const goalEl = document.querySelector('.story-goal') || document.querySelector('.rebirth') || document.querySelector('[data-hero-section="actions"]');
+      if(goalEl){
+        goalEl.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        goalEl.classList?.add?.('highlight-pulse');
+        setTimeout(() => goalEl.classList?.remove?.('highlight-pulse'), 1200);
+      }
+      return;
+    }
+    if(b.id==='world-tab-open-map'||b.closest?.('#world-tab-open-map')){
+      openMapDialog();
+      return;
+    }
     if(b.id==='hero-collapse-toggle'){heroCollapsed=!heroCollapsed;setUiPref('isekai-hero-collapsed',String(heroCollapsed));applyHeroCollapse();return;}
     if(b.id==='novel-font-btn'){novelSerif=!novelSerif;setUiPref('isekai-novel-serif',String(novelSerif));render();return;}
     if(b.id==='novel-size-btn'){novelLarge=!novelLarge;setUiPref('isekai-novel-large',String(novelLarge));render();return;}
@@ -1891,6 +2134,13 @@
     if (b.dataset?.quickAction) {
       const act = b.dataset.quickAction;
       const val = b.dataset.quickValue !== undefined ? b.dataset.quickValue : '';
+      if (act === 'style') {
+        s.style = val;
+        Sound.playClash?.();
+        save();
+        render();
+        return;
+      }
       if (act === 'click') {
         Sound.playClick();
         const clickKey = val, clickDef = E.clicks[clickKey];
@@ -1905,6 +2155,16 @@
           } else if (clickKey === 'scout' || clickKey === 'search') {
             setTimeout(() => spawnFloating(`+1 ${uiText('Осмотр','Search')}`, 'floating-gold', cx, cy - 18), 120);
           }
+          if (autoResumeRoutine && lastMaintainedActivity && lastMaintainedActivity !== 'rest') {
+            if (autoResumeTimer) clearTimeout(autoResumeTimer);
+            autoResumeTimer = setTimeout(() => {
+              if (s.activity === 'rest' && lastMaintainedActivity && lastMaintainedActivity !== 'rest') {
+                s.activity = lastMaintainedActivity;
+                save();
+                render();
+              }
+            }, 1800);
+          }
         } else if (clickDef && s.stamina < clickDef.stamina) {
           b.classList?.add?.('shake-warning');
           setTimeout(() => b.classList?.remove?.('shake-warning'), 400);
@@ -1915,6 +2175,7 @@
       const realmBefore = s.realm;
       if (E.action(s, act, val)) {
         if (['story', 'advance'].includes(act)) { novelViewStep = null; Sound.playParchment(); }
+        if (act === 'activity' && val && val !== 'rest') lastMaintainedActivity = val;
         if (act === 'activity' && val === 'meditate') Sound.playBowl();
         if (act === 'rest') Sound.playBowl(260, 2.2);
         if (act === 'breakthrough') Sound.playBreakthrough();
@@ -1950,6 +2211,16 @@
         }else if(clickKey==='search'){
           setTimeout(()=>spawnFloating(`+1 ${uiText('Осмотр','Search')}`,'floating-gold',cx,cy-18),120);
         }
+        if (autoResumeRoutine && lastMaintainedActivity && lastMaintainedActivity !== 'rest') {
+          if (autoResumeTimer) clearTimeout(autoResumeTimer);
+          autoResumeTimer = setTimeout(() => {
+            if (s.activity === 'rest' && lastMaintainedActivity && lastMaintainedActivity !== 'rest') {
+              s.activity = lastMaintainedActivity;
+              save();
+              render();
+            }
+          }, 1800);
+        }
       }else if(clickDef&&s.stamina<clickDef.stamina){
         b.classList?.add?.('shake-warning');
         setTimeout(()=>b.classList?.remove?.('shake-warning'),400);
@@ -1966,6 +2237,7 @@
         if (['story', 'advance'].includes(b.dataset.action)) { novelViewStep = null; Sound.playParchment(); }
         if (b.dataset.action === 'travel') Sound.playCaravanBell?.();
         if (b.dataset.action === 'atlas-survey' || b.id === 'map-survey') Sound.playWindWhisper?.();
+        if (b.dataset.action === 'activity' && b.dataset.value && b.dataset.value !== 'rest') lastMaintainedActivity = b.dataset.value;
         if (b.dataset.action === 'activity' && b.dataset.value === 'meditate') Sound.playBowl();
         if (b.dataset.action === 'rest') Sound.playBowl(260, 2.2);
         if (b.dataset.action === 'breakthrough') Sound.playBreakthrough();
@@ -2107,6 +2379,12 @@
     e.preventDefault();
     if(!E.action(s,'name',$('player-name-input').value)){$('identity-error').textContent=t('Введи имя от 2 до 40 символов без необычных знаков.');return;}
     $('identity-error').textContent='';save();render();
+  });
+  document.addEventListener('change', e => {
+    if (e.target && e.target.id === 'auto-resume-cb') {
+      autoResumeRoutine = e.target.checked;
+      setUiPref('isekai-auto-resume', String(autoResumeRoutine));
+    }
   });
   document.addEventListener('keydown', e => {
     if (!e || !e.key) return;
