@@ -110,3 +110,112 @@ test('Alchemy engine: Apothecary shop purchases and selling pure pills', () => {
   assert.equal(s.resources.relics, 1);
   assert.equal(s.alchemy.ingredients.relic_dust, 2);
 });
+
+test('Alchemy engine: regional herb foraging and cooldown', () => {
+  const s = {
+    resources: { gold: 100, herbs: 20, qi: 50, pills: 0 },
+    stamina: 50,
+    staminaMax: 100,
+    world: { location: 'village', journey: null },
+    alchemy: Alchemy.fresh()
+  };
+
+  assert.equal(Alchemy.canForage(s, 'village'), true);
+  const herbsBefore = s.alchemy.ingredients.mountain_herb;
+
+  // Forage in village
+  const success = Alchemy.forage(s, 'village');
+  assert.equal(success, true);
+  assert.equal(s.stamina, 40); // 50 - 10
+  assert.equal(s.alchemy.ingredients.mountain_herb > herbsBefore, true);
+  assert.equal(s.alchemy.stats.forages, 1);
+  assert.equal(s.alchemy.forageCooldown > 0, true);
+
+  // While on cooldown, canForage is false
+  assert.equal(Alchemy.canForage(s, 'village'), false);
+
+  // Advance cooldown timer
+  Alchemy.advance(s, 60);
+  assert.equal(s.alchemy.forageCooldown, 0);
+  assert.equal(Alchemy.canForage(s, 'village'), true);
+
+  // Forage in ruins
+  s.stamina = 50;
+  const dustBefore = s.alchemy.ingredients.relic_dust;
+  const flameBefore = s.alchemy.ingredients.flame_bloom;
+  assert.equal(Alchemy.forage(s, 'ruins'), true);
+  assert.equal(s.alchemy.ingredients.relic_dust > dustBefore || s.alchemy.ingredients.flame_bloom > flameBefore, true);
+});
+
+test('Alchemy engine: Miracle Doctor Clinic patient treatment', () => {
+  const s = {
+    resources: { gold: 50, reputation: 0, qi: 50, pills: 0 },
+    stamina: 50,
+    alchemy: Alchemy.fresh()
+  };
+
+  // Uncle Ba requires vigor_broth
+  assert.equal(Alchemy.canTreatPatient(s, 'ba_strained', false), false);
+  s.alchemy.inventory.vigor_broth = 1;
+  assert.equal(Alchemy.canTreatPatient(s, 'ba_strained', false), true);
+
+  // Treat Uncle Ba with pill
+  const treatBa = Alchemy.treatPatient(s, 'ba_strained', false);
+  assert.equal(treatBa, true);
+  assert.equal(s.alchemy.inventory.vigor_broth, 0);
+  assert.equal(s.alchemy.patients.includes('ba_strained'), false);
+  assert.equal(s.resources.gold, 50 + 35);
+  assert.equal(s.resources.reputation, 1);
+  assert.equal(s.alchemy.stats.patientsTreated, 1);
+
+  // Hunter Darius poisoned, can treat via Sky Poison Pearl alternative purge
+  assert.equal(Alchemy.canTreatPatient(s, 'hunter_poison', true), true);
+  const qiBefore = s.resources.qi;
+  const poisonSacBefore = s.alchemy.ingredients.poison_sac;
+
+  const treatHunter = Alchemy.treatPatient(s, 'hunter_poison', true);
+  assert.equal(treatHunter, true);
+  assert.equal(s.resources.qi, qiBefore - 15);
+  assert.equal(s.alchemy.ingredients.poison_sac, poisonSacBefore + 2);
+  assert.equal(s.alchemy.patients.includes('hunter_poison'), false);
+  assert.equal(s.alchemy.stats.patientsTreated, 2);
+});
+
+test('Alchemy engine: regional market pill trading and arbitrage', () => {
+  const s = {
+    resources: { gold: 0, pills: 0 },
+    alchemy: Alchemy.fresh()
+  };
+
+  s.alchemy.inventory.vigor_broth = 3;
+  // In village, vigor_broth buys for 35 coins
+  assert.equal(Alchemy.sellSpecificPill(s, 'vigor_broth', 1, 'village'), true);
+  assert.equal(s.resources.gold, 35);
+  assert.equal(s.alchemy.inventory.vigor_broth, 2);
+  assert.equal(s.alchemy.stats.pillsTraded, 1);
+
+  // In ruins (ancient ruins sanctuary), evil_god_pill sells for 140 coins
+  s.alchemy.inventory.evil_god_pill = 2;
+  assert.equal(Alchemy.sellSpecificPill(s, 'evil_god_pill', 2, 'ruins'), true);
+  assert.equal(s.resources.gold, 35 + (140 * 2));
+  assert.equal(s.alchemy.inventory.evil_god_pill, 0);
+  assert.equal(s.alchemy.stats.pillsTraded, 3);
+});
+
+test('Alchemy engine: combat pouch equipping and unequipping', () => {
+  const s = {
+    alchemy: Alchemy.fresh()
+  };
+
+  assert.equal(s.alchemy.pouch[0], 'vigor_broth');
+  assert.equal(s.alchemy.pouch[1], null);
+
+  // Equip body_pill to slot 1
+  assert.equal(Alchemy.equipPouch(s, 'body_pill', 1), true);
+  assert.equal(s.alchemy.pouch[1], 'body_pill');
+
+  // Unequip slot 0
+  assert.equal(Alchemy.equipPouch(s, 'none', 0), true);
+  assert.equal(s.alchemy.pouch[0], null);
+});
+

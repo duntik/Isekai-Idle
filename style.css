@@ -603,3 +603,89 @@ html[data-interface="data"] .alchemy-rank-banner,html[data-interface="data"] .al
 
 /* Fate Tree Veiled Cards */
 .fate-veiled-card{background:rgba(12,23,28,0.6);border:1px dashed #304348;opacity:0.85}
+
+/* ══════════════════════════════════════════════════════════════
+   EXPANDED ALCHEMY & MEDICINE HUB (CLINIC, MARKETS, POUCH)
+   ══════════════════════════════════════════════════════════════ */
+.clinic-header-card{background:linear-gradient(135deg,rgba(46,219,162,0.08),rgba(21,39,44,0.85));border:1px solid rgba(46,219,162,0.3);border-radius:10px;padding:14px;margin-bottom:14px}
+.clinic-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--gold);margin-bottom:3px}
+.clinic-patients-list{display:flex;flex-direction:column;gap:12px}
+.clinic-patient-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.patient-card-header{display:flex;align-items:center;gap:12px}
+.patient-avatar{font-size:24px;width:42px;height:42px;display:grid;place-items:center;background:rgba(46,219,162,0.12);border-radius:8px;border:1px solid rgba(46,219,162,0.3);flex-shrink:0}
+.patient-name{margin:0;font-size:15px;font-weight:700;color:var(--text)}
+.patient-condition{font-size:12px;color:var(--muted);margin-top:2px}
+.patient-details-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:rgba(0,0,0,0.25);padding:10px;border-radius:8px}
+.patient-detail-box{font-size:12px;display:flex;flex-direction:column;gap:3px}
+.patient-detail-lbl{font-size:11px;color:var(--muted)}
+.patient-reward-text{color:var(--gold);font-weight:600}
+.patient-actions-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-clinic-treat{background:linear-gradient(135deg,rgba(46,219,162,0.2),rgba(229,195,130,0.15));border:1px solid var(--green,#2edba2);color:#6ee7b7;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-clinic-treat:hover:not(:disabled){background:rgba(46,219,162,0.35);border-color:#2edba2;box-shadow:0 0 10px rgba(46,219,162,0.35)}
+.pill-ready-tag{color:#2edba2;font-size:11px;margin-left:6px}
+.pill-missing-tag{color:#e24b4b;font-size:11px;margin-left:6px}
+
+/* Regional Foraging & Markets */
+.market-forage-card{background:rgba(46,219,162,0.05);border:1px solid rgba(46,219,162,0.25);border-radius:10px;padding:14px;margin-bottom:14px}
+.forage-yield-info{display:flex;flex-direction:column;gap:6px;font-size:12px;margin:10px 0}
+.forage-lbl{color:var(--muted)}
+.rare-herb-text{color:#f59e0b}
+.forage-actions-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-forage-action{background:linear-gradient(135deg,#1f6b52,#114232);border:1px solid var(--green,#2edba2);color:#ecfdf5;padding:7px 16px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-forage-action:hover:not(:disabled){background:#248062;box-shadow:0 0 10px rgba(46,219,162,0.35)}
+.forage-cost-hint{font-size:11px;color:var(--muted)}
+.market-regional-banner{background:rgba(229,195,130,0.08);border:1px solid rgba(229,195,130,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.market-regional-banner strong{color:var(--gold);font-size:13px}
+.market-regional-banner p{font-size:12px;margin:4px 0 0;color:var(--muted)}
+.market-trade-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.market-trade-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.trade-item-name{font-size:13px;color:var(--text)}
+.trade-item-stock{font-size:11.5px;color:var(--muted)}
+.trade-price-tag{font-size:12.5px;color:var(--gold);font-weight:700}
+.trade-actions-row{display:flex;gap:6px;flex-wrap:wrap}
+.trade-btn{background:rgba(229,195,130,0.12);border:1px solid rgba(229,195,130,0.4);color:var(--gold);padding:5px 10px;border-radius:5px;font-size:11.5px;cursor:pointer;transition:all .15s}
+.trade-btn:hover:not(:disabled){background:rgba(229,195,130,0.25);border-color:var(--gold)}
+
+/* World View Forage Card */
+.world-forage-card{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:12px;background:linear-gradient(135deg,rgba(46,219,162,0.08),rgba(21,39,44,0.75));border:1px solid rgba(46,219,162,0.3);border-left:4px solid var(--green,#2edba2);border-radius:8px}
+.forage-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;flex-wrap:wrap}
+.forage-card-icon{font-size:20px}
+.forage-card-meta{display:flex;flex-direction:column;gap:2px;flex-grow:1}
+.forage-card-meta strong{font-size:12.5px;color:#6ee7b7}
+.forage-card-meta small{font-size:11px;color:var(--muted)}
+.btn-forage{background:linear-gradient(135deg,#1f6b52,#114232);border:1px solid var(--green,#2edba2);color:#ecfdf5;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-forage:hover:not(:disabled){background:#248062;box-shadow:0 0 10px rgba(46,219,162,0.3)}
+
+/* Tactical Pouch & Combat Belt */
+.pouch-container{display:flex;flex-direction:column;gap:14px}
+.pouch-header-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.pouch-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--gold);margin-bottom:3px}
+.pouch-slots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.pouch-slot-card{border-radius:8px;padding:12px;border:1px solid var(--line);background:rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:8px}
+.pouch-slot-card.slot-occupied{border-color:rgba(46,219,162,0.45);background:rgba(46,219,162,0.05)}
+.pouch-slot-card.slot-empty{border-style:dashed;border-color:rgba(255,255,255,0.15)}
+.slot-header{display:flex;justify-content:space-between;align-items:center}
+.slot-badge{font-size:11px;font-weight:700;color:var(--muted)}
+.slot-remove-btn{background:transparent;border:1px solid rgba(226,75,75,0.4);color:#f87171;padding:2px 7px;border-radius:4px;font-size:10.5px;cursor:pointer;transition:all .15s}
+.slot-remove-btn:hover{background:rgba(226,75,75,0.2);border-color:#e24b4b}
+.slot-pill-icon{font-size:22px}
+.slot-pill-name{font-size:13px;color:var(--text)}
+.slot-pill-stock{font-size:11.5px;color:var(--muted)}
+.slot-pill-effect{font-size:11.5px;color:var(--gold);margin:4px 0 0}
+.slot-empty-body{text-align:center;padding:10px 0;color:var(--muted);font-size:11.5px}
+.pouch-choices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.pouch-pill-choice-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.choice-card-head{display:flex;align-items:center;gap:8px}
+.choice-combat-effect{font-size:11.5px;color:var(--gold);margin:0}
+.choice-equip-buttons{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.choice-equip-label{font-size:11px;color:var(--muted)}
+.btn-slot-equip{background:rgba(46,219,162,0.12);border:1px solid rgba(46,219,162,0.35);color:#6ee7b7;padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-slot-equip:hover{background:rgba(46,219,162,0.25);border-color:#2edba2}
+
+.combat-pouch-belt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:rgba(14,24,28,0.85);border:1px solid rgba(46,219,162,0.3);border-radius:8px;margin-bottom:8px}
+.combat-pouch-label{font-size:11px;font-weight:700;color:#6ee7b7}
+.combat-pouch-slots{display:flex;gap:6px;flex-wrap:wrap}
+.combat-pouch-pill-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:rgba(22,38,44,0.9);border:1px solid rgba(46,219,162,0.4);border-radius:6px;color:#ecfdf5;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s ease}
+.combat-pouch-pill-btn:hover:not(:disabled){background:rgba(46,219,162,0.25);border-color:var(--green,#2edba2);box-shadow:0 0 8px rgba(46,219,162,0.35)}
+.pouch-pill-qty{color:var(--gold);font-size:10px;font-weight:700}
+

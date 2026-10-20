@@ -1033,9 +1033,33 @@
           ${button('combat-retreat', '', uiText('Завершить поединок', 'Conclude duel'))}
         </div>`;
     } else {
+      const pouchPills = (s.alchemy?.pouch || []).filter(Boolean);
+      let pouchBeltHtml = '';
+      if (pouchPills.length > 0) {
+        const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
+        const pouchItems = pouchPills.map(rId => {
+          const recipe = Alc?.RECIPES?.[rId];
+          const count = s.alchemy?.inventory?.[rId] || 0;
+          const name = recipe ? (en ? recipe.nameEn : recipe.nameRu) : rId;
+          const icon = recipe?.icon || '💊';
+          const canUse = count > 0 || (s.resources.pills || 0) > 0;
+          return `<button type="button" class="combat-pouch-pill-btn" data-quick-action="combat-pill" data-pill-id="${rId}" ${canUse ? '' : 'disabled'}>
+            <span class="pouch-pill-icon">${icon}</span>
+            <span class="pouch-pill-name">${name}</span>
+            <span class="pouch-pill-qty">×${count}</span>
+          </button>`;
+        }).join('');
+        pouchBeltHtml = `
+          <div class="combat-pouch-belt">
+            <span class="combat-pouch-label">🎒 ${uiText('Боевой пояс пилюль:', 'Combat Pill Belt:')}</span>
+            <div class="combat-pouch-slots">${pouchItems}</div>
+          </div>`;
+      }
+
       deckHtml = `
         <div class="duel-deck">
           <div class="deck-title"><span>${uiText('Выбери действие на раунд', 'Choose your round action')}</span></div>
+          ${pouchBeltHtml}
           <div class="deck-actions">
             ${button('combat-act', 'thrust', uiText('Быстрый выпад', 'Swift thrust'))}
             ${button('combat-act', 'heavy', uiText('Тяжёлый удар', 'Heavy strike'))}
@@ -1613,8 +1637,10 @@
         const isAct=btn.dataset.alchemyTab===activeAlchemyTab;
         btn.classList.toggle('active',isAct);
         btn.setAttribute('aria-selected',isAct?'true':'false');
-        if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('Алхимический Котёл','Alchemy Crucible');
-        if(btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Лавка мастера Хо','Master Huo’s Apothecary');
+        if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('Котёл и Жемчужина','Crucible & Pearl');
+        if(btn.dataset.alchemyTab==='clinic')btn.textContent=uiText('Клиника Лекаря','Miracle Doctor Clinic');
+        if(btn.dataset.alchemyTab==='market'||btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Рынки и Сбор','Markets & Gathering');
+        if(btn.dataset.alchemyTab==='pouch')btn.textContent=uiText('Боевая Сумка','Combat Pouch');
       });
     }
 
@@ -1629,7 +1655,290 @@
     const nextRank=Alc.RANKS[alc.level]||null;
     const xpMax=nextRank?nextRank.xpReq:currentRank.xpReq;
 
-    if(activeAlchemyTab==='cauldron'){
+    if(activeAlchemyTab==='clinic'){
+      const treatedCount = alc.stats.patientsTreated || 0;
+      const clinicHeader = `
+        <div class="clinic-header-card">
+          <div class="clinic-eyebrow">🩺 ${uiText('КЛИНИКА ЛЕКАРЯ С НЕБЕС', 'MIRACLE DOCTOR CLINIC')} · ${uiText('ОЧИЩЕНИЕ ОТ ЯДОВ И ДАНЬ ДУ', 'VENOM & DAN DU PURGE')}</div>
+          <h3>${uiText('Лекарь с Небес · Очищение от ядов и Дань Ду', 'Miracle Doctor · Venom & Dan Du Purge')}</h3>
+          <p class="intro">${uiText('Пациенты стекаются со всей округи в надежде на божественное исцеление Жемчужиной Злого Неба или очищенные пилюли.', 'Patients gather from across the realm seeking divine healing through the Sky Poison Pearl or pure remedies.')}</p>
+          <div class="clinic-substats">
+            <span>✨ ${uiText('Исцелено пациентов: ', 'Patients cured: ')}<strong>${treatedCount}</strong></span>
+            <span>✦ ${uiText('Репутация: ', 'Reputation: ')}<strong>${s.resources.reputation || 0}</strong></span>
+          </div>
+        </div>`;
+
+      const activePatients = alc.patients || ['ba_strained', 'hunter_poison'];
+      const patientCards = activePatients.map(pId => {
+        const p = Alc.PATIENTS?.[pId];
+        if (!p) return '';
+        const canPill = Alc.canTreatPatient(s, pId, false);
+        const canPearl = Alc.canTreatPatient(s, pId, true);
+        const hasReqPill = (alc.inventory?.[p.reqPill] || 0) >= 1;
+        const reqRec = Alc.RECIPES[p.reqPill];
+        const reqName = isEn ? (p.reqPillNameEn || reqRec?.nameEn) : (p.reqPillNameRu || reqRec?.nameRu);
+
+        const pillBtn = `<button type="button" class="btn-clinic-treat" data-alchemy-action="treat" data-patient="${pId}" data-pearl="false" ${canPill ? '' : 'disabled'}>💊 ${uiText('Исцелить пилюлей', 'Cure with pill')}</button>`;
+        const pearlBtn = p.pearlAlt
+          ? `<button type="button" class="btn-pearl" data-alchemy-action="treat" data-patient="${pId}" data-pearl="true" ${canPearl ? '' : 'disabled'}>✨ ${uiText('Очистить Жемчужиной', 'Purge with Pearl')} (${p.pearlQi || 15} ${uiText('Ци', 'Qi')})</button>`
+          : '';
+
+        return `
+          <div class="clinic-patient-card">
+            <div class="patient-card-header">
+              <span class="patient-avatar">🩺</span>
+              <div>
+                <h4 class="patient-name">${isEn ? p.nameEn : p.nameRu}</h4>
+                <div class="patient-condition">${isEn ? p.conditionEn : p.conditionRu}</div>
+              </div>
+            </div>
+            <div class="patient-details-grid">
+              <div class="patient-detail-box">
+                <span class="patient-detail-lbl">${uiText('Требуется снадобье:', 'Required remedy:')}</span>
+                <strong>${reqName} ${hasReqPill ? `<span class="pill-ready-tag">✓ ${uiText('Есть в сумке', 'In stock')}</span>` : `<span class="pill-missing-tag">× ${uiText('Нет в сумке', 'Missing')}</span>`}</strong>
+              </div>
+              <div class="patient-detail-box">
+                <span class="patient-detail-lbl">${uiText('Награда за исцеление:', 'Treatment reward:')}</span>
+                <span class="patient-reward-text">${isEn ? p.rewardEn : p.rewardRu}</span>
+              </div>
+            </div>
+            <div class="patient-actions-row">
+              ${pillBtn}
+              ${pearlBtn}
+            </div>
+          </div>`;
+      }).join('');
+
+      const patientSection = `
+        <div class="section-head"><h3>${uiText('Пациенты клиники', 'Clinic Patients')}</h3></div>
+        <div class="clinic-patients-list">
+          ${patientCards || `<p class="intro">${uiText('Все пациенты в округе здоровы. Новые больные прибудут со временем.', 'All local patients are healed. New cases will arrive with time.')}</p>`}
+        </div>`;
+
+      let logHtml = '';
+      if (alc.log && alc.log.length > 0) {
+        logHtml = `
+          <div class="alchemy-log-box">
+            <h4>${uiText('История клиники', 'Clinic History')}</h4>
+            ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+          </div>`;
+      }
+
+      body.innerHTML = clinicHeader + patientSection + logHtml;
+    } else if (activeAlchemyTab === 'market' || activeAlchemyTab === 'shop') {
+      const curLoc = s.world?.location || 'village';
+      const fTable = Alc.FORAGE_TABLES?.[curLoc] || Alc.FORAGE_TABLES?.village || { herbs: [] };
+      const mTable = Alc.REGIONAL_MARKETS?.[curLoc] || Alc.REGIONAL_MARKETS?.village || { buys: {} };
+      const canDoForage = Alc.canForage ? Alc.canForage(s, curLoc) : false;
+      const forageCd = Math.ceil(alc.forageCooldown || 0);
+
+      // Section 1: Foraging in current location
+      const commonHerbsRu = fTable.herbs.map(h => `${Alc.INGREDIENTS[h.id].icon} ${Alc.INGREDIENTS[h.id].nameRu}`).join(', ');
+      const commonHerbsEn = fTable.herbs.map(h => `${Alc.INGREDIENTS[h.id].icon} ${Alc.INGREDIENTS[h.id].nameEn}`).join(', ');
+      const rareIng = fTable.rareHerb ? Alc.INGREDIENTS[fTable.rareHerb] : null;
+
+      const forageSection = `
+        <div class="apothecary-section market-forage-card">
+          <div class="section-head">
+            <h3>🌿 ${uiText('Региональное травничество', 'Regional Herbalism')} · ${isEn ? fTable.nameEn : fTable.nameRu}</h3>
+            <small>${uiText('Всего сборов: ', 'Total forages: ')}${alc.stats.forages || 0}</small>
+          </div>
+          <p class="intro">${isEn ? fTable.descEn : fTable.descRu}</p>
+          <div class="forage-yield-info">
+            <div><span class="forage-lbl">${uiText('Обычные сборы:', 'Common harvest:')}</span> <strong>${isEn ? commonHerbsEn : commonHerbsRu}</strong></div>
+            ${rareIng ? `<div><span class="forage-lbl">${uiText('Редкая находка:', 'Rare find:')}</span> <strong class="rare-herb-text">${rareIng.icon} ${isEn ? rareIng.nameEn : rareIng.nameRu} (~35%)</strong></div>` : ''}
+          </div>
+          <div class="forage-actions-bar">
+            <button type="button" class="btn-forage-action" data-alchemy-action="forage" ${canDoForage ? '' : 'disabled'}>
+              ${forageCd > 0 ? `${uiText('Отдых травника: ', 'Herbalist rest: ')}${forageCd} ${uiText('сек.', 's.')}` : uiText('Собрать травы в этой местности (10 выносл.)', 'Gather herbs in this area (10 stam.)')}
+            </button>
+            <span class="forage-cost-hint">⚡ 10 ${uiText('выносливости', 'stamina')} · +10 ${uiText('опыта', 'XP')}</span>
+          </div>
+        </div>`;
+
+      // Section 2: Regional Trade Board
+      const tradeItems = Object.keys(Alc.RECIPES).map(recId => {
+        const r = Alc.RECIPES[recId];
+        const inStock = alc.inventory?.[recId] || 0;
+        const unitPrice = mTable.buys[recId] || 25;
+        const canSell1 = inStock >= 1 || (s.resources.pills || 0) >= 1;
+        const canSellAll = inStock > 1;
+
+        return `
+          <div class="market-trade-card">
+            <div class="market-trade-head">
+              <span class="alchemy-ing-icon">${r.icon}</span>
+              <div>
+                <strong class="trade-item-name">${isEn ? r.nameEn : r.nameRu}</strong>
+                <div class="trade-item-stock">${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${uiText('шт.', 'pcs')}</div>
+              </div>
+            </div>
+            <div class="trade-price-tag">💰 ${unitPrice} ${uiText('монет', 'coins')} / ${uiText('шт.', 'pc')}</div>
+            <div class="trade-actions-row">
+              <button type="button" class="trade-btn" data-alchemy-action="trade" data-recipe="${recId}" data-count="1" ${canSell1 ? '' : 'disabled'}>${uiText('Сдать 1 шт.', 'Sell 1 pc')} (+${unitPrice})</button>
+              ${canSellAll ? `<button type="button" class="trade-btn" data-alchemy-action="trade" data-recipe="${recId}" data-count="${inStock}">×${inStock} (+${unitPrice * inStock})</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      const tradeSection = `
+        <div class="apothecary-section">
+          <div class="section-head">
+            <h3>⚖️ ${uiText('Караванная торговля и спрос поселений', 'Caravan Trade & Regional Demand')}</h3>
+            <small>${uiText('Продано пилюль: ', 'Pills traded: ')}${alc.stats.pillsTraded || 0}</small>
+          </div>
+          <div class="market-regional-banner">
+            <strong>🏛 ${isEn ? mTable.nameEn : mTable.nameRu}</strong>
+            <p>${isEn ? mTable.descEn : mTable.descRu}</p>
+          </div>
+          <div class="market-trade-grid">${tradeItems}</div>
+        </div>`;
+
+      // Section 3: Master Huo's Apothecary
+      const herbsForSale = ['mountain_herb', 'spring_water', 'spirit_clover', 'iron_root', 'frost_lotus', 'flame_bloom', 'poison_sac'];
+      const herbCards = herbsForSale.map(ingId => {
+        const ing = Alc.INGREDIENTS[ingId];
+        const canBuy1 = s.resources.gold >= ing.cost;
+        const canBuy5 = s.resources.gold >= ing.cost * 5;
+        return `
+          <div class="apothecary-card">
+            <div class="apothecary-card-head">
+              <span class="alchemy-ing-icon">${ing.icon}</span>
+              <div>
+                <div class="apothecary-card-title">${isEn ? ing.nameEn : ing.nameRu}</div>
+                <div class="apothecary-card-price">${ing.cost} ${uiText('монет', 'coins')}</div>
+              </div>
+            </div>
+            <div class="actions" style="gap:4px">
+              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="1" ${canBuy1 ? '' : 'disabled'}>${uiText('+1 шт', '+1 pc')}</button>
+              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="5" ${canBuy5 ? '' : 'disabled'}>${uiText('+5 шт', '+5 pcs')}</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const availableRecipes = [
+        { id: 'body_pill', cost: 35 },
+        { id: 'calm_tea', cost: 45 },
+        { id: 'breakthrough_pill', cost: 80 }
+      ];
+      const recipeCards = availableRecipes.map(item => {
+        const r = Alc.RECIPES[item.id];
+        const isUnlocked = alc.unlockedRecipes.includes(item.id);
+        const canBuy = !isUnlocked && s.resources.gold >= item.cost;
+        return `
+          <div class="apothecary-card">
+            <div class="apothecary-card-head">
+              <span class="alchemy-ing-icon">${r.icon}</span>
+              <div>
+                <div class="apothecary-card-title">${isEn ? r.nameEn : r.nameRu}</div>
+                <div class="apothecary-card-price">${item.cost} ${uiText('монет', 'coins')}</div>
+              </div>
+            </div>
+            ${isUnlocked
+              ? `<button type="button" disabled>${uiText('Изучен', 'Learned')}</button>`
+              : `<button type="button" data-alchemy-action="buy" data-item="recipe_${item.id}" ${canBuy ? '' : 'disabled'}>${uiText('Купить', 'Buy')}</button>`}
+          </div>`;
+      }).join('');
+
+      const relicsCount = s.resources.relics || 0;
+      const canGrind = relicsCount >= 1;
+
+      const shopSection = `
+        <div class="apothecary-section">
+          <h4>${uiText('Аптекарская лавка мастера Хо', 'Master Huo’s Apothecary')} · ${s.resources.gold} ${uiText('монет', 'coins')}</h4>
+          <div class="apothecary-grid">${herbCards}</div>
+          <h4 style="margin-top:14px">${uiText('Купить рецепт', 'Buy recipe')}</h4>
+          <div class="apothecary-grid">${recipeCards}</div>
+          <div style="margin-top:14px" class="apothecary-card">
+            <div class="apothecary-card-head">
+              <span class="alchemy-ing-icon">🏛️</span>
+              <div>
+                <div class="apothecary-card-title">${uiText('Ступка алтаря: перетереть осколок', 'Altar mortar: grind relic shard')}</div>
+                <div class="apothecary-card-price">${relicsCount} ${uiText('осколков', 'shards')}</div>
+              </div>
+            </div>
+            <button type="button" data-alchemy-action="grind" ${canGrind ? '' : 'disabled'}>${uiText('Перетереть осколок (+2 Нефритовой пыли)', 'Grind shard (+2 Jade Relic Dust)')}</button>
+          </div>
+        </div>`;
+
+      let logHtml = '';
+      if (alc.log && alc.log.length > 0) {
+        logHtml = `
+          <div class="alchemy-log-box">
+            <h4>${uiText('История лавки', 'Shop Log')}</h4>
+            ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+          </div>`;
+      }
+
+      body.innerHTML = forageSection + tradeSection + shopSection + logHtml;
+    } else if (activeAlchemyTab === 'pouch') {
+      const pouchSlots = alc.pouch || ['vigor_broth', null, null];
+      const slotsHtml = [0, 1, 2].map(slotIdx => {
+        const recId = pouchSlots[slotIdx];
+        const r = recId ? Alc.RECIPES[recId] : null;
+        const inStock = r ? (alc.inventory?.[recId] || 0) : 0;
+
+        return `
+          <div class="pouch-slot-card ${r ? 'slot-occupied' : 'slot-empty'}">
+            <div class="slot-header">
+              <span class="slot-badge">${uiText('Слот', 'Slot')} ${slotIdx + 1}</span>
+              ${r ? `<button type="button" class="slot-remove-btn" data-alchemy-action="unequip-pouch" data-slot="${slotIdx}">✕ ${uiText('Снять', 'Unequip')}</button>` : ''}
+            </div>
+            ${r ? `
+              <div class="slot-body">
+                <span class="slot-pill-icon">${r.icon}</span>
+                <strong class="slot-pill-name">${isEn ? r.nameEn : r.nameRu}</strong>
+                <div class="slot-pill-stock">💊 ${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${uiText('шт.', 'pcs')}</div>
+                <p class="slot-pill-effect">${isEn ? r.combatEffectEn : r.combatEffectRu}</p>
+              </div>` : `
+              <div class="slot-empty-body">
+                <span class="slot-empty-icon">👝</span>
+                <p>${uiText('Пустой слот пояса', 'Empty belt slot')}</p>
+                <small>${uiText('Выбери пилюлю ниже, чтобы снарядить', 'Select a pill below to equip')}</small>
+              </div>`}
+          </div>`;
+      }).join('');
+
+      const unlockedPills = (alc.unlockedRecipes || ['vigor_broth']).map(recId => {
+        const r = Alc.RECIPES[recId];
+        if (!r) return '';
+        const inStock = alc.inventory?.[recId] || 0;
+
+        return `
+          <div class="pouch-pill-choice-card">
+            <div class="choice-card-head">
+              <span class="alchemy-ing-icon">${r.icon}</span>
+              <div>
+                <strong>${isEn ? r.nameEn : r.nameRu}</strong>
+                <div class="choice-stock">${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${uiText('шт.', 'pcs')}</div>
+              </div>
+            </div>
+            <p class="choice-combat-effect">⚔ ${isEn ? r.combatEffectEn : r.combatEffectRu}</p>
+            <div class="choice-equip-buttons">
+              <span class="choice-equip-label">${uiText('Снарядить в сумку:', 'Equip to pouch:')}</span>
+              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="0">${uiText('В слот 1', 'To slot 1')}</button>
+              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="1">${uiText('В слот 2', 'To slot 2')}</button>
+              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="2">${uiText('В слот 3', 'To slot 3')}</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const pouchHtml = `
+        <div class="pouch-container">
+          <div class="pouch-header-card">
+            <div class="pouch-eyebrow">🎒 ${uiText('ПОЯСНАЯ СУМКА АЛХИМИКА', 'ALCHEMIST’S TACTICAL BELT POUCH')}</div>
+            <h3>${uiText('Поясная сумка пилюль', 'Belt Pill Pouch')}</h3>
+            <p class="intro">${uiText('Снаряди до 3 пилюль в быстрые слоты пояса для мгновенного применения в тактических поединках.', 'Equip up to 3 pills into quick belt slots for instant tactical combat use.')}</p>
+          </div>
+          <div class="section-head"><h3>${uiText('Быстрые слоты пояса', 'Quick Belt Slots')}</h3></div>
+          <div class="pouch-slots-grid">${slotsHtml}</div>
+          <div class="section-head" style="margin-top:16px"><h3>${uiText('Доступные пилюли для снаряжения', 'Available Pills to Equip')}</h3></div>
+          <div class="pouch-choices-grid">${unlockedPills}</div>
+        </div>`;
+
+      body.innerHTML = pouchHtml;
+    } else {
+      // cauldron tab
       const rankTitle=isEn?currentRank.en:currentRank.ru;
       const rankPerk=isEn?currentRank.perkEn:currentRank.perkRu;
 
@@ -1706,6 +2015,9 @@
           return `<span class="alchemy-req-pill ${isMet?'met':'unmet'}">${ing.icon} ${isEn?ing.nameEn:ing.nameRu}: ${has}/${needed}</span>`;
         }).join(' ');
 
+        const inStock = alc.inventory?.[rId] || 0;
+        const stockTag = `<span class="alchemy-stock-tag">💊 ${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${uiText('шт.', 'pcs')}</span>`;
+
         const crucibleBtn=!r.requiresPearl
           ? `<button type="button" class="btn-crucible" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="false" ${canCrucible?'':'disabled'}>${crucibleText}</button>`
           : `<span class="alchemy-req-pill unmet">${uiText('Только очищение Жемчужиной','Pearl purification only')}</span>`;
@@ -1716,11 +2028,13 @@
           <div class="alchemy-recipe-card ${r.requiresPearl?'requires-pearl':''}">
             <div class="alchemy-recipe-head">
               <span class="alchemy-recipe-title">${r.icon} ${isEn?r.nameEn:r.nameRu}</span>
+              ${stockTag}
               <small>${uiText('Требуется ранг:','Required rank:')} ${r.reqLevel}</small>
             </div>
             <p class="alchemy-recipe-desc">${isEn?r.descEn:r.descRu}</p>
             <div class="alchemy-recipe-reqs">${reqsHtml}</div>
             <div class="alchemy-recipe-effect">⚡ ${isEn?r.effectEn:r.effectRu}</div>
+            <div class="alchemy-combat-tag">⚔ ${isEn?r.combatEffectEn:r.combatEffectRu}</div>
             <div class="alchemy-recipe-actions">
               ${crucibleBtn}
               ${pearlBtn}
@@ -1743,118 +2057,6 @@
       }
 
       body.innerHTML=rankBanner+ingSection+recipesSection+logHtml;
-    }else{
-      // Shop tab
-      const herbsForSale=['mountain_herb','spring_water','spirit_clover','iron_root','frost_lotus','flame_bloom','poison_sac'];
-      const herbCards=herbsForSale.map(ingId=>{
-        const ing=Alc.INGREDIENTS[ingId];
-        const canBuy1=s.resources.gold>=ing.cost;
-        const canBuy5=s.resources.gold>=ing.cost*5;
-        return `
-          <div class="apothecary-card">
-            <div class="apothecary-card-head">
-              <span class="alchemy-ing-icon">${ing.icon}</span>
-              <div>
-                <div class="apothecary-card-title">${isEn?ing.nameEn:ing.nameRu}</div>
-                <div class="apothecary-card-price">${ing.cost} ${uiText('монет','coins')}</div>
-              </div>
-            </div>
-            <div class="actions" style="gap:4px">
-              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="1" ${canBuy1?'':'disabled'}>${uiText('+1 шт','+1 pc')}</button>
-              <button type="button" data-alchemy-action="buy" data-item="${ingId}" data-count="5" ${canBuy5?'':'disabled'}>${uiText('+5 шт','+5 pcs')}</button>
-            </div>
-          </div>`;
-      }).join('');
-
-      const shopHerbs=`
-        <div class="apothecary-section">
-          <h4>${uiText('Купить ингредиенты','Buy ingredients')} · ${s.resources.gold} ${uiText('монет','coins')}</h4>
-          <div class="apothecary-grid">${herbCards}</div>
-        </div>`;
-
-      const availableRecipes=[
-        {id:'body_pill',cost:35},
-        {id:'calm_tea',cost:45},
-        {id:'breakthrough_pill',cost:80}
-      ];
-      const recipeCards=availableRecipes.map(item=>{
-        const r=Alc.RECIPES[item.id];
-        const isUnlocked=alc.unlockedRecipes.includes(item.id);
-        const canBuy=!isUnlocked&&s.resources.gold>=item.cost;
-        return `
-          <div class="apothecary-card">
-            <div class="apothecary-card-head">
-              <span class="alchemy-ing-icon">${r.icon}</span>
-              <div>
-                <div class="apothecary-card-title">${isEn?r.nameEn:r.nameRu}</div>
-                <div class="apothecary-card-price">${item.cost} ${uiText('монет','coins')}</div>
-              </div>
-            </div>
-            ${isUnlocked
-              ? `<button type="button" disabled>${uiText('Изучен','Learned')}</button>`
-              : `<button type="button" data-alchemy-action="buy" data-item="recipe_${item.id}" ${canBuy?'':'disabled'}>${uiText('Купить','Buy')}</button>`}
-          </div>`;
-      }).join('');
-
-      const shopRecipes=`
-        <div class="apothecary-section">
-          <h4>${uiText('Купить рецепт','Buy recipe')}</h4>
-          <div class="apothecary-grid">${recipeCards}</div>
-        </div>`;
-
-      const pillsCount=s.resources.pills||0;
-      const relicsCount=s.resources.relics||0;
-      const canSellStd=pillsCount>=1;
-      const canSellPure=pillsCount>=1&&alc.stats.pearlPurified>=1;
-      const canGrind=relicsCount>=1;
-
-      const shopTrading=`
-        <div class="apothecary-section">
-          <h4>${uiText('Сдать пилюли в лавку','Sell pills to apothecary')}</h4>
-          <div class="apothecary-grid">
-            <div class="apothecary-card">
-              <div class="apothecary-card-head">
-                <span class="alchemy-ing-icon">💊</span>
-                <div>
-                  <div class="apothecary-card-title">${uiText('Обычная пилюля','Standard pill')}</div>
-                  <div class="apothecary-card-price">+20 ${uiText('монет','coins')}</div>
-                </div>
-              </div>
-              <button type="button" data-alchemy-action="sell" data-kind="standard" data-count="1" ${canSellStd?'':'disabled'}>${uiText('Сдать (+20 монет)','Sell (+20 coins)')}</button>
-            </div>
-            <div class="apothecary-card">
-              <div class="apothecary-card-head">
-                <span class="alchemy-ing-icon">✨</span>
-                <div>
-                  <div class="apothecary-card-title">${uiText('Пилюля 100% чистоты','100% pure pill')}</div>
-                  <div class="apothecary-card-price">+45 ${uiText('монет, +1 репутация','coins, +1 rep')}</div>
-                </div>
-              </div>
-              <button type="button" data-alchemy-action="sell" data-kind="pure" data-count="1" ${canSellPure?'':'disabled'}>${uiText('Сдать (+45 монет, +1 репутация)','Sell (+45 coins, +1 rep)')}</button>
-            </div>
-            <div class="apothecary-card">
-              <div class="apothecary-card-head">
-                <span class="alchemy-ing-icon">🏛️</span>
-                <div>
-                  <div class="apothecary-card-title">${uiText('Ступка алтаря: перетереть осколок','Altar mortar: grind relic shard')}</div>
-                  <div class="apothecary-card-price">${relicsCount} ${uiText('осколков','shards')}</div>
-                </div>
-              </div>
-              <button type="button" data-alchemy-action="grind" ${canGrind?'':'disabled'}>${uiText('Перетереть осколок (+2 Нефритовой пыли)','Grind shard (+2 Jade Relic Dust)')}</button>
-            </div>
-          </div>
-        </div>`;
-
-      let logHtml='';
-      if(alc.log&&alc.log.length>0){
-        logHtml=`
-          <div class="alchemy-log-box">
-            <h4>${uiText('История лавки','Shop Log')}</h4>
-            ${alc.log.slice(0,5).map(e=>`<div class="alchemy-log-item">${isEn?e.en:e.ru}</div>`).join('')}
-          </div>`;
-      }
-
-      body.innerHTML=shopHerbs+shopRecipes+shopTrading+logHtml;
     }
   }
   function openAlchemyDialog(){
@@ -1877,6 +2079,27 @@
   }
   function worldView() {
     const W=E.world,w=s.world,scene=W.current(s);
+    const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
+    const forageTable = Alc?.FORAGE_TABLES?.[w.location];
+    const canForageHere = Alc?.canForage ? Alc.canForage(s, w.location) : false;
+    const cd = s.alchemy?.forageCooldown || 0;
+    const forageBtnText = cd > 0
+      ? `${uiText('Отдых травника: ', 'Foraging rest: ')}${Math.ceil(cd)} ${uiText('сек.', 's.')}`
+      : uiText('🌿 Собрать травы в этой области (10 выносл.)', '🌿 Forage herbs in this area (10 stam.)');
+    const forageCard = (forageTable && !w.journey) ? `
+      <div class="world-forage-card">
+        <div class="forage-card-header">
+          <span class="forage-card-icon">🌿</span>
+          <div class="forage-card-meta">
+            <strong>${uiText('Травничество: ', 'Herbalism: ')}${L?.language === 'en' ? forageTable.nameEn : forageTable.nameRu}</strong>
+            <small>${L?.language === 'en' ? forageTable.descEn : forageTable.descRu}</small>
+          </div>
+          <button type="button" class="btn-forage" id="world-forage-btn" data-location="${w.location}" ${canForageHere ? '' : 'disabled'}>
+            ${forageBtnText}
+          </button>
+        </div>
+      </div>` : '';
+
     const mapPortalCard = `
       <div class="world-map-portal-card">
         <div class="portal-header">
@@ -1897,7 +2120,7 @@
           <p class="portal-hint">${uiText('Исследуй тайники, древние руины и короткие тропы на древнем свитке.', 'Discover hidden caches, ancient ruins, and secret shortcuts on the ancient scroll.')}</p>
         </div>
       </div>`;
-    let html = mapPortalCard + `<h2>${uiText('Дороги другого мира', 'Roads of another world')}</h2><p class="intro">${uiText('Сейчас: ', 'Current: ')}${t(W.locations[w.location].name)}. ${w.journey ? (uiText('В пути: ', 'Travelling: ') + t(W.locations[w.journey.destination].name) + uiText(', осталось ', ', remaining ') + Math.ceil(w.journey.remaining) + uiText(' сек.', ' s.')) : uiText('Можно выбрать маршрут или поискать встречу на месте.', 'Choose a destination or look for an encounter here.')}</p>`;
+    let html = mapPortalCard + forageCard + `<h2>${uiText('Дороги другого мира', 'Roads of another world')}</h2><p class="intro">${uiText('Сейчас: ', 'Current: ')}${t(W.locations[w.location].name)}. ${w.journey ? (uiText('В пути: ', 'Travelling: ') + t(W.locations[w.journey.destination].name) + uiText(', осталось ', ', remaining ') + Math.ceil(w.journey.remaining) + uiText(' сек.', ' s.')) : uiText('Можно выбрать маршрут или поискать встречу на месте.', 'Choose a destination or look for an encounter here.')}</p>`;
     html+=techniqueActionsView();
     if(s.stage===1)html+=`<section class="story-panel"><h3>${uiText('Школа определяет твой путь','Your school shapes your path')}</h3><p>${E.sects.progress(s,'gates',L?.language||'ru')}</p><div class="cards">${Object.keys(E.sects.schools).map(k=>schoolView(k)).join('')}</div></section>`;
     if(s.stage>=2&&w.admission)html+=schoolView(w.admission);
@@ -2016,7 +2239,7 @@
     if(b.id==='close-fate-tree'){$('fate-tree-dialog')?.close?.();return;}
     if(b.id==='open-map'){openMapDialog();return;}
     if(b.id==='close-map'){$('world-map-dialog')?.close?.();return;}
-    if(b.id==='open-alchemy'||b.dataset?.quickAction==='alchemy'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
+    if(b.id==='open-alchemy'||b.dataset?.quickAction==='alchemy'||b.id==='combat-alchemy-btn'){$('alchemy-dialog')?.showModal?.();renderAlchemy();Sound.playParchment?.();return;}
     if(b.id==='close-alchemy'){$('alchemy-dialog')?.close?.();return;}
     if(b.dataset?.alchemyTab){activeAlchemyTab=b.dataset.alchemyTab;renderAlchemy();return;}
     if(b.dataset?.alchemyBatch){
@@ -2027,47 +2250,82 @@
     }
     if(b.dataset?.alchemyAction){
       const act = b.dataset.alchemyAction;
+      const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
       if (act === 'craft') {
         const recipeId = b.dataset.recipe;
         const usePearl = b.dataset.pearl === 'true';
         const mode = usePearl ? 'pearl' : 'crucible';
-        const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
         const maxAvailable = Alc.maxBrew ? Alc.maxBrew(s, recipeId, mode) : 1;
         const desiredCount = alchemyBatch === 'max' ? maxAvailable : (Number(alchemyBatch) || 1);
         const batchCount = Math.max(1, Math.min(desiredCount, maxAvailable || 1));
 
-        let successes = 0, crits = 0, fails = 0;
-        let anyBrewed = false;
-
-        for (let i = 0; i < batchCount; i++) {
-          const statsBefore = { ...(s.alchemy?.stats || {}) };
-          if (E.action(s, 'alchemy-craft', recipeId, { usePearl })) {
-            anyBrewed = true;
-            const statsAfter = s.alchemy?.stats || {};
-            if (statsAfter.crit > (statsBefore.crit || 0)) crits++;
-            else if (statsAfter.fail > (statsBefore.fail || 0)) fails++;
-            else successes++;
-          } else {
-            break;
-          }
-        }
-
-        if (anyBrewed) {
-          if (usePearl) Sound.playBreakthrough();
-          else Sound.playBowl();
+        const statsBefore = { ...(s.alchemy?.stats || {}) };
+        if (E.action(s, 'alchemy-craft', `${recipeId}:${mode}:${batchCount}`)) {
+          if (usePearl) Sound.playBreakthrough?.();
+          else Sound.playBowl?.();
           save();
+          const statsAfter = s.alchemy?.stats || {};
+          const successes = (statsAfter.success || 0) - (statsBefore.success || 0);
+          const crits = (statsAfter.crit || 0) - (statsBefore.crit || 0);
+          const fails = (statsAfter.fail || 0) - (statsBefore.fail || 0);
           if (batchCount > 1) {
-            const summary = `${uiText('Сварено пилюль: ', 'Pills brewed: ')}${successes + crits + fails} (${successes} ${uiText('успешно', 'success')}, ${crits} ${uiText('критических', 'critical')}, ${fails} ${uiText('неудач', 'failures')})`;
+            const summary = `${uiText('Сварено пилюль: ', 'Pills brewed: ')}${successes + fails} (${successes - crits} ${uiText('успешно', 'success')}, ${crits} ${uiText('критических', 'critical')}, ${fails} ${uiText('неудач', 'failures')})`;
             toast(summary);
           }
         } else {
           toast(uiText('Не хватает сырья или уровня!', 'Missing ingredients or level!'));
         }
+      } else if (act === 'treat') {
+        const patientId = b.dataset.patient;
+        const usePearl = b.dataset.pearl === 'true';
+        if (E.action(s, 'alchemy-treat', `${patientId}:${usePearl ? 'pearl' : 'pill'}`)) {
+          if (usePearl) Sound.playBreakthrough?.();
+          else Sound.playBowl?.();
+          save();
+          toast(uiText('Пациент успешно исцелён!', 'Patient successfully cured!'));
+        } else {
+          toast(uiText('Не хватает снадобья или Ци!', 'Missing required remedy or Qi!'));
+        }
+      } else if (act === 'forage') {
+        const loc = b.dataset.location || s.world?.location || 'village';
+        if (E.action(s, 'alchemy-forage', loc)) {
+          Sound.playParchment?.();
+          save();
+          toast(uiText('Дикорастущие травы собраны!', 'Wild herbs foraged!'));
+        } else {
+          toast(uiText('Сбор трав ещё на перезарядке!', 'Herb foraging is still on cooldown!'));
+        }
+      } else if (act === 'trade') {
+        const recipeId = b.dataset.recipe;
+        const count = parseInt(b.dataset.count || '1', 10);
+        const place = b.dataset.place || s.world?.location || 'village';
+        if (E.action(s, 'alchemy-trade', `${recipeId}:${count}:${place}`)) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Партия пилюль продана!', 'Pill batch sold!'));
+        } else {
+          toast(uiText('Нет пилюль для продажи!', 'No pills in inventory to sell!'));
+        }
+      } else if (act === 'equip-pouch') {
+        const slot = b.dataset.slot || '0';
+        const recipeId = b.dataset.recipe;
+        if (E.action(s, 'alchemy-pouch', `${slot}:${recipeId}`)) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Пилюля помещена в боевой пояс!', 'Pill equipped to combat belt!'));
+        }
+      } else if (act === 'unequip-pouch') {
+        const slot = b.dataset.slot || '0';
+        if (E.action(s, 'alchemy-pouch', `${slot}:none`)) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Слот боевого пояса очищен.', 'Combat belt slot cleared.'));
+        }
       } else if (act === 'buy') {
         const itemId = b.dataset.item;
         const count = parseInt(b.dataset.count || '1', 10);
-        if (E.action(s, 'alchemy-buy', itemId, count)) {
-          Sound.playClick();
+        if (E.action(s, 'alchemy-buy', `${itemId}:${count}`)) {
+          Sound.playClick?.();
           save();
         } else {
           toast(uiText('Не хватает монет!', 'Not enough coins!'));
@@ -2075,15 +2333,15 @@
       } else if (act === 'sell') {
         const kind = b.dataset.kind || 'standard';
         const count = parseInt(b.dataset.count || '1', 10);
-        if (E.action(s, 'alchemy-sell', kind, count)) {
-          Sound.playClick();
+        if (E.action(s, 'alchemy-sell', `${kind}:${count}`)) {
+          Sound.playClick?.();
           save();
         } else {
           toast(uiText('Нечего продать!', 'Nothing to sell!'));
         }
       } else if (act === 'grind') {
         if (E.action(s, 'alchemy-grind')) {
-          Sound.playClick();
+          Sound.playClick?.();
           save();
         } else {
           toast(uiText('Нет осколков!', 'No relic shards!'));
@@ -2091,6 +2349,31 @@
       }
       renderAlchemy();
       render();
+      return;
+    }
+    if (b.id === 'world-forage-btn' || b.closest?.('#world-forage-btn')) {
+      const loc = b.dataset.location || s.world?.location || 'village';
+      if (E.action(s, 'alchemy-forage', loc)) {
+        Sound.playParchment?.();
+        save();
+        toast(uiText('Дикорастущие травы собраны!', 'Wild herbs foraged!'));
+        render();
+      } else {
+        toast(uiText('Сбор трав ещё на перезарядке!', 'Herb foraging is still on cooldown!'));
+      }
+      return;
+    }
+    if (b.dataset?.quickAction === 'combat-pill') {
+      const pillId = b.dataset.pillId;
+      if (E.combat?.act) {
+        if (E.combat.act(s, `pill:${pillId}`, E)) {
+          Sound.playClick?.();
+          save();
+          render();
+        } else {
+          toast(uiText('Нет пилюли для использования!', 'No pill available to use!'));
+        }
+      }
       return;
     }
     if(b.id==='goal-quick-nav'||b.closest?.('#goal-quick-nav')){

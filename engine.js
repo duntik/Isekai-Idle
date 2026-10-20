@@ -663,14 +663,26 @@
       taskPractice(s,'combat');
       s.combat = null;
     } else if (type === 'alchemy-craft') {
-      const [recipeId, mode] = value.split(':');
-      return Alchemy ? Alchemy.brew(s, recipeId, mode || 'crucible', api) : false;
+      const [recipeId, mode, countStr] = (value || '').split(':');
+      const count = countStr ? Number(countStr) : 1;
+      return Alchemy ? Alchemy.brew(s, recipeId, mode || 'crucible', api, count) : false;
     } else if (type === 'alchemy-buy') {
-      const [itemId, countStr] = value.split(':');
+      const [itemId, countStr] = (value || '').split(':');
       return Alchemy ? Alchemy.buy(s, itemId, countStr ? Number(countStr) : 1) : false;
     } else if (type === 'alchemy-sell') {
       const [kind, countStr] = (value || 'standard').split(':');
       return Alchemy ? Alchemy.sellPill(s, kind || 'standard', countStr ? Number(countStr) : 1) : false;
+    } else if (type === 'alchemy-trade') {
+      const [recipeId, countStr, place] = (value || '').split(':');
+      return Alchemy ? Alchemy.sellSpecificPill(s, recipeId, Number(countStr) || 1, place || s.world.location) : false;
+    } else if (type === 'alchemy-treat') {
+      const [patientId, pearlStr] = (value || '').split(':');
+      return Alchemy ? Alchemy.treatPatient(s, patientId, pearlStr === 'pearl', api) : false;
+    } else if (type === 'alchemy-forage') {
+      return Alchemy ? Alchemy.forage(s, value || s.world.location, api) : false;
+    } else if (type === 'alchemy-pouch') {
+      const [slotStr, recipeId] = (value || '').split(':');
+      return Alchemy ? Alchemy.equipPouch(s, recipeId, Number(slotStr) || 0) : false;
     } else if (type === 'alchemy-grind') {
       return Alchemy ? Alchemy.grindRelic(s) : false;
     } else if (type === 'weapon') {

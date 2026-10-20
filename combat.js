@@ -101,7 +101,7 @@
     const c = s.combat;
     const counterMatches = (({ swift: 'swift', armored: 'piercing', mystic: 'ward' })[c.foeType] === s.style);
     const styleMult = counterMatches ? 1.35 : 1.0;
-    const evilGodMult = c.evilGodAwakened ? 1.35 : 1.0;
+    const evilGodMult = (c.evilGodAwakened ? 1.35 : 1.0) * (c.evilGodPillSurge ? 1.40 : 1.0);
     const momentumMult = 1.0 + (c.momentum || 0) * 0.1;
 
     let pDamage = 0;
@@ -262,14 +262,59 @@
       c.playerStamina = c.playerMaxStamina;
       pLogRu = `【Вспышка Небесной Жемчужины Яда】 Багрово-изумрудный свет из левой ладони ослепляет врага! Яд растворяет ${pDamage} стойкости, сокрушая баланс противника (импульс +2)!`;
       pLogEn = `【Sky Poison Pearl Burst】 Emerald-crimson radiance erupts from your left palm! Divine toxic miasma melts away ${pDamage} vitality, completely shattering foe’s poise (momentum +2)!`;
-    } else if (actionKey === 'pill') {
-      if (s.resources.pills < 1) return false;
-      s.resources.pills--;
-      const heal = Math.floor(c.playerMaxHp * 0.45);
-      c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
-      c.playerStamina = c.playerMaxStamina;
-      pLogRu = `Глоток алхимической пилюли чистоты! Эликсир мгновенно восстанавливает +${heal} HP и наполняет мышцы неутомимой силой!`;
-      pLogEn = `Swallowing a pure alchemical pill! The elixir instantly restores +${heal} HP and surges through your veins with fresh vigour!`;
+    } else if (actionKey === 'pill' || actionKey.startsWith('pill:')) {
+      const hasGenericPills = (s.resources.pills || 0) >= 1;
+      let requestedRecipe = actionKey.startsWith('pill:') ? actionKey.slice(5) : null;
+      if (!requestedRecipe && s.alchemy?.pouch?.[0] && (s.alchemy.inventory?.[s.alchemy.pouch[0]] > 0)) {
+        requestedRecipe = s.alchemy.pouch[0];
+      }
+      const hasSpecificPill = requestedRecipe ? ((s.alchemy?.inventory?.[requestedRecipe] || 0) >= 1) : false;
+      if (!hasGenericPills && !hasSpecificPill) return false;
+
+      // Consume from inventory & sync with generic pills
+      if (requestedRecipe && s.alchemy?.inventory?.[requestedRecipe] > 0) {
+        s.alchemy.inventory[requestedRecipe]--;
+      }
+      s.resources.pills = Math.max(0, (s.resources.pills || 1) - 1);
+
+      if (requestedRecipe === 'vigor_broth') {
+        const heal = Math.floor(c.playerMaxHp * 0.50);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
+        c.playerStamina = c.playerMaxStamina;
+        pLogRu = `【Отвар бодрости и сытости】 Свежий эликсир Мэй мгновенно восстанавливает +${heal} HP и наполняет выносливость на 100%!`;
+        pLogEn = `【Vigor and Satiety Broth】 Mei’s nourishing broth instantly restores +${heal} HP and refills stamina to 100%!`;
+      } else if (requestedRecipe === 'body_pill') {
+        const heal = Math.floor(c.playerMaxHp * 0.25);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
+        c.playerPoise = c.playerMaxPoise;
+        c.guardBuff = 0.40;
+        pLogRu = `【Пилюля закалки костей】 Кости Жэня твердеют, как гранит: +${heal} HP, стойка восстановлена (100%), защита усилена (-40% входящего урона)!`;
+        pLogEn = `【Bone-Tempering Pill】 Ren’s tempered bone formula: +${heal} HP, poise fully restored (100%), defense fortified (-40% damage taken)!`;
+      } else if (requestedRecipe === 'evil_god_pill') {
+        c.momentum = 3;
+        s.resources.qi = (s.resources.qi || 0) + 20;
+        c.evilGodPillSurge = true;
+        pLogRu = `【Пилюля Первородного Пламени】 Багровое пламя Сутры Злого Бога охватывает клинки: боевой кураж МАКСИМАЛЕН (импульс 3), Ци +20, сила ударов +40%!`;
+        pLogEn = `【Primordial Flame Pill】 Crimson fire of the Evil God Sutra ignites your weapon: MAX momentum (3), Qi +20, damage +40%!`;
+      } else if (requestedRecipe === 'calm_tea') {
+        s.resources.qi = (s.resources.qi || 0) + 25;
+        c.playerPoise = Math.min(c.playerMaxPoise, c.playerPoise + Math.floor(c.playerMaxPoise * 0.5));
+        c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 40);
+        pLogRu = `【Настой ясного сердца】 Лазурная прохлада Линя очищает каналы: истинная Ци +25, стойка стабилизирована (+50%), выносливость +40!`;
+        pLogEn = `【Clear Heart Infusion】 Lin’s azure tranquility purges turmoil: profound Qi +25, poise stabilized (+50%), stamina +40!`;
+      } else if (requestedRecipe === 'breakthrough_pill') {
+        pDamage = Math.max(30, Math.floor(c.foePower * 0.4));
+        pPoiseDmg = Math.floor(c.enemyMaxPoise * 0.6);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + Math.floor(c.playerMaxHp * 0.3));
+        pLogRu = `【Пилюля сокрушения преград】 Эссенция мастера Хо взрывается духовной волной: нанесено ${pDamage} урона барьеру врага (${pPoiseDmg} пробоя стойки), здоровье +30%!`;
+        pLogEn = `【Barrier-Shattering Pill】 Master Huo’s essence erupts into a profound shockwave: dealt ${pDamage} damage (${pPoiseDmg} poise damage), health +30%!`;
+      } else {
+        const heal = Math.floor(c.playerMaxHp * 0.45);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
+        c.playerStamina = c.playerMaxStamina;
+        pLogRu = `Глоток алхимической пилюли чистоты! Эликсир мгновенно восстанавливает +${heal} HP и наполняет мышцы неутомимой силой!`;
+        pLogEn = `Swallowing a pure alchemical pill! The elixir instantly restores +${heal} HP and surges through your veins with fresh vigour!`;
+      }
     } else {
       return false;
     }
