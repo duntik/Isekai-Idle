@@ -73,8 +73,167 @@
       descEn: 'Deadly beast venom, purifiable only by the Sky Poison Pearl.',
       icon: '🧪',
       cost: 32
+    },
+    aged_mountain_herb: {
+      id: 'aged_mountain_herb',
+      nameRu: 'Столетний горный чабрец',
+      nameEn: 'Century Mountain Thyme',
+      descRu: 'Чабрец, вобравший 100 лет первородной ци Жемчужины. Снимает пилюльные токсины и дарует +35% крита.',
+      descEn: 'Thyme concentrated with 100 years of Pearl qi. Removes pill toxins and grants +35% crit.',
+      icon: '🌿',
+      cost: 25
+    },
+    aged_spirit_clover: {
+      id: 'aged_spirit_clover',
+      nameRu: 'Столетний лазурный клевер',
+      nameEn: 'Century Azure Clover',
+      descRu: 'Клевер вековой концентрации, сияющий лазурным ореолом.',
+      descEn: 'Century-aged clover radiating an azure spiritual halo.',
+      icon: '🍀',
+      cost: 35
+    },
+    aged_iron_root: {
+      id: 'aged_iron_root',
+      nameRu: 'Столетний адамантовый корень',
+      nameEn: 'Century Adamantine Root',
+      descRu: 'Закалённый веками корень крепостью драконьей кости.',
+      descEn: 'Century-tempered root as unyielding as dragon bone.',
+      icon: '🪵',
+      cost: 50
+    },
+    aged_frost_lotus: {
+      id: 'aged_frost_lotus',
+      nameRu: 'Столетний ледяной лотос',
+      nameEn: 'Century Frost Lotus',
+      descRu: 'Вековой кристальный цветок безупречной чистоты.',
+      descEn: 'Century-aged crystalline blossom of flawless purity.',
+      icon: '❄️',
+      cost: 65
+    },
+    aged_flame_bloom: {
+      id: 'aged_flame_bloom',
+      nameRu: 'Столетний огненный зверобой',
+      nameEn: 'Century Flame Bloom',
+      descRu: 'Вековой огненный цветок, пылающий золотым жаром.',
+      descEn: 'Century-aged flame blossom blazing with golden heat.',
+      icon: '🔥',
+      cost: 70
+    },
+    aged_poison_sac: {
+      id: 'aged_poison_sac',
+      nameRu: 'Очищенная эссенция яда',
+      nameEn: 'Purified Venom Essence',
+      descRu: 'Вековой очищенный яд Небесной Жемчужины, лишённый вреда для сосуда.',
+      descEn: 'Century-aged purified Pearl venom essence, harmless to the cultivator’s vessel.',
+      icon: '🧪',
+      cost: 85
+    },
+    divine_petals: {
+      id: 'divine_petals',
+      nameRu: 'Священные лепестки Жемчужины',
+      nameEn: 'Divine Pearl Petals',
+      descRu: 'Божественные лепестки тысячелетней мутации первозданного хаоса.',
+      descEn: 'Divine petals from millennial mutation of primordial chaos.',
+      icon: '🌸',
+      cost: 120
     }
   };
+
+  const SEEDS = {
+    mountain_herb_seed: {
+      id: 'mountain_herb_seed',
+      nameRu: 'Семя горного чабреца',
+      nameEn: 'Mountain Thyme Seed',
+      descRu: 'Семя дикорастущего чабреца со склонов долины.',
+      descEn: 'Wild thyme seed from valley slopes.',
+      icon: '🌱',
+      herbId: 'mountain_herb',
+      agedHerbId: 'aged_mountain_herb',
+      matureTime: 180,
+      cost: 6
+    },
+    spirit_clover_seed: {
+      id: 'spirit_clover_seed',
+      nameRu: 'Семя лазурного клевера',
+      nameEn: 'Azure Clover Seed',
+      descRu: 'Семя духовного клевера, тянущееся к первородной ци.',
+      descEn: 'Spiritual clover seed drawn to primordial qi.',
+      icon: '🍀',
+      herbId: 'spirit_clover',
+      agedHerbId: 'aged_spirit_clover',
+      matureTime: 480,
+      cost: 12
+    },
+    iron_root_seed: {
+      id: 'iron_root_seed',
+      nameRu: 'Семя железного корня',
+      nameEn: 'Iron Root Seed',
+      descRu: 'Тяжёлое семя для выращивания железного корня.',
+      descEn: 'Heavy seed for growing iron roots.',
+      icon: '🪵',
+      herbId: 'iron_root',
+      agedHerbId: 'aged_iron_root',
+      matureTime: 900,
+      cost: 20
+    },
+    frost_lotus_seed: {
+      id: 'frost_lotus_seed',
+      nameRu: 'Семя морозного колокольчика',
+      nameEn: 'Frost Lotus Seed',
+      descRu: 'Ледяное семя, дышащее горной прохладой.',
+      descEn: 'Icy seed breathing mountain chill.',
+      icon: '❄️',
+      herbId: 'frost_lotus',
+      agedHerbId: 'aged_frost_lotus',
+      matureTime: 1800,
+      cost: 28
+    },
+    flame_bloom_seed: {
+      id: 'flame_bloom_seed',
+      nameRu: 'Семя огненного зверобоя',
+      nameEn: 'Flame Bloom Seed',
+      descRu: 'Жгучее семя, вобравшее частицу первородного пламени.',
+      descEn: 'Fiery seed harboring a spark of primordial flame.',
+      icon: '🔥',
+      herbId: 'flame_bloom',
+      agedHerbId: 'aged_flame_bloom',
+      matureTime: 1800,
+      cost: 30
+    },
+    poison_spore: {
+      id: 'poison_spore',
+      nameRu: 'Ядовитая спора Чащоб',
+      nameEn: 'Beast Miasma Spore',
+      descRu: 'Концентрированная спора ядовитых тварей.',
+      descEn: 'Concentrated spore of venomous beasts.',
+      icon: '🧪',
+      herbId: 'poison_sac',
+      agedHerbId: 'aged_poison_sac',
+      matureTime: 2700,
+      cost: 45
+    },
+    primordial_seed: {
+      id: 'primordial_seed',
+      nameRu: 'Реликтовое семя Хаоса',
+      nameEn: 'Relic Primordial Seed',
+      descRu: 'Древнейшее семя Небес. Прорастая в Жемчужине, рождает священные лепестки.',
+      descEn: 'Ancient celestial seed. Sprouting inside the Pearl yields divine petals.',
+      icon: '✨',
+      herbId: 'divine_petals',
+      agedHerbId: 'divine_petals',
+      matureTime: 3600,
+      cost: 80
+    }
+  };
+
+  const PLOT_UNLOCK_REQS = [
+    { plotIndex: 0, reqRank: 1, qi: 0, gold: 0, relics: 0, nameRu: 'Алтарная делянка у чистой воды I', nameEn: 'Altar Plot by Clear Water I' },
+    { plotIndex: 1, reqRank: 1, qi: 0, gold: 0, relics: 0, nameRu: 'Алтарная делянка у чистой воды II', nameEn: 'Altar Plot by Clear Water II' },
+    { plotIndex: 2, reqRank: 2, qi: 20, gold: 50, relics: 0, nameRu: 'Очищенная лазурная земля', nameEn: 'Cleansed Azure Soil' },
+    { plotIndex: 3, reqRank: 3, qi: 40, gold: 150, relics: 0, nameRu: 'Делянка пламени Злого Бога', nameEn: 'Evil God Flame Soil' },
+    { plotIndex: 4, reqRank: 4, qi: 80, gold: 400, relics: 1, nameRu: 'Терраса Пятицветной Нефритовой Земли', nameEn: 'Five-Color Jade Earth Terrace' },
+    { plotIndex: 5, reqRank: 5, qi: 150, gold: 1000, relics: 2, nameRu: 'Сердцевина Жемчужины Изначального Хаоса', nameEn: 'Core of Primordial Chaos Pearl' }
+  ];
 
   const RANKS = [
     { rank: 1, xpReq: 0, ru: 'Новичок ступки', en: 'Mortar Novice', perkRu: 'Базовые восстанавливающие отвары.', perkEn: 'Basic recovery decoctions.' },
@@ -211,6 +370,109 @@
           en: `Evil Sky Sutra surge: +40% battle power for ${fights} duels, profound Qi +${qiBonus}!`
         };
       }
+    },
+    century_vitality: {
+      id: 'century_vitality',
+      nameRu: 'Пилюля Столетней Жизни',
+      nameEn: 'Century Vitality Dan',
+      descRu: 'Сваренная на вековом чабреце и лазурном клевере, пилюля навсегда расширяет пределы выносливости.',
+      descEn: 'Brewed with century thyme and azure clover, this pill permanently expands stamina reserves.',
+      icon: '🌿',
+      reqLevel: 3,
+      ingredients: { aged_mountain_herb: 1, aged_spirit_clover: 1, spring_water: 2 },
+      pearlQi: 15,
+      effectRu: 'Макс. выносливость навсегда +2.0 (Жемчужина: +3.0)',
+      effectEn: 'Max stamina permanently +2.0 (Pearl: +3.0)',
+      combatEffectRu: 'В бою: 100% выносливости и барьер 30% HP',
+      combatEffectEn: 'In combat: 100% stamina and 30% HP barrier',
+      apply(s, isPearl, isCrit) {
+        const bonus = isPearl ? 3.0 : (isCrit ? 2.5 : 2.0);
+        s.staminaMax = Math.min(250, (s.staminaMax || 100) + bonus);
+        s.stamina = s.staminaMax;
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Столетней Жизни усвоена: макс. выносливость увеличена на +${bonus.toFixed(1)}!`,
+          en: `Century Vitality Dan absorbed: max stamina increased by +${bonus.toFixed(1)}!`
+        };
+      }
+    },
+    iron_dragon_pill: {
+      id: 'iron_dragon_pill',
+      nameRu: 'Пилюля Кости Железного Дракона',
+      nameEn: 'Iron Dragon Pill',
+      descRu: 'Сплавление адамантового корня и векового пламени закаляет кости драконьей прочностью.',
+      descEn: 'Fusing adamantine root and century flame tempers bones with dragon durability.',
+      icon: '🐉',
+      reqLevel: 3,
+      ingredients: { aged_iron_root: 1, aged_flame_bloom: 1 },
+      pearlQi: 20,
+      effectRu: 'Тело +0.40, выносл. +40 (Жемчужина: Тело +0.60, выносл. +60)',
+      effectEn: 'Body +0.40, stamina +40 (Pearl: Body +0.60, stamina +60)',
+      combatEffectRu: 'В бою: чешуя дракона снижает урон на -50% на 3 хода',
+      combatEffectEn: 'In combat: dragon scales reduce damage by -50% for 3 turns',
+      apply(s, isPearl, isCrit) {
+        const bodyGain = isPearl ? 0.60 : (isCrit ? 0.50 : 0.40);
+        const stamGain = isPearl ? 60 : 40;
+        s.body = Math.min(10 * (s.realm + 1), s.body + bodyGain);
+        s.stamina = Math.min((s.staminaMax || 100), s.stamina + stamGain);
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Железного Дракона усвоена: Тело +${bodyGain.toFixed(2)}, выносливость +${stamGain}!`,
+          en: `Iron Dragon Pill absorbed: Body +${bodyGain.toFixed(2)}, stamina +${stamGain}!`
+        };
+      }
+    },
+    nine_revolutions: {
+      id: 'nine_revolutions',
+      nameRu: 'Пилюля Девяти Превращений Духа',
+      nameEn: 'Nine Revolutions Dan',
+      descRu: 'Великое снадобье на священных лепестках хаоса. Дарует прозрение и колоссальный приток истинной ци.',
+      descEn: 'Grand elixir of divine chaos petals. Grants breakthrough insight and a colossal surge of true qi.',
+      icon: '🌌',
+      reqLevel: 4,
+      ingredients: { divine_petals: 1, aged_spirit_clover: 1, relic_dust: 1 },
+      pearlQi: 25,
+      effectRu: 'Понимание +80 XP, Ци +60 (Жемчужина: +120 XP, Ци +90)',
+      effectEn: 'Insight +80 XP, Qi +60 (Pearl: +120 XP, Qi +90)',
+      combatEffectRu: 'В бою: Ци +60, мгновенный сброс перезарядки техник',
+      combatEffectEn: 'In combat: Qi +60, resets technique cooldowns',
+      apply(s, isPearl, isCrit) {
+        const xpGain = isPearl ? 120 : (isCrit ? 100 : 80);
+        const qiGain = isPearl ? 90 : (isCrit ? 75 : 60);
+        s.xp = (s.xp || 0) + xpGain;
+        s.resources.qi = (s.resources.qi || 0) + qiGain;
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Девяти Превращений усвоена: Понимание +${xpGain} XP, истинная ци +${qiGain}!`,
+          en: `Nine Revolutions Dan absorbed: Insight +${xpGain} XP, true qi +${qiGain}!`
+        };
+      }
+    },
+    sky_nirvana: {
+      id: 'sky_nirvana',
+      nameRu: 'Пилюля Нирваны Злого Неба',
+      nameEn: 'Sky Poison Nirvana Pill',
+      descRu: 'Священный эликсир на лепестках хаоса и очищенном яде. Дарует ярость Злого Бога в боях.',
+      descEn: 'Sacred elixir of chaos petals and purified venom. Grants Evil God fury in battle.',
+      icon: '⚡',
+      reqLevel: 4,
+      ingredients: { divine_petals: 1, aged_poison_sac: 1, aged_frost_lotus: 1 },
+      pearlQi: 30,
+      requiresPearl: true,
+      effectRu: 'Ярость Злого Бога на 5 боёв (MAX импульс, урон +50%)',
+      effectEn: 'Evil God Fury for 5 battles (MAX momentum, damage +50%)',
+      combatEffectRu: 'В бою: макс. урон и 20% вампиризм HP',
+      combatEffectEn: 'In combat: max damage and 20% HP vampirism',
+      apply(s, isPearl, isCrit) {
+        if (!s.alchemy.buffs) s.alchemy.buffs = {};
+        const fights = isPearl ? 8 : (isCrit ? 6 : 5);
+        s.alchemy.buffs.evilGodFights = (s.alchemy.buffs.evilGodFights || 0) + fights;
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Нирваны принята: Сила Злого Бога пробуждена на следующие ${fights} боёв!`,
+          en: `Sky Poison Nirvana Pill consumed: Evil God fury awakened for next ${fights} battles!`
+        };
+      }
     }
   };
 
@@ -224,11 +486,12 @@
       reqPill: 'vigor_broth',
       reqPillNameRu: 'Отвар бодрости и сытости',
       reqPillNameEn: 'Vigor and Satiety Broth',
-      rewardRu: '+35 монет, +1 репутация, +15 опыта алхимии',
-      rewardEn: '+35 coins, +1 reputation, +15 alchemy XP',
+      rewardRu: '+35 монет, +1 репутация, +1 семя чабреца, +15 опыта алхимии',
+      rewardEn: '+35 coins, +1 reputation, +1 thyme seed, +15 alchemy XP',
       rewardGold: 35,
       rewardRep: 1,
-      rewardXp: 15
+      rewardXp: 15,
+      rewardSeed: { mountain_herb_seed: 1 }
     },
     hunter_poison: {
       id: 'hunter_poison',
@@ -241,12 +504,13 @@
       pearlQi: 15,
       reqPillNameRu: 'Настой ясного сердца (или очищение Жемчужиной, 15 Ци)',
       reqPillNameEn: 'Clear Heart Infusion (or Pearl purge, 15 Qi)',
-      rewardRu: '+60 монет, +2 репутации, +2 железы яда, +25 опыта',
-      rewardEn: '+60 coins, +2 reputation, +2 venom glands, +25 XP',
+      rewardRu: '+60 монет, +2 репутации, +2 железы яда, +1 спора яда, +25 опыта',
+      rewardEn: '+60 coins, +2 reputation, +2 venom glands, +1 poison spore, +25 XP',
       rewardGold: 60,
       rewardRep: 2,
       rewardXp: 25,
-      rewardIngredient: { poison_sac: 2 }
+      rewardIngredient: { poison_sac: 2 },
+      rewardSeed: { poison_spore: 1 }
     },
     apprentice_fracture: {
       id: 'apprentice_fracture',
@@ -257,12 +521,13 @@
       reqPill: 'body_pill',
       reqPillNameRu: 'Пилюля закалки костей',
       reqPillNameEn: 'Bone-Tempering Pill',
-      rewardRu: '+75 монет, +2 репутации, +1 нефритовая пыль, +30 опыта',
-      rewardEn: '+75 coins, +2 reputation, +1 jade dust, +30 XP',
+      rewardRu: '+75 монет, +2 репутации, +1 нефритовая пыль, +1 семя корня, +30 опыта',
+      rewardEn: '+75 coins, +2 reputation, +1 jade dust, +1 root seed, +30 XP',
       rewardGold: 75,
       rewardRep: 2,
       rewardXp: 30,
-      rewardIngredient: { relic_dust: 1 }
+      rewardIngredient: { relic_dust: 1 },
+      rewardSeed: { iron_root_seed: 1 }
     },
     elder_dandu: {
       id: 'elder_dandu',
@@ -275,12 +540,13 @@
       pearlQi: 25,
       reqPillNameRu: 'Пилюля сокрушения преград (или очищение Жемчужиной, 25 Ци)',
       reqPillNameEn: 'Barrier-Shattering Pill (or Pearl purge, 25 Qi)',
-      rewardRu: '+150 монет, +5 репутации, +1 осколок алтаря, +50 опыта',
-      rewardEn: '+150 coins, +5 reputation, +1 relic shard, +50 XP',
+      rewardRu: '+150 монет, +5 репутации, +1 осколок алтаря, +1 семя Хаоса, +50 опыта',
+      rewardEn: '+150 coins, +5 reputation, +1 relic shard, +1 Chaos seed, +50 XP',
       rewardGold: 150,
       rewardRep: 5,
       rewardXp: 50,
-      rewardRelic: 1
+      rewardRelic: 1,
+      rewardSeed: { primordial_seed: 1 }
     }
   };
 
@@ -432,7 +698,11 @@
         body_pill: 0,
         calm_tea: 0,
         breakthrough_pill: 0,
-        evil_god_pill: 0
+        evil_god_pill: 0,
+        century_vitality: 0,
+        iron_dragon_pill: 0,
+        nine_revolutions: 0,
+        sky_nirvana: 0
       },
       pouch: ['vigor_broth', null, null],
       patients: ['ba_strained', 'hunter_poison'],
@@ -445,7 +715,45 @@
         frost_lotus: 0,
         flame_bloom: 0,
         relic_dust: 0,
-        poison_sac: 0
+        poison_sac: 0,
+        aged_mountain_herb: 0,
+        aged_spirit_clover: 0,
+        aged_iron_root: 0,
+        aged_frost_lotus: 0,
+        aged_flame_bloom: 0,
+        aged_poison_sac: 0,
+        divine_petals: 0
+      },
+      garden: {
+        unlockedPlots: 2,
+        dew: 1,
+        dewMax: 5,
+        dewProgress: 0,
+        seeds: {
+          mountain_herb_seed: 2,
+          spirit_clover_seed: 1,
+          iron_root_seed: 0,
+          frost_lotus_seed: 0,
+          flame_bloom_seed: 0,
+          poison_spore: 0,
+          primordial_seed: 0
+        },
+        plots: [
+          { id: 0, seed: null, growthSeconds: 0, watered: false, infused: false },
+          { id: 1, seed: null, growthSeconds: 0, watered: false, infused: false },
+          { id: 2, seed: null, growthSeconds: 0, watered: false, infused: false },
+          { id: 3, seed: null, growthSeconds: 0, watered: false, infused: false },
+          { id: 4, seed: null, growthSeconds: 0, watered: false, infused: false },
+          { id: 5, seed: null, growthSeconds: 0, watered: false, infused: false }
+        ],
+        stats: {
+          planted: 0,
+          harvested: 0,
+          centuryHarvested: 0,
+          millenniumMutations: 0,
+          dewUsed: 0,
+          qiInfused: 0
+        }
       },
       buffs: {
         evilGodFights: 0,
@@ -507,6 +815,40 @@
     if (input.ingredients && typeof input.ingredients === 'object') {
       for (const k of Object.keys(INGREDIENTS)) {
         base.ingredients[k] = Math.max(0, Math.floor(input.ingredients[k] || 0));
+      }
+    }
+
+    if (input.garden && typeof input.garden === 'object') {
+      base.garden.unlockedPlots = Math.max(2, Math.min(6, Math.floor(input.garden.unlockedPlots || 2)));
+      base.garden.dew = Math.max(0, Math.min(5, Math.floor(input.garden.dew !== undefined ? input.garden.dew : 1)));
+      base.garden.dewMax = 5;
+      base.garden.dewProgress = Math.max(0, Math.min(1800, Number(input.garden.dewProgress) || 0));
+
+      if (input.garden.seeds && typeof input.garden.seeds === 'object') {
+        for (const k of Object.keys(SEEDS)) {
+          base.garden.seeds[k] = Math.max(0, Math.floor(input.garden.seeds[k] || 0));
+        }
+      }
+
+      if (Array.isArray(input.garden.plots)) {
+        base.garden.plots = base.garden.plots.map((dp, idx) => {
+          const inp = input.garden.plots[idx];
+          if (!inp || typeof inp !== 'object') return dp;
+          const validSeed = inp.seed && Object.hasOwn(SEEDS, inp.seed) ? inp.seed : null;
+          return {
+            id: idx,
+            seed: validSeed,
+            growthSeconds: Math.max(0, Number(inp.growthSeconds) || 0),
+            watered: !!inp.watered,
+            infused: !!inp.infused
+          };
+        });
+      }
+
+      if (input.garden.stats && typeof input.garden.stats === 'object') {
+        for (const k of ['planted', 'harvested', 'centuryHarvested', 'millenniumMutations', 'dewUsed', 'qiInfused']) {
+          base.garden.stats[k] = Math.max(0, Math.floor(input.garden.stats[k] || 0));
+        }
       }
     }
 
@@ -679,13 +1021,36 @@
       const recId = itemId.replace('recipe_', '');
       const r = RECIPES[recId];
       if (!r || s.alchemy.unlockedRecipes.includes(recId)) return false;
-      const price = recId === 'body_pill' ? 35 : (recId === 'calm_tea' ? 45 : 80);
+      const prices = {
+        body_pill: 35,
+        calm_tea: 45,
+        breakthrough_pill: 80,
+        century_vitality: 120,
+        iron_dragon_pill: 180,
+        nine_revolutions: 350,
+        sky_nirvana: 500
+      };
+      const price = prices[recId] || 80;
       if (s.resources.gold < price) return false;
       s.resources.gold -= price;
       s.alchemy.unlockedRecipes.push(recId);
       s.alchemy.log.unshift({
         ru: `Куплен рецепт: «${r.nameRu}» у аптекаря Хо за ${price} монет.`,
         en: `Purchased recipe: “${r.nameEn}” from Apothecary Huo for ${price} coins.`
+      });
+      return true;
+    }
+
+    if (SEEDS[itemId]) {
+      const seed = SEEDS[itemId];
+      const totalCost = seed.cost * count;
+      if (s.resources.gold < totalCost) return false;
+      s.resources.gold -= totalCost;
+      if (!s.alchemy.garden) s.alchemy.garden = fresh().garden;
+      s.alchemy.garden.seeds[itemId] = (s.alchemy.garden.seeds[itemId] || 0) + count;
+      s.alchemy.log.unshift({
+        ru: `Куплено ${count} шт. семян «${seed.nameRu}» у мастера Хо за ${totalCost} монет.`,
+        en: `Purchased ${count} “${seed.nameEn}” seeds from Master Huo for ${totalCost} coins.`
       });
       return true;
     }
@@ -817,6 +1182,21 @@
       rareFound = INGREDIENTS[table.rareHerb];
     }
 
+    let seedFound = null;
+    const seedChances = {
+      village: { id: 'mountain_herb_seed', chance: 0.40 },
+      forest: { id: 'spirit_clover_seed', chance: 0.30 },
+      pass: { id: 'iron_root_seed', chance: 0.35 },
+      ruins: { id: 'flame_bloom_seed', chance: 0.35 },
+      city: { id: 'spirit_clover_seed', chance: 0.30 }
+    };
+    const sc = seedChances[locKey] || seedChances.village;
+    if (sc && Math.random() < sc.chance && SEEDS[sc.id]) {
+      if (!alc.garden) alc.garden = fresh().garden;
+      alc.garden.seeds[sc.id] = (alc.garden.seeds[sc.id] || 0) + 1;
+      seedFound = SEEDS[sc.id];
+    }
+
     alc.xp += 10;
     // Check rank up
     for (let i = RANKS.length - 1; i >= 0; i--) {
@@ -834,10 +1214,12 @@
     const itemsEn = gathered.map(g => `${g.ing.icon} ${g.ing.nameEn} ×${g.count}`).join(', ');
     const rareRu = rareFound ? ` Редкая находка: ${rareFound.icon} ${rareFound.nameRu}!` : '';
     const rareEn = rareFound ? ` Rare find: ${rareFound.icon} ${rareFound.nameEn}!` : '';
+    const seedRu = seedFound ? ` Найдено семя: ${seedFound.icon} ${seedFound.nameRu}!` : '';
+    const seedEn = seedFound ? ` Seed found: ${seedFound.icon} ${seedFound.nameEn}!` : '';
 
     alc.log.unshift({
-      ru: `【Сбор трав · ${table.nameRu}】 Найдено: ${itemsRu}.${rareRu} (+10 опыта)`,
-      en: `【Herb Foraging · ${table.nameEn}】 Gathered: ${itemsEn}.${rareEn} (+10 XP)`
+      ru: `【Сбор трав · ${table.nameRu}】 Найдено: ${itemsRu}.${rareRu}${seedRu} (+10 опыта)`,
+      en: `【Herb Foraging · ${table.nameEn}】 Gathered: ${itemsEn}.${rareEn}${seedEn} (+10 XP)`
     });
     alc.log = alc.log.slice(0, 10);
     return true;
@@ -884,6 +1266,12 @@
     if (patient.rewardIngredient) {
       for (const [k, v] of Object.entries(patient.rewardIngredient)) {
         alc.ingredients[k] = (alc.ingredients[k] || 0) + v;
+      }
+    }
+    if (patient.rewardSeed) {
+      if (!alc.garden) alc.garden = fresh().garden;
+      for (const [k, v] of Object.entries(patient.rewardSeed)) {
+        alc.garden.seeds[k] = (alc.garden.seeds[k] || 0) + v;
       }
     }
 
@@ -950,11 +1338,362 @@
     return true;
   }
 
+  function getPlotStage(plot) {
+    if (!plot || !plot.seed || !SEEDS[plot.seed]) {
+      return { stage: 'empty', progress: 0, progressPercent: 0, labelRu: 'Пустая делянка', labelEn: 'Empty plot', nextTime: 0 };
+    }
+    const seed = SEEDS[plot.seed];
+    const T = seed.matureTime;
+    const t = plot.growthSeconds || 0;
+
+    if (t < T) {
+      const pct = Math.floor((t / T) * 100);
+      return {
+        stage: 'sprout',
+        progress: t,
+        progressPercent: pct,
+        labelRu: '🌱 Росток',
+        labelEn: '🌱 Sprout',
+        nextTime: Math.max(0, Math.ceil(T - t))
+      };
+    }
+    if (t < 3 * T) {
+      const pct = Math.min(100, Math.floor(((t - T) / (2 * T)) * 100));
+      return {
+        stage: 'mature',
+        progress: t,
+        progressPercent: pct,
+        labelRu: '🌿 Зрелая трава (10 лет)',
+        labelEn: '🌿 Mature Herb (10y)',
+        nextTime: Math.max(0, Math.ceil(3 * T - t))
+      };
+    }
+    if (t < 8 * T) {
+      const pct = Math.min(100, Math.floor(((t - 3 * T) / (5 * T)) * 100));
+      return {
+        stage: 'century',
+        progress: t,
+        progressPercent: pct,
+        labelRu: '✨ Вековой реликт (100 лет)',
+        labelEn: '✨ Century Relic (100y)',
+        nextTime: Math.max(0, Math.ceil(8 * T - t))
+      };
+    }
+    return {
+      stage: 'millennium',
+      progress: t,
+      progressPercent: 100,
+      labelRu: '🌌 Тысячелетняя мутация (1000 лет)',
+      labelEn: '🌌 Millennium Mutation (1000y)',
+      nextTime: 0
+    };
+  }
+
+  function canPlant(s, plotIndex, seedId) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    const g = s.alchemy.garden;
+    plotIndex = Math.floor(plotIndex);
+    if (plotIndex < 0 || plotIndex >= g.unlockedPlots) return false;
+    const plot = g.plots[plotIndex];
+    if (!plot || plot.seed) return false;
+    if (!SEEDS[seedId] || (g.seeds[seedId] || 0) < 1) return false;
+    return true;
+  }
+
+  function plant(s, plotIndex, seedId, E = null) {
+    if (!canPlant(s, plotIndex, seedId)) return false;
+    const g = s.alchemy.garden;
+    const plot = g.plots[plotIndex];
+    const seed = SEEDS[seedId];
+
+    g.seeds[seedId]--;
+    plot.seed = seedId;
+    plot.growthSeconds = 0;
+    plot.watered = false;
+    plot.infused = false;
+    g.stats.planted = (g.stats.planted || 0) + 1;
+
+    const logRu = `🌱 Семя «${seed.nameRu}» бережно посажено в делянку #${plotIndex + 1}. Изначальный Хаос питает росток.`;
+    const logEn = `🌱 Seed “${seed.nameEn}” planted in plot #${plotIndex + 1}. Primordial Chaos nourishes the sprout.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, `Сад Жемчужины: посажено семя «${seed.nameRu}».`);
+    return true;
+  }
+
+  function canWater(s, plotIndex) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    const g = s.alchemy.garden;
+    plotIndex = Math.floor(plotIndex);
+    if (plotIndex < 0 || plotIndex >= g.unlockedPlots) return false;
+    const plot = g.plots[plotIndex];
+    if (!plot || !plot.seed || plot.watered) return false;
+    return (g.dew || 0) >= 1;
+  }
+
+  function waterPlot(s, plotIndex, E = null) {
+    if (!canWater(s, plotIndex)) return false;
+    const g = s.alchemy.garden;
+    const plot = g.plots[plotIndex];
+
+    g.dew = Math.max(0, g.dew - 1);
+    plot.watered = true;
+    plot.growthSeconds += 3600; // instant +1 hr growth
+    g.stats.dewUsed = (g.stats.dewUsed || 0) + 1;
+
+    const logRu = `💧 Капля Живительной Росы оросила делянку #${plotIndex + 1}! Рост ускорен на +50%, добавлено +1 час развития.`;
+    const logEn = `💧 Pearl Dew Drop watered plot #${plotIndex + 1}! Growth rate boosted by +50%, +1 hr growth added.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, `Сад Жемчужины: делянка #${plotIndex + 1} орошена росой.`);
+    return true;
+  }
+
+  function canInfuse(s, plotIndex) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    const g = s.alchemy.garden;
+    plotIndex = Math.floor(plotIndex);
+    if (plotIndex < 0 || plotIndex >= g.unlockedPlots) return false;
+    const plot = g.plots[plotIndex];
+    if (!plot || !plot.seed) return false;
+    return (s.resources.qi || 0) >= 15;
+  }
+
+  function infusePlot(s, plotIndex, E = null) {
+    if (!canInfuse(s, plotIndex)) return false;
+    const g = s.alchemy.garden;
+    const plot = g.plots[plotIndex];
+
+    s.resources.qi = Math.max(0, (s.resources.qi || 0) - 15);
+    plot.infused = true;
+    plot.growthSeconds += 1800; // instant +30 min
+    g.stats.qiInfused = (g.stats.qiInfused || 0) + 1;
+
+    const logRu = `⚡ Вливание 15 Истинной Ци в делянку #${plotIndex + 1}! Корни вобрали силу (+30 минут роста).`;
+    const logEn = `⚡ Infused 15 True Qi into plot #${plotIndex + 1}! Roots absorbed divine energy (+30 min growth).`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, `Сад Жемчужины: в делянку #${plotIndex + 1} влита Ци.`);
+    return true;
+  }
+
+  function canHarvest(s, plotIndex) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    const g = s.alchemy.garden;
+    plotIndex = Math.floor(plotIndex);
+    if (plotIndex < 0 || plotIndex >= g.unlockedPlots) return false;
+    const plot = g.plots[plotIndex];
+    if (!plot || !plot.seed || !SEEDS[plot.seed]) return false;
+    return (plot.growthSeconds || 0) >= SEEDS[plot.seed].matureTime;
+  }
+
+  function harvest(s, plotIndex, E = null) {
+    if (!canHarvest(s, plotIndex)) return false;
+    const alc = s.alchemy;
+    const g = alc.garden;
+    const plot = g.plots[plotIndex];
+    const seed = SEEDS[plot.seed];
+    const stageInfo = getPlotStage(plot);
+    const stage = stageInfo.stage;
+
+    let xpGain = 15;
+    let normalYield = 2;
+    let agedYield = 0;
+    let seedReturn = 0;
+    let divineYield = 0;
+    let relicDustYield = 0;
+
+    if (stage === 'mature') {
+      normalYield = 2 + (Math.random() < 0.5 ? 1 : 0);
+      seedReturn = Math.random() < 0.35 ? 1 : 0;
+      xpGain = 15;
+    } else if (stage === 'century') {
+      normalYield = 3 + (Math.random() < 0.5 ? 1 : 0);
+      agedYield = 1;
+      seedReturn = 1; // guaranteed seed back
+      xpGain = 40;
+      g.stats.centuryHarvested = (g.stats.centuryHarvested || 0) + 1;
+    } else if (stage === 'millennium') {
+      normalYield = 4 + (Math.random() < 0.5 ? 1 : 0);
+      agedYield = 1;
+      seedReturn = 1 + (Math.random() < 0.5 ? 1 : 0);
+      xpGain = 75;
+      const mutationChance = plot.watered ? 0.75 : 0.50;
+      if (Math.random() < mutationChance) {
+        divineYield = 1 + (Math.random() < 0.35 ? 1 : 0);
+        relicDustYield = 1;
+        g.stats.millenniumMutations = (g.stats.millenniumMutations || 0) + 1;
+      }
+    }
+
+    // Apply yields
+    alc.ingredients[seed.herbId] = (alc.ingredients[seed.herbId] || 0) + normalYield;
+    if (agedYield > 0 && seed.agedHerbId) {
+      alc.ingredients[seed.agedHerbId] = (alc.ingredients[seed.agedHerbId] || 0) + agedYield;
+    }
+    if (divineYield > 0) {
+      alc.ingredients.divine_petals = (alc.ingredients.divine_petals || 0) + divineYield;
+    }
+    if (relicDustYield > 0) {
+      alc.ingredients.relic_dust = (alc.ingredients.relic_dust || 0) + relicDustYield;
+    }
+    if (seedReturn > 0) {
+      g.seeds[plot.seed] = (g.seeds[plot.seed] || 0) + seedReturn;
+    }
+
+    alc.xp += xpGain;
+    g.stats.harvested = (g.stats.harvested || 0) + 1;
+
+    // Rank up check
+    for (let i = RANKS.length - 1; i >= 0; i--) {
+      if (alc.xp >= RANKS[i].xpReq && alc.level < RANKS[i].rank) {
+        alc.level = RANKS[i].rank;
+        const rankUpMsgRu = `★ Новый ранг алхимии: «${RANKS[i].ru}»!`;
+        const rankUpMsgEn = `★ New alchemy rank: “${RANKS[i].en}”!`;
+        alc.log.unshift({ ru: rankUpMsgRu, en: rankUpMsgEn });
+        if (E && E.log) E.log(s, rankUpMsgRu);
+        break;
+      }
+    }
+
+    // Clear plot
+    plot.seed = null;
+    plot.growthSeconds = 0;
+    plot.watered = false;
+    plot.infused = false;
+
+    const yieldSummaryRu = [
+      `${normalYield} шт. «${INGREDIENTS[seed.herbId]?.nameRu || seed.herbId}»`,
+      agedYield ? `${agedYield} шт. «${INGREDIENTS[seed.agedHerbId]?.nameRu || seed.agedHerbId}»` : '',
+      divineYield ? `${divineYield} шт. Священных Лепестков` : '',
+      seedReturn ? `${seedReturn} семя` : ''
+    ].filter(Boolean).join(', ');
+
+    const yieldSummaryEn = [
+      `${normalYield} pcs “${INGREDIENTS[seed.herbId]?.nameEn || seed.herbId}”`,
+      agedYield ? `${agedYield} pcs “${INGREDIENTS[seed.agedHerbId]?.nameEn || seed.agedHerbId}”` : '',
+      divineYield ? `${divineYield} pcs Divine Petals` : '',
+      seedReturn ? `${seedReturn} seed` : ''
+    ].filter(Boolean).join(', ');
+
+    const logRu = `🌾 Урожай делянки #${plotIndex + 1} (${stageInfo.labelRu}): получено ${yieldSummaryRu} (+${xpGain} опыта алхимии).`;
+    const logEn = `🌾 Harvested plot #${plotIndex + 1} (${stageInfo.labelEn}): received ${yieldSummaryEn} (+${xpGain} alchemy XP).`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, `Сад Жемчужины: собран урожай с делянки #${plotIndex + 1}.`);
+    return true;
+  }
+
+  function harvestAll(s, E = null) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    let any = false;
+    for (let i = 0; i < s.alchemy.garden.unlockedPlots; i++) {
+      if (canHarvest(s, i)) {
+        if (harvest(s, i, E)) any = true;
+      }
+    }
+    return any;
+  }
+
+  function canUnlockPlot(s, plotIndex) {
+    if (!s || !s.alchemy || !s.alchemy.garden) return false;
+    const g = s.alchemy.garden;
+    plotIndex = Math.floor(plotIndex);
+    if (plotIndex !== g.unlockedPlots || plotIndex >= 6) return false;
+    const req = PLOT_UNLOCK_REQS[plotIndex];
+    if (!req) return false;
+    if (s.alchemy.level < req.reqRank) return false;
+    if ((s.resources.qi || 0) < req.qi) return false;
+    if ((s.resources.gold || 0) < req.gold) return false;
+    if ((s.resources.relics || 0) < req.relics) return false;
+    return true;
+  }
+
+  function unlockPlot(s, plotIndex, E = null) {
+    if (!canUnlockPlot(s, plotIndex)) return false;
+    const g = s.alchemy.garden;
+    const req = PLOT_UNLOCK_REQS[plotIndex];
+
+    s.resources.qi = Math.max(0, (s.resources.qi || 0) - req.qi);
+    s.resources.gold = Math.max(0, (s.resources.gold || 0) - req.gold);
+    if (req.relics > 0) {
+      s.resources.relics = Math.max(0, (s.resources.relics || 0) - req.relics);
+    }
+    g.unlockedPlots++;
+
+    const logRu = `✨ Пробуждена новая духовная делянка #${g.unlockedPlots}: «${req.nameRu}»! Пространство Жемчужины расширяется.`;
+    const logEn = `✨ Awakened new spiritual plot #${g.unlockedPlots}: “${req.nameEn}”! The Pearl’s space expands.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, `Сад Жемчужины: открыта делянка #${g.unlockedPlots}.`);
+    return true;
+  }
+
+  function getJasmineGardenQuote(s, lang = 'ru') {
+    const isEn = lang === 'en';
+    if (!s || !s.alchemy || !s.alchemy.garden) {
+      return isEn
+        ? '“Cultivate the sacred realm with reverence, mortal.”'
+        : '«Взращивай священный сад с благоговением, смертный.»';
+    }
+    const g = s.alchemy.garden;
+    const activePlots = g.plots.slice(0, g.unlockedPlots);
+    const hasMillennium = activePlots.some(p => p.seed && getPlotStage(p).stage === 'millennium');
+    const hasCentury = activePlots.some(p => p.seed && getPlotStage(p).stage === 'century');
+    const allEmpty = activePlots.every(p => !p.seed);
+
+    if (hasMillennium) {
+      return isEn
+        ? '“Oh?.. Even in the God Realm, such petals are worth their weight in astral jade. It seems your clumsiness is not entirely hopeless.”'
+        : '«О?.. Даже в Царстве Богов такие лепестки ценятся на вес звездного нефрита. Похоже, твоя неуклюжесть не совсем безнадёжна.»';
+    }
+    if (hasCentury) {
+      return isEn
+        ? '“Not bad. The stem absorbed century qi without a single crack. Take it to the cauldron before the essence disperses.”'
+        : '«Неплохо. Стебель вобрал столетнюю ци без единой трещины. Неси в котёл, пока эссенция не рассеялась в воздухе.»';
+    }
+    if (allEmpty) {
+      return isEn
+        ? '“You possess a Heavenly Treasure of Primordial Chaos and leave its sacred soil empty?! Plant seeds immediately, you lazy fool!”'
+        : '«Ты получил в руки Небесное Сокровище Изначального Хаоса и держишь его священную землю пустой?! Немедленно посади семена, ленивый глупец!»';
+    }
+    return isEn
+      ? '“The Primordial Spring fills the sprouts with divine force. Don’t just stand there — use dew or infuse qi if you are in a hurry.”'
+      : '«Изначальный Источник наполняет ростки божественной силой. Не стой без дела — используй росу или влей каплю ци, если торопишься.»';
+  }
+
   function advance(s, dt) {
     if (!s || !s.alchemy) return;
     if (typeof dt === 'number' && dt > 0) {
       if (s.alchemy.forageCooldown > 0) {
         s.alchemy.forageCooldown = Math.max(0, s.alchemy.forageCooldown - dt);
+      }
+      // Garden advancement
+      if (s.alchemy.garden) {
+        const g = s.alchemy.garden;
+        // Dew condensation: 1 drop per 1800s (30 min) up to dewMax (5)
+        if (g.dew < (g.dewMax || 5)) {
+          g.dewProgress = (g.dewProgress || 0) + dt;
+          while (g.dewProgress >= 1800 && g.dew < (g.dewMax || 5)) {
+            g.dew++;
+            g.dewProgress -= 1800;
+          }
+          if (g.dew >= (g.dewMax || 5)) g.dewProgress = 0;
+        } else {
+          g.dewProgress = 0;
+        }
+
+        // Plot growth
+        const unlocked = Math.min(6, g.unlockedPlots || 2);
+        for (let i = 0; i < unlocked; i++) {
+          const plot = g.plots?.[i];
+          if (plot && plot.seed && SEEDS[plot.seed]) {
+            const seed = SEEDS[plot.seed];
+            const rate = plot.watered ? 1.5 : 1.0;
+            const cap = seed.matureTime * 8 + 3600;
+            plot.growthSeconds = Math.min(cap, (plot.growthSeconds || 0) + dt * rate);
+          }
+        }
       }
     }
     if (s.alchemy.buffs && s.alchemy.buffs.meditationBoostUntil > 0) {
@@ -969,6 +1708,8 @@
 
   const api = {
     INGREDIENTS,
+    SEEDS,
+    PLOT_UNLOCK_REQS,
     RANKS,
     RECIPES,
     PATIENTS,
@@ -988,6 +1729,19 @@
     canForage,
     forage,
     equipPouch,
+    getPlotStage,
+    canPlant,
+    plant,
+    canWater,
+    waterPlot,
+    canInfuse,
+    infusePlot,
+    canHarvest,
+    harvest,
+    harvestAll,
+    canUnlockPlot,
+    unlockPlot,
+    getJasmineGardenQuote,
     advance
   };
 

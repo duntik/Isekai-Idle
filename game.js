@@ -1641,6 +1641,7 @@
         if(btn.dataset.alchemyTab==='clinic')btn.textContent=uiText('Клиника Лекаря','Miracle Doctor Clinic');
         if(btn.dataset.alchemyTab==='market'||btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Рынки и Сбор','Markets & Gathering');
         if(btn.dataset.alchemyTab==='pouch')btn.textContent=uiText('Боевая Сумка','Combat Pouch');
+        if(btn.dataset.alchemyTab==='garden')btn.textContent=uiText('Сад Жемчужины','Pearl Garden');
       });
     }
 
@@ -1937,6 +1938,202 @@
         </div>`;
 
       body.innerHTML = pouchHtml;
+    } else if (activeAlchemyTab === 'garden') {
+      const garden = alc.garden || (Alc.fresh ? Alc.fresh().garden : { unlockedPlots: 2, dew: 1, dewMax: 5, dewProgress: 0, seeds: {}, plots: [], stats: {} });
+      const jasmineQuote = Alc.getJasmineGardenQuote ? Alc.getJasmineGardenQuote(s, lang) : '';
+      const hasReadyHarvest = (garden.plots || []).some((p, idx) => idx < garden.unlockedPlots && Alc.canHarvest(s, idx));
+      const dewPct = Math.min(100, Math.floor(((garden.dewProgress || 0) / 1800) * 100));
+
+      const formatGardenTimer = (sec) => {
+        if (sec <= 0) return isEn ? 'Ready!' : 'Готово!';
+        const m = Math.floor(sec / 60);
+        const secRem = sec % 60;
+        if (m >= 60) {
+          const h = Math.floor(m / 60);
+          const remM = m % 60;
+          return `${h} ${uiText(' ч.', ' hr.')} ${remM} ${uiText(' мин.', ' min.')}`;
+        }
+        if (m > 0) {
+          return `${m} ${uiText(' мин.', ' min.')} ${secRem} ${uiText(' сек.', ' sec.')}`;
+        }
+        return `${secRem} ${uiText(' сек.', ' sec.')}`;
+      };
+
+      const headerHtml = `
+        <div class="garden-header-card">
+          <div class="garden-eyebrow">🌿 ${uiText('ВНУТРЕННИЙ МИР ЖЕМЧУЖИНЫ', 'PEARL INNER REALM')} · ${uiText('АВТОНОМНОЕ ДУХОВНОЕ ИЗМЕРЕНИЕ', 'AUTONOMOUS SPIRITUAL DIMENSION')}</div>
+          <h3>${uiText('Духовный Сад Небесной Жемчужины', 'Sky Poison Pearl Spiritual Garden')}</h3>
+          <div class="jasmine-garden-card">
+            <div class="jasmine-avatar">👘</div>
+            <div class="jasmine-dialog-body">
+              <strong>${uiText('Принцесса Жасмин', 'Princess Jasmine')} <small>(${uiText('Звездный Бог Небесной Бойни', 'Heavenly Slaughter Star God')})</small></strong>
+              <p class="jasmine-quote-text">«${jasmineQuote.replace(/^«|»$|^“|”$/g, '')}»</p>
+            </div>
+          </div>
+          <div class="dew-status-bar">
+            <div class="dew-counter">
+              <span class="dew-icon">💧</span>
+              <div>
+                <strong>${uiText('Живительная Роса: ', 'Life-Giving Dew: ')}<span class="dew-val">${garden.dew || 0}</span> / ${garden.dewMax || 5}</strong>
+                <div class="dew-progress-wrap">
+                  <div class="dew-progress-bar" style="width:${dewPct}%"></div>
+                </div>
+                <small class="dew-hint">${uiText('Конденсация росы:', 'Dew condensation:')} ${garden.dew >= garden.dewMax ? (isEn ? 'Full (5/5)' : 'Полный запас (5/5)') : `${dewPct}% (1800 ${uiText(' сек.', ' sec.')})`}</small>
+              </div>
+            </div>
+            <div class="garden-header-actions">
+              <button type="button" class="btn-harvest-all" data-alchemy-action="garden-harvest-all" ${hasReadyHarvest ? '' : 'disabled'}>
+                🌾 ${uiText('Собрать весь готовый урожай', 'Harvest All Ready Herbs')}
+              </button>
+            </div>
+          </div>
+        </div>`;
+
+      // 6 Plots
+      const plotCardsHtml = (garden.plots || []).map((plot, idx) => {
+        const isUnlocked = idx < (garden.unlockedPlots || 2);
+        const req = Alc.PLOT_UNLOCK_REQS?.[idx] || { reqRank: 1, qi: 0, gold: 0, relics: 0, nameRu: `Делянка #${idx + 1}`, nameEn: `Plot #${idx + 1}` };
+        const plotName = isEn ? req.nameEn : req.nameRu;
+
+        if (!isUnlocked) {
+          const canUnlock = Alc.canUnlockPlot(s, idx);
+          const costParts = [];
+          if (req.qi) costParts.push(`${req.qi} ${uiText('Ци', 'Qi')}`);
+          if (req.gold) costParts.push(`${req.gold} ${uiText('монет', 'coins')}`);
+          if (req.relics) costParts.push(`${req.relics} ${uiText('осколков', 'relics')}`);
+          const costStr = costParts.join(' · ');
+
+          return `
+            <div class="garden-plot-card plot-locked">
+              <div class="plot-card-head">
+                <span class="plot-badge-locked">🔒 ${uiText('Закрытая делянка', 'Locked Plot')} #${idx + 1}</span>
+              </div>
+              <strong class="plot-name">${plotName}</strong>
+              <div class="plot-lock-info">
+                <div>${uiText('Требуется ранг алхимии: ', 'Requires alchemy rank: ')}<strong>${req.reqRank}</strong></div>
+                <div>${uiText('Стоимость пробуждения: ', 'Awakening cost: ')}<strong>${costStr}</strong></div>
+              </div>
+              <button type="button" class="btn-unlock-plot" data-alchemy-action="garden-unlock" data-plot="${idx}" ${canUnlock ? '' : 'disabled'}>
+                ✨ ${uiText('Разблокировать делянку', 'Unlock Plot')}
+              </button>
+            </div>`;
+        }
+
+        // Unlocked plot
+        if (!plot.seed) {
+          // Empty plot
+          const availableSeeds = Object.keys(Alc.SEEDS).filter(sId => (garden.seeds?.[sId] || 0) > 0);
+          const hasSeeds = availableSeeds.length > 0;
+          const seedOptions = availableSeeds.map(sId => {
+            const sd = Alc.SEEDS[sId];
+            const cnt = garden.seeds[sId];
+            return `<option value="${sId}">${sd.icon} ${isEn ? sd.nameEn : sd.nameRu} (${cnt} ${uiText('шт.', 'pcs')})</option>`;
+          }).join('');
+
+          return `
+            <div class="garden-plot-card plot-empty">
+              <div class="plot-card-head">
+                <span class="plot-badge-unlocked">🌱 ${uiText('Делянка #', 'Plot #')}${idx + 1}</span>
+                <span class="plot-status-empty">${uiText('Пустая делянка', 'Empty Plot')}</span>
+              </div>
+              <strong class="plot-name">${plotName}</strong>
+              <div class="plot-plant-box">
+                ${hasSeeds ? `
+                  <label class="plot-plant-lbl" for="plot-seed-select-${idx}">${uiText('Выбери семя:', 'Choose seed:')}</label>
+                  <select class="plot-seed-select" id="plot-seed-select-${idx}">
+                    ${seedOptions}
+                  </select>
+                  <button type="button" class="btn-plant-seed" data-alchemy-action="garden-plant" data-plot="${idx}">
+                    🌱 ${uiText('Посадить семя', 'Plant Seed')}
+                  </button>
+                ` : `
+                  <p class="plot-no-seeds-hint">${uiText('Нет семян в запасе. Собери травы в мире или купи семена у мастера Хо.', 'No seeds in stock. Forage herbs in the world or purchase seeds from Master Huo.')}</p>
+                `}
+              </div>
+            </div>`;
+        }
+
+        // Growing plot
+        const seed = Alc.SEEDS[plot.seed];
+        const stageInfo = Alc.getPlotStage(plot);
+        const canWater = Alc.canWater(s, idx);
+        const canInfuse = Alc.canInfuse(s, idx);
+        const canHarvest = Alc.canHarvest(s, idx);
+
+        return `
+          <div class="garden-plot-card plot-growing stage-${stageInfo.stage}">
+            <div class="plot-card-head">
+              <span class="plot-badge-unlocked">🌱 ${uiText('Делянка #', 'Plot #')}${idx + 1}</span>
+              <span class="plot-stage-badge badge-${stageInfo.stage}">${isEn ? stageInfo.labelEn : stageInfo.labelRu}</span>
+            </div>
+            <div class="plot-crop-head">
+              <span class="crop-icon">${seed ? seed.icon : '🌿'}</span>
+              <div>
+                <strong class="crop-name">${seed ? (isEn ? seed.nameEn : seed.nameRu) : ''}</strong>
+                <div class="crop-soil">${plotName}</div>
+              </div>
+            </div>
+            <div class="plot-status-tags">
+              ${plot.watered ? `<span class="tag-watered">💧 ${uiText('Орошено росой (+50% скорости)', 'Watered with Dew (+50% speed)')}</span>` : ''}
+              ${plot.infused ? `<span class="tag-infused">⚡ ${uiText('Влита Ци (+30 мин)', 'Qi Infused (+30 min)')}</span>` : ''}
+            </div>
+            <div class="plot-progress-area">
+              <div class="plot-progress-track">
+                <div class="plot-progress-fill stage-fill-${stageInfo.stage}" style="width:${stageInfo.progressPercent}%"></div>
+              </div>
+              <div class="plot-progress-label">
+                ${stageInfo.stage === 'millennium'
+                  ? `<span>🌌 ${uiText('Созрело для сбора!', 'Ready for harvest!')}</span>`
+                  : `<span>${uiText('До следующей фазы: ', 'Until next phase: ')}<strong>${formatGardenTimer(stageInfo.nextTime)}</strong></span>`}
+              </div>
+            </div>
+            <div class="plot-actions-row">
+              <button type="button" class="btn-plot-water" data-alchemy-action="garden-water" data-plot="${idx}" ${canWater ? '' : 'disabled'}>
+                💧 ${uiText('Полить росой', 'Water with Dew')}
+              </button>
+              <button type="button" class="btn-plot-infuse" data-alchemy-action="garden-infuse" data-plot="${idx}" ${canInfuse ? '' : 'disabled'}>
+                ⚡ ${uiText('Влить Ци (15)', 'Infuse Qi (15)')}
+              </button>
+              <button type="button" class="btn-plot-harvest" data-alchemy-action="garden-harvest" data-plot="${idx}" ${canHarvest ? '' : 'disabled'}>
+                🌾 ${uiText('Собрать урожай', 'Harvest Crop')}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Seeds Inventory / Drawer
+      const seedCardsHtml = Object.keys(Alc.SEEDS).map(sId => {
+        const sd = Alc.SEEDS[sId];
+        const cnt = garden.seeds?.[sId] || 0;
+        const canBuy = (s.resources.gold || 0) >= sd.cost;
+        const matureMin = Math.round(sd.matureTime / 60);
+
+        return `
+          <div class="garden-seed-card">
+            <div class="seed-card-head">
+              <span class="seed-icon">${sd.icon}</span>
+              <div>
+                <strong class="seed-name">${isEn ? sd.nameEn : sd.nameRu}</strong>
+                <div class="seed-mature-time">⏱ ${matureMin} ${uiText(' мин.', ' min.')} ${uiText('созревание', 'maturation')}</div>
+              </div>
+            </div>
+            <div class="seed-stock-tag">🌰 ${uiText('В запасе: ', 'In stock: ')}<strong>${cnt}</strong> ${uiText('шт.', 'pcs')}</div>
+            <button type="button" class="btn-buy-seed" data-alchemy-action="buy" data-item="${sId}" data-count="1" ${canBuy ? '' : 'disabled'}>
+              💰 ${sd.cost} ${uiText('монет', 'coins')} (${uiText('Купить', 'Buy')})
+            </button>
+          </div>`;
+      }).join('');
+
+      const gardenHtml = `
+        <div class="garden-container">
+          ${headerHtml}
+          <div class="section-head"><h3>🌱 ${uiText('Делянки сада', 'Garden Plots')} (${garden.unlockedPlots || 2}/6)</h3></div>
+          <div class="garden-plots-grid">${plotCardsHtml}</div>
+          <div class="section-head" style="margin-top:20px"><h3>🌰 ${uiText('Запас семян в Жемчужине', 'Seed Reserves in Pearl')}</h3></div>
+          <div class="garden-seeds-grid">${seedCardsHtml}</div>
+        </div>`;
+
+      body.innerHTML = gardenHtml;
     } else {
       // cauldron tab
       const rankTitle=isEn?currentRank.en:currentRank.ru;
@@ -2345,6 +2542,61 @@
           save();
         } else {
           toast(uiText('Нет осколков!', 'No relic shards!'));
+        }
+      } else if (act === 'garden-plant') {
+        const plot = b.dataset.plot;
+        const sel = $(`plot-seed-select-${plot}`);
+        const seedId = sel ? sel.value : b.dataset.seed;
+        if (E.action(s, 'alchemy-garden-plant', `${plot}:${seedId}`)) {
+          Sound.playParchment?.();
+          save();
+          toast(uiText('Семя успешно посажено!', 'Seed successfully planted!'));
+        } else {
+          toast(uiText('Нет семян этого вида!', 'No seeds of this kind!'));
+        }
+      } else if (act === 'garden-water') {
+        const plot = b.dataset.plot;
+        if (E.action(s, 'alchemy-garden-water', plot)) {
+          Sound.playBowl?.();
+          save();
+          toast(uiText('Делянка орошена Живительной Росой!', 'Plot watered with Life-Giving Dew!'));
+        } else {
+          toast(uiText('Не хватает Росы для полива!', 'Not enough Dew to water!'));
+        }
+      } else if (act === 'garden-infuse') {
+        const plot = b.dataset.plot;
+        if (E.action(s, 'alchemy-garden-infuse', plot)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Истинная Ци влита в корни растения!', 'True Qi infused into plant roots!'));
+        } else {
+          toast(uiText('Не хватает Истинной Ци!', 'Not enough True Qi!'));
+        }
+      } else if (act === 'garden-harvest') {
+        const plot = b.dataset.plot;
+        if (E.action(s, 'alchemy-garden-harvest', plot)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Урожай успешно собран!', 'Crop successfully harvested!'));
+        } else {
+          toast(uiText('Растение ещё не созрело!', 'Plant is not mature yet!'));
+        }
+      } else if (act === 'garden-harvest-all') {
+        if (E.action(s, 'alchemy-garden-harvest-all')) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Весь созревший урожай собран!', 'All mature crops harvested!'));
+        } else {
+          toast(uiText('Растение ещё не созрело!', 'Plant is not mature yet!'));
+        }
+      } else if (act === 'garden-unlock') {
+        const plot = b.dataset.plot;
+        if (E.action(s, 'alchemy-garden-unlock', plot)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Новая делянка сада разблокирована!', 'New garden plot unlocked!'));
+        } else {
+          toast(uiText('Не выполнены условия разблокировки!', 'Unlock requirements not met!'));
         }
       }
       renderAlchemy();

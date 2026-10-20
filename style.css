@@ -689,3 +689,103 @@ html[data-interface="data"] .alchemy-rank-banner,html[data-interface="data"] .al
 .combat-pouch-pill-btn:hover:not(:disabled){background:rgba(46,219,162,0.25);border-color:var(--green,#2edba2);box-shadow:0 0 8px rgba(46,219,162,0.35)}
 .pouch-pill-qty{color:var(--gold);font-size:10px;font-weight:700}
 
+/* ══════════════════════════════════════════════════════════════
+   SPIRITUAL GARDEN & HERB CULTIVATION (SKY POISON PEARL)
+   ══════════════════════════════════════════════════════════════ */
+.garden-container{display:flex;flex-direction:column;gap:14px}
+.garden-header-card{background:linear-gradient(135deg,rgba(46,219,162,0.1),rgba(14,24,28,0.95));border:1px solid rgba(46,219,162,0.35);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.garden-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--gold)}
+
+.jasmine-garden-card{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:linear-gradient(135deg,rgba(226,75,75,0.12),rgba(20,30,35,0.8));border:1px solid rgba(226,75,75,0.35);border-radius:8px}
+.jasmine-avatar{font-size:26px;line-height:1}
+.jasmine-dialog-body{flex:1}
+.jasmine-dialog-body strong{font-size:12.5px;color:#fca5a5}
+.jasmine-dialog-body small{font-size:10.5px;color:var(--muted);margin-left:4px}
+.jasmine-quote-text{font-size:12px;font-style:italic;color:#fecdd3;margin:4px 0 0;line-height:1.4}
+
+.dew-status-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px}
+.dew-counter{display:flex;align-items:center;gap:10px}
+.dew-icon{font-size:24px}
+.dew-val{color:#6ee7b7;font-size:15px;font-weight:700}
+.dew-progress-wrap{width:140px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:4px 0 2px}
+.dew-progress-bar{height:100%;background:linear-gradient(90deg,#2edba2,#06b6d4);transition:width .3s}
+.dew-hint{font-size:10.5px;color:var(--muted)}
+
+.btn-harvest-all{background:linear-gradient(135deg,rgba(229,195,130,0.2),rgba(229,195,130,0.08));border:1px solid rgba(229,195,130,0.45);color:var(--gold);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-harvest-all:hover:not(:disabled){background:rgba(229,195,130,0.3);border-color:var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.3)}
+
+.garden-plots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.garden-plot-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;transition:all .2s ease}
+
+.plot-locked{opacity:0.75;background:rgba(20,28,32,0.6);border-style:dashed}
+.plot-badge-locked{font-size:11px;font-weight:700;color:var(--muted)}
+.plot-badge-unlocked{font-size:11px;font-weight:700;color:var(--gold)}
+.plot-name{font-size:13px;color:var(--text)}
+.plot-lock-info{font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.plot-lock-info strong{color:var(--text)}
+.btn-unlock-plot{background:linear-gradient(135deg,rgba(46,219,162,0.15),rgba(46,219,162,0.05));border:1px solid rgba(46,219,162,0.4);color:#6ee7b7;padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-unlock-plot:hover:not(:disabled){background:rgba(46,219,162,0.25);border-color:#2edba2}
+
+.plot-empty{border-color:rgba(46,219,162,0.25)}
+.plot-status-empty{font-size:11px;color:var(--muted)}
+.plot-plant-box{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.plot-plant-lbl{font-size:11px;color:var(--muted)}
+.plot-seed-select{background:rgba(14,24,28,0.9);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:6px;font-size:12px}
+.btn-plant-seed{background:linear-gradient(135deg,rgba(46,219,162,0.2),rgba(46,219,162,0.08));border:1px solid rgba(46,219,162,0.45);color:#a7f3d0;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-plant-seed:hover:not(:disabled){background:rgba(46,219,162,0.3);border-color:#2edba2}
+.plot-no-seeds-hint{font-size:11.5px;color:var(--muted);margin:0;line-height:1.4}
+
+.plot-growing{border-color:rgba(46,219,162,0.35)}
+.plot-growing.stage-mature{border-color:rgba(46,219,162,0.6);box-shadow:0 0 10px rgba(46,219,162,0.1)}
+.plot-growing.stage-century{border-color:rgba(229,195,130,0.65);background:linear-gradient(135deg,rgba(229,195,130,0.04),var(--panel));box-shadow:0 0 14px rgba(229,195,130,0.15)}
+.plot-growing.stage-millennium{border-color:rgba(168,85,247,0.7);background:linear-gradient(135deg,rgba(168,85,247,0.08),var(--panel));box-shadow:0 0 18px rgba(168,85,247,0.2)}
+
+.plot-stage-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.badge-sprout{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--line)}
+.badge-mature{background:rgba(46,219,162,0.15);color:#6ee7b7;border:1px solid rgba(46,219,162,0.4)}
+.badge-century{background:rgba(229,195,130,0.18);color:#fde047;border:1px solid rgba(229,195,130,0.5)}
+.badge-millennium{background:rgba(168,85,247,0.22);color:#e9d5ff;border:1px solid rgba(168,85,247,0.6);animation:pulse 2s infinite}
+
+.plot-crop-head{display:flex;align-items:center;gap:10px}
+.crop-icon{font-size:24px}
+.crop-name{font-size:13px;color:var(--text)}
+.crop-soil{font-size:11px;color:var(--muted)}
+
+.plot-status-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag-watered{font-size:10.5px;padding:2px 7px;border-radius:4px;background:rgba(6,182,212,0.15);color:#67e8f9;border:1px solid rgba(6,182,212,0.35)}
+.tag-infused{font-size:10.5px;padding:2px 7px;border-radius:4px;background:rgba(234,179,8,0.15);color:#fde047;border:1px solid rgba(234,179,8,0.35)}
+
+.plot-progress-area{display:flex;flex-direction:column;gap:4px}
+.plot-progress-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.plot-progress-fill{height:100%;transition:width .3s}
+.stage-fill-sprout{background:#64748b}
+.stage-fill-mature{background:linear-gradient(90deg,#2edba2,#10b981)}
+.stage-fill-century{background:linear-gradient(90deg,#f59e0b,#eab308)}
+.stage-fill-millennium{background:linear-gradient(90deg,#8b5cf6,#d946ef)}
+.plot-progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.plot-progress-label strong{color:var(--text)}
+
+.plot-actions-row{display:flex;gap:6px;flex-wrap:wrap}
+.btn-plot-water{flex:1;min-width:80px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.35);color:#67e8f9;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-plot-water:hover:not(:disabled){background:rgba(6,182,212,0.25);border-color:#06b6d4}
+.btn-plot-infuse{flex:1;min-width:80px;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.35);color:#fde047;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-plot-infuse:hover:not(:disabled){background:rgba(234,179,8,0.25);border-color:#eab308}
+.btn-plot-harvest{flex:1;min-width:90px;background:linear-gradient(135deg,rgba(46,219,162,0.25),rgba(46,219,162,0.1));border:1px solid rgba(46,219,162,0.5);color:#6ee7b7;padding:5px 8px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-plot-harvest:hover:not(:disabled){background:rgba(46,219,162,0.35);border-color:#2edba2;box-shadow:0 0 10px rgba(46,219,162,0.3)}
+
+.garden-seeds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.garden-seed-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.seed-card-head{display:flex;align-items:center;gap:10px}
+.seed-icon{font-size:20px}
+.seed-name{font-size:12.5px;color:var(--text)}
+.seed-mature-time{font-size:11px;color:var(--muted)}
+.seed-stock-tag{font-size:11.5px;color:var(--muted)}
+.seed-stock-tag strong{color:var(--gold)}
+.btn-buy-seed{background:rgba(229,195,130,0.1);border:1px solid rgba(229,195,130,0.35);color:var(--gold);padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s;text-align:center}
+.btn-buy-seed:hover:not(:disabled){background:rgba(229,195,130,0.2);border-color:var(--gold)}
+
+html[data-interface="data"] .garden-header-card,
+html[data-interface="data"] .garden-plot-card,
+html[data-interface="data"] .garden-seed-card,
+html[data-interface="data"] .jasmine-garden-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+

@@ -685,6 +685,19 @@
       return Alchemy ? Alchemy.equipPouch(s, recipeId, Number(slotStr) || 0) : false;
     } else if (type === 'alchemy-grind') {
       return Alchemy ? Alchemy.grindRelic(s) : false;
+    } else if (type === 'alchemy-garden-plant') {
+      const [plotIndexStr, seedId] = (value || '').split(':');
+      return Alchemy ? Alchemy.plant(s, Number(plotIndexStr), seedId, api) : false;
+    } else if (type === 'alchemy-garden-harvest') {
+      return Alchemy ? Alchemy.harvest(s, Number(value), api) : false;
+    } else if (type === 'alchemy-garden-harvest-all') {
+      return Alchemy ? Alchemy.harvestAll(s, api) : false;
+    } else if (type === 'alchemy-garden-water') {
+      return Alchemy ? Alchemy.waterPlot(s, Number(value), api) : false;
+    } else if (type === 'alchemy-garden-infuse') {
+      return Alchemy ? Alchemy.infusePlot(s, Number(value), api) : false;
+    } else if (type === 'alchemy-garden-unlock') {
+      return Alchemy ? Alchemy.unlockPlot(s, Number(value), api) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;
