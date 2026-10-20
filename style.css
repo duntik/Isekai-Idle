@@ -820,4 +820,100 @@ html[data-interface="data"] .alchemy-meridian-card{background:#f8f9fa;border-col
 .btn-consume-pill:hover:not(:disabled){background:rgba(229,195,130,0.3);border-color:var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.25)}
 .btn-consume-pill:disabled{opacity:0.4;cursor:not-allowed}
 
+/* ══════════════════════════════════════════════════════════════
+   MASK OF THE DIVINE DOCTOR & BLACK MOON AUCTION
+   ══════════════════════════════════════════════════════════════ */
+.clinic-mask-card{background:linear-gradient(135deg,rgba(139,92,246,0.12),var(--panel));border:1px solid rgba(139,92,246,0.35);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.clinic-mask-card.mask-active{border-color:#8b5cf6;box-shadow:0 0 14px rgba(139,92,246,0.25);background:linear-gradient(135deg,rgba(139,92,246,0.22),var(--panel))}
+.mask-card-head{display:flex;align-items:center;gap:12px}
+.mask-avatar{font-size:26px}
+.mask-meta strong{font-size:13px;color:#c084fc;display:block}
+.mask-desc{margin:3px 0 0;font-size:11px;color:var(--muted);max-width:440px}
+.btn-mask-toggle{background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(139,92,246,0.08));border:1px solid rgba(139,92,246,0.5);color:#d8b4fe;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-mask-toggle:hover{background:rgba(139,92,246,0.35);border-color:#8b5cf6;box-shadow:0 0 10px rgba(139,92,246,0.3)}
+
+.patient-card-vip{border-color:rgba(234,179,8,0.5)!important;background:linear-gradient(135deg,rgba(234,179,8,0.08),var(--panel))!important;box-shadow:0 0 12px rgba(234,179,8,0.15)}
+.patient-vip-tag{background:linear-gradient(90deg,#eab308,#f59e0b);color:#1c1917;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:0.04em}
+
+.auction-container{display:flex;flex-direction:column;gap:14px}
+.auction-header-card{background:linear-gradient(135deg,rgba(20,20,35,0.8),var(--panel));border:1px solid rgba(147,112,219,0.3);border-radius:10px;padding:16px}
+.auction-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#a78bfa;margin-bottom:4px}
+.auction-header-card h3{margin:0 0 6px;font-size:17px;color:var(--text)}
+
+.auction-vip-card{margin-top:12px;border-radius:8px;padding:12px 14px;border:1px solid var(--line);background:rgba(255,255,255,0.02)}
+.vip-card-head{display:flex;align-items:center;gap:10px}
+.vip-icon{font-size:24px}
+.vip-name{color:var(--gold)}
+.vip-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.vip-stats-bar{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.vip-stats-bar strong{color:var(--text)}
+.vip-disguise-tag{color:#c084fc;font-weight:600}
+.vip-disguise-tag.off{color:var(--muted);font-weight:400}
+
+.vip-badge-iron{border-color:#64748b;background:rgba(100,116,139,0.08)}
+.vip-badge-bronze{border-color:#d97706;background:rgba(217,119,6,0.1)}
+.vip-badge-silver{border-color:#94a3b8;background:rgba(148,163,184,0.12);box-shadow:0 0 10px rgba(148,163,184,0.15)}
+.vip-badge-gold{border-color:#eab308;background:rgba(234,179,8,0.15);box-shadow:0 0 12px rgba(234,179,8,0.25)}
+.vip-badge-purple{border-color:#a855f7;background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(147,51,234,0.1));box-shadow:0 0 16px rgba(168,85,247,0.35)}
+
+.auction-active-panel{background:rgba(255,255,255,0.02);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:14px}
+.round-badge{font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(234,179,8,0.15);color:#fde047;border:1px solid rgba(234,179,8,0.3)}
+.active-lot-card{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.lot-header{display:flex;align-items:center;gap:12px}
+.lot-pill-icon{font-size:26px}
+.lot-title{margin:0;font-size:15px;color:var(--text)}
+.lot-tags{display:flex;gap:6px;margin-top:4px}
+.pill-pure-tag{font-size:10.5px;padding:2px 7px;border-radius:4px;background:rgba(46,219,162,0.18);color:#5eead4;border:1px solid rgba(46,219,162,0.45);font-weight:600}
+.pill-std-tag{font-size:10.5px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--line)}
+
+.lot-bid-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:rgba(0,0,0,0.25);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.bid-current-box strong{font-size:16px;color:var(--gold)}
+.bid-leader-box strong{font-size:14px;color:#f1f5f9}
+.bid-lbl{font-size:11px;color:var(--muted);display:block}
+
+.auction-bid-bubble{background:rgba(139,92,246,0.12);border-left:3px solid #8b5cf6;padding:10px 14px;border-radius:0 8px 8px 0;margin:4px 0}
+.bubble-speaker{font-size:11.5px;font-weight:700;color:#c084fc;margin-bottom:3px}
+.bubble-quote{font-size:12.5px;font-style:italic;color:#e2e8f0;line-height:1.45}
+
+.auction-actions-row{display:flex;gap:10px;margin-top:6px}
+.btn-auction-step{flex:1;background:linear-gradient(135deg,rgba(234,179,8,0.25),rgba(245,158,11,0.1));border:1px solid rgba(234,179,8,0.6);color:#fde047;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.btn-auction-step:hover{background:rgba(234,179,8,0.35);border-color:#eab308;box-shadow:0 0 14px rgba(234,179,8,0.3)}
+.btn-auction-collect{flex:1;background:linear-gradient(135deg,rgba(46,219,162,0.28),rgba(16,185,129,0.15));border:1px solid rgba(46,219,162,0.65);color:#6ee7b7;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.btn-auction-collect:hover{background:rgba(46,219,162,0.4);border-color:#2edba2;box-shadow:0 0 16px rgba(46,219,162,0.4)}
+
+.auction-listing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:8px}
+.auction-list-item-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.list-item-head{display:flex;align-items:center;gap:10px}
+.list-item-name{font-size:12.5px;color:var(--text)}
+.list-item-stock{font-size:11px;color:var(--muted)}
+.list-item-actions{display:flex;flex-direction:column;gap:6px}
+.btn-list-std{background:rgba(255,255,255,0.04);border:1px solid var(--line);color:var(--text);padding:6px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .15s;text-align:left}
+.btn-list-std:hover{background:rgba(255,255,255,0.1);border-color:var(--gold)}
+.btn-list-pure{background:rgba(46,219,162,0.12);border:1px solid rgba(46,219,162,0.4);color:#5eead4;padding:6px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-align:left}
+.btn-list-pure:hover{background:rgba(46,219,162,0.25);border-color:#2edba2;box-shadow:0 0 10px rgba(46,219,162,0.25)}
+
+.auction-catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:8px}
+.auction-catalog-card{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.catalog-card-head{display:flex;gap:10px}
+.catalog-item-icon{font-size:24px}
+.catalog-item-title{font-size:13px;color:var(--text);display:block}
+.catalog-item-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.catalog-bought-tag{display:inline-block;padding:6px 12px;background:rgba(46,219,162,0.12);color:#6ee7b7;border:1px solid rgba(46,219,162,0.3);border-radius:5px;font-size:11.5px;font-weight:600}
+.btn-buy-lot{background:linear-gradient(135deg,rgba(229,195,130,0.18),rgba(229,195,130,0.06));border:1px solid rgba(229,195,130,0.45);color:var(--gold);padding:6px 12px;border-radius:5px;font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-buy-lot:hover:not(:disabled){background:rgba(229,195,130,0.3);border-color:var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.25)}
+.btn-buy-lot:disabled{opacity:0.4;cursor:not-allowed}
+
+.auction-locked-card{background:rgba(255,255,255,0.02);border:1px dashed var(--line);border-radius:10px;padding:24px;text-align:center}
+.auction-locked-emblem{font-size:40px;margin-bottom:8px}
+.auction-lock-reqs{display:flex;flex-direction:column;gap:6px;margin-top:14px;align-items:center}
+.req-item{font-size:12px;color:var(--muted)}
+
+html[data-interface="data"] .clinic-mask-card,
+html[data-interface="data"] .auction-header-card,
+html[data-interface="data"] .auction-vip-card,
+html[data-interface="data"] .auction-active-panel,
+html[data-interface="data"] .auction-list-item-card,
+html[data-interface="data"] .auction-catalog-card,
+html[data-interface="data"] .auction-locked-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+
 

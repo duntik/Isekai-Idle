@@ -608,6 +608,33 @@
           en: `Sky Poison Nirvana Pill consumed: Evil God fury awakened for next ${fights} battles!`
         };
       }
+    },
+    dragon_vitality: {
+      id: 'dragon_vitality',
+      nameRu: 'Пилюля Драконьей Жизненной Силы',
+      nameEn: 'Dragon Vitality Dan',
+      descRu: 'Утерянное снадобье драконьей силы: навсегда увеличивает Тело и выносливость.',
+      descEn: 'Lost elixir of dragon might: permanently enhances Body and maximum stamina.',
+      icon: '🐉',
+      reqLevel: 3,
+      ingredients: { iron_root: 2, flame_bloom: 1, spring_water: 1 },
+      pearlQi: 20,
+      effectRu: 'Тело +0.30, макс. выносл. +5.0 (Жемчужина: Тело +0.50, выносл. +8.0)',
+      effectEn: 'Body +0.30, max stamina +5.0 (Pearl: Body +0.50, stamina +8.0)',
+      combatEffectRu: 'В бою: 100% HP и щит 40% на 3 хода',
+      combatEffectEn: 'In combat: 100% HP and 40% shield for 3 rounds',
+      apply(s, isPearl, isCrit) {
+        const bodyGain = isPearl ? 0.50 : (isCrit ? 0.40 : 0.30);
+        const stamGain = isPearl ? 8.0 : 5.0;
+        s.body = Math.min(10 * (s.realm + 1), s.body + bodyGain);
+        s.staminaMax = Math.min(300, (s.staminaMax || 100) + stamGain);
+        s.stamina = s.staminaMax;
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Драконьей Жизненной Силы усвоена: Тело +${bodyGain.toFixed(2)}, макс. выносливость +${stamGain.toFixed(1)}!`,
+          en: `Dragon Vitality Dan absorbed: Body +${bodyGain.toFixed(2)}, max stamina +${stamGain.toFixed(1)}!`
+        };
+      }
     }
   };
 
@@ -682,8 +709,217 @@
       rewardXp: 50,
       rewardRelic: 1,
       rewardSeed: { primordial_seed: 1 }
+    },
+    vip_xiao_tiannan: {
+      id: 'vip_xiao_tiannan',
+      isVip: true,
+      nameRu: 'Патриарх Сяо Тяньнань (Ветвь Сяо)',
+      nameEn: 'Patriarch Xiao Tiannan (Xiao Branch)',
+      conditionRu: 'Меридианы сына Сяо Лочэна сокрушены загадочным мастером. Патриарх молит о спасении наследника.',
+      conditionEn: 'Son Xiao Luocheng’s meridians crushed by an unknown expert. The Patriarch pleads for his heir.',
+      reqPill: 'nine_revolutions',
+      pearlAlt: true,
+      pearlQi: 35,
+      reqPillNameRu: 'Пилюля Девяти Превращений (или исцеление Жемчужиной, 35 Ци)',
+      reqPillNameEn: 'Nine Revolutions Dan (or Pearl purge, 35 Qi)',
+      rewardRu: '+500 монет, +10 репутации, +2 реликвии, +2 семени Хаоса, +80 опыта',
+      rewardEn: '+500 coins, +10 reputation, +2 relics, +2 Chaos seeds, +80 XP',
+      rewardGold: 500,
+      rewardRep: 10,
+      rewardXp: 80,
+      rewardRelic: 2,
+      rewardSeed: { primordial_seed: 2 }
+    },
+    vip_pu_he: {
+      id: 'vip_pu_he',
+      isVip: true,
+      nameRu: 'Управляющий Пу Хэ (Палата Чёрной Луны)',
+      nameEn: 'Manager Pu He (Black Moon Chamber)',
+      conditionRu: 'Ледяной яд сковал даньтянь управляющего. Требуется высшее очищение Жемчужиной или Пилюля Нирваны.',
+      conditionEn: 'Frost poison seized the manager’s dantian. Requires supreme Pearl purification or a Sky Nirvana Pill.',
+      reqPill: 'sky_nirvana',
+      pearlAlt: true,
+      pearlQi: 40,
+      reqPillNameRu: 'Пилюля Нирваны Злого Неба (или очищение Жемчужиной, 40 Ци)',
+      reqPillNameEn: 'Sky Poison Nirvana Pill (or Pearl purge, 40 Qi)',
+      rewardRu: '+850 монет, +15 репутации, +3 реликвии, +3 семени Хаоса, +120 опыта',
+      rewardEn: '+850 coins, +15 reputation, +3 relics, +3 Chaos seeds, +120 XP',
+      rewardGold: 850,
+      rewardRep: 15,
+      rewardXp: 120,
+      rewardRelic: 3,
+      rewardSeed: { primordial_seed: 3 }
+    },
+    vip_elder_ziji: {
+      id: 'vip_elder_ziji',
+      isVip: true,
+      nameRu: 'Старейшина Цзы Цзи (Торговая Палата)',
+      nameEn: 'Elder Zi Ji (Merchant Chamber)',
+      conditionRu: 'Вековой застой на пике земного царства из-за повреждения вен. Лишь чистая эссенция дракона вернёт силу.',
+      conditionEn: 'Century stagnation at peak Earth Realm from vein trauma. Only pure dragon essence can restore vitality.',
+      reqPill: 'iron_dragon_pill',
+      pearlAlt: true,
+      pearlQi: 30,
+      reqPillNameRu: 'Пилюля Кости Железного Дракона (или очищение Жемчужиной, 30 Ци)',
+      reqPillNameEn: 'Iron Dragon Pill (or Pearl purge, 30 Qi)',
+      rewardRu: '+650 монет, +12 репутации, +2 реликвии, +2 семени Хаоса, +100 опыта',
+      rewardEn: '+650 coins, +12 reputation, +2 relics, +2 Chaos seeds, +100 XP',
+      rewardGold: 650,
+      rewardRep: 12,
+      rewardXp: 100,
+      rewardRelic: 2,
+      rewardSeed: { primordial_seed: 2 }
     }
   };
+
+  const BLACK_MOON_VIP_TIERS = {
+    iron: {
+      id: 'iron',
+      nameRu: 'Железная карта Чёрной Луны',
+      nameEn: 'Black Moon Iron VIP Card',
+      minGold: 0,
+      feeRate: 0.15,
+      icon: '🪙',
+      badgeClass: 'vip-badge-iron',
+      descRu: 'Базовая комиссия аукциона: 15%. Доступ к открытым торгам.',
+      descEn: 'Standard auction fee: 15%. Access to open bidding.'
+    },
+    bronze: {
+      id: 'bronze',
+      nameRu: 'Бронзовая карта Чёрной Луны',
+      nameEn: 'Black Moon Bronze VIP Card',
+      minGold: 300,
+      feeRate: 0.10,
+      icon: '🥉',
+      badgeClass: 'vip-badge-bronze',
+      descRu: 'Сниженная комиссия: 10%. Приветствие управляющего Пу Хэ.',
+      descEn: 'Reduced fee: 10%. Commended by Manager Pu He.'
+    },
+    silver: {
+      id: 'silver',
+      nameRu: 'Серебряная карта Чёрной Луны',
+      nameEn: 'Black Moon Silver VIP Card',
+      minGold: 1000,
+      feeRate: 0.07,
+      icon: '🥈',
+      badgeClass: 'vip-badge-silver',
+      descRu: 'Сниженная комиссия: 7%. Персональная ложа торгов.',
+      descEn: 'Reduced fee: 7%. Private bidding chamber.'
+    },
+    gold: {
+      id: 'gold',
+      nameRu: 'Золотая карта Чёрной Луны',
+      nameEn: 'Black Moon Gold VIP Card',
+      minGold: 3000,
+      feeRate: 0.04,
+      icon: '🥇',
+      badgeClass: 'vip-badge-gold',
+      descRu: 'Привилегированная комиссия: 4%. Аукционисты лично кланяются мастеру.',
+      descEn: 'Privileged fee: 4%. Auctioneers personally bow to the master.'
+    },
+    purple: {
+      id: 'purple',
+      nameRu: 'Пурпурно-Нефритовая карта Чёрной Луны',
+      nameEn: 'Black Moon Purple Jade VIP Card',
+      minGold: 8000,
+      feeRate: 0.02,
+      icon: '💎',
+      badgeClass: 'vip-badge-purple',
+      descRu: 'Высшая карта континента: комиссия 2%! Доступ к закрытой сокровищнице Палаты.',
+      descEn: 'Supreme continent card: 2% fee! Unrestricted access to the Chamber’s secret vaults.'
+    }
+  };
+
+  function getBlackMoonVipTier(totalGold = 0) {
+    if (totalGold >= 8000) return BLACK_MOON_VIP_TIERS.purple;
+    if (totalGold >= 3000) return BLACK_MOON_VIP_TIERS.gold;
+    if (totalGold >= 1000) return BLACK_MOON_VIP_TIERS.silver;
+    if (totalGold >= 300) return BLACK_MOON_VIP_TIERS.bronze;
+    return BLACK_MOON_VIP_TIERS.iron;
+  }
+
+  const AUCTION_CATALOG = {
+    recipe_dragon_vitality: {
+      id: 'recipe_dragon_vitality',
+      nameRu: 'Древний свиток: «Пилюля Драконьей Жизненной Силы»',
+      nameEn: 'Ancient Scroll: “Dragon Vitality Dan”',
+      descRu: 'Утерянный рецепт секты Горящих Небес. Навсегда повышает Тело и выносливость.',
+      descEn: 'Lost recipe of the Burning Heaven Clan. Permanently enhances Body and stamina.',
+      costGold: 250,
+      type: 'recipe',
+      recipeId: 'dragon_vitality',
+      icon: '📜'
+    },
+    spatial_ring: {
+      id: 'spatial_ring',
+      nameRu: 'Пространственное кольцо Чёрной Луны',
+      nameEn: 'Black Moon Spatial Ring',
+      descRu: 'Кольцо со складчатым пространством. Расширяет боевую сумку до 4 ячеек!',
+      descEn: 'Folded-space ring. Expands combat pouch to 4 slots!',
+      costGold: 450,
+      type: 'pouch_upgrade',
+      icon: '💍'
+    },
+    primordial_seed_lot: {
+      id: 'primordial_seed_lot',
+      nameRu: 'Лот Небесных Семян (3 шт.)',
+      nameEn: 'Primordial Seed Lot (3 pcs)',
+      descRu: 'Редчайшие семена из глубин Первобытного Леса для сада Жемчужины.',
+      descEn: 'Rarest seeds from the Primordial Forest depths for the Pearl garden.',
+      costGold: 350,
+      type: 'seeds',
+      seeds: { primordial_seed: 3 },
+      icon: '🌱'
+    },
+    star_jade_cauldron: {
+      id: 'star_jade_cauldron',
+      nameRu: 'Котёл Звёздного Нефрита',
+      nameEn: 'Star Jade Cauldron',
+      descRu: 'Древний артефактный котёл: снижает шанс неудачи варки до 0% и дарует +20% к криту!',
+      descEn: 'Ancient artifact crucible: eliminates crucible failures (0%) and grants +20% crit chance!',
+      costGold: 600,
+      type: 'cauldron_upgrade',
+      icon: '🏺'
+    }
+  };
+
+  const AUCTION_BIDDERS = [
+    {
+      id: 'xiao_scion',
+      nameRu: 'Молодой мастер Сяо',
+      nameEn: 'Young Master Xiao',
+      quoteRu: '«Ничтожества! Никто в Городе Нового Месяца не посмеет спорить о богатстве с сектой Сяо! Я поднимаю цену!»',
+      quoteEn: '“Fools! No one in New Moon City dares dispute wealth with the Xiao Sect! I raise the bid!”'
+    },
+    {
+      id: 'blaze_elder',
+      nameRu: 'Старейшина Пылающих Небес',
+      nameEn: 'Burning Heaven Elder',
+      quoteRu: '«Такая чистота эссенции?! Без малейшего следа токсинов Дань Ду?! Этот лот должен стать достоянием наших учеников!»',
+      quoteEn: '“Such essence purity?! Without a shred of Dan Du toxins?! This lot must belong to our disciples!”'
+    },
+    {
+      id: 'iron_master',
+      nameRu: 'Глава Палаты Железного Бастиона',
+      nameEn: 'Iron Bastion Chamber Master',
+      quoteRu: '«Сяо, придержи язык! Караваны Железного Бастиона не считают медяки. Я удваиваю предложение!»',
+      quoteEn: '“Xiao, hold your tongue! Iron Bastion caravans don’t pinch coppers. I double the offer!”'
+    },
+    {
+      id: 'imperial_envoy',
+      nameRu: 'Посланник Императорской Семьи',
+      nameEn: 'Imperial Palace Envoy',
+      quoteRu: '«Его Императорское Величество высоко оценит такое сокровище. Палата Чёрной Луны, запишите лот за мной!»',
+      quoteEn: '“His Imperial Majesty will prize such treasure. Black Moon Chamber, record this lot under my name!”'
+    },
+    {
+      id: 'cloud_merchant',
+      nameRu: 'Купец Гильдии Золотого Шелка',
+      nameEn: 'Golden Silk Merchant Guildmaster',
+      quoteRu: '«Мои склады ломятся от золота. Назовите вашу цену, почтенный аукционист, я беру всё!»',
+      quoteEn: '“My vaults overflow with gold. Name your price, honored auctioneer, I take it all!”'
+    }
+  ];
 
   const FORAGE_TABLES = {
     village: {
@@ -837,7 +1073,8 @@
         century_vitality: 0,
         iron_dragon_pill: 0,
         nine_revolutions: 0,
-        sky_nirvana: 0
+        sky_nirvana: 0,
+        dragon_vitality: 0
       },
       pureInventory: {
         vigor_broth: 0,
@@ -848,11 +1085,23 @@
         century_vitality: 0,
         iron_dragon_pill: 0,
         nine_revolutions: 0,
-        sky_nirvana: 0
+        sky_nirvana: 0,
+        dragon_vitality: 0
       },
       pouch: ['vigor_broth', null, null],
       patients: ['ba_strained', 'hunter_poison'],
       forageCooldown: 0,
+      maskUnlocked: false,
+      maskActive: false,
+      blackMoon: {
+        unlocked: false,
+        vipTier: 'iron',
+        totalAuctionGold: 0,
+        activeAuction: null,
+        catalogPurchased: [],
+        cauldronUpgrade: false,
+        pouchUpgrade: false
+      },
       ingredients: {
         mountain_herb: 5,
         spring_water: 3,
@@ -955,12 +1204,60 @@
       }
     }
 
+    base.maskUnlocked = !!(input.maskUnlocked || (input.level && input.level >= 2) || (input.stage && input.stage >= 1));
+    base.maskActive = !!(input.maskActive && base.maskUnlocked);
+
+    if (input.blackMoon && typeof input.blackMoon === 'object') {
+      base.blackMoon.unlocked = !!input.blackMoon.unlocked;
+      base.blackMoon.totalAuctionGold = Math.max(0, Math.floor(input.blackMoon.totalAuctionGold || 0));
+      base.blackMoon.vipTier = getBlackMoonVipTier(base.blackMoon.totalAuctionGold).id;
+      base.blackMoon.cauldronUpgrade = !!input.blackMoon.cauldronUpgrade;
+      base.blackMoon.pouchUpgrade = !!input.blackMoon.pouchUpgrade;
+      if (Array.isArray(input.blackMoon.catalogPurchased)) {
+        base.blackMoon.catalogPurchased = [...new Set(input.blackMoon.catalogPurchased.filter(k => Object.hasOwn(AUCTION_CATALOG, k)))];
+      }
+      if (input.blackMoon.activeAuction && typeof input.blackMoon.activeAuction === 'object') {
+        const a = input.blackMoon.activeAuction;
+        if (a.recipeId && Object.hasOwn(RECIPES, a.recipeId)) {
+          base.blackMoon.activeAuction = {
+            recipeId: a.recipeId,
+            count: Math.max(1, Math.floor(a.count || 1)),
+            isPure: !!a.isPure,
+            basePrice: Math.max(1, Math.floor(a.basePrice || 1)),
+            currentBid: Math.max(1, Math.floor(a.currentBid || 1)),
+            round: Math.max(1, Math.min(5, Math.floor(a.round || 1))),
+            maxRounds: Math.max(2, Math.min(5, Math.floor(a.maxRounds || 3))),
+            highestBidderRu: String(a.highestBidderRu || '').slice(0, 80),
+            highestBidderEn: String(a.highestBidderEn || '').slice(0, 80),
+            bidHistory: Array.isArray(a.bidHistory) ? a.bidHistory.slice(0, 10).map(bh => ({
+              round: Math.floor(bh.round || 1),
+              bidderRu: String(bh.bidderRu || '').slice(0, 80),
+              bidderEn: String(bh.bidderEn || '').slice(0, 80),
+              amount: Math.max(1, Math.floor(bh.amount || 1)),
+              quoteRu: String(bh.quoteRu || '').slice(0, 200),
+              quoteEn: String(bh.quoteEn || '').slice(0, 200)
+            })) : [],
+            settled: !!a.settled
+          };
+        }
+      }
+    }
+
     if (Array.isArray(input.pouch)) {
-      base.pouch = [
-        input.pouch[0] && Object.hasOwn(RECIPES, input.pouch[0]) ? input.pouch[0] : (input.pouch[0] === null ? null : 'vigor_broth'),
-        input.pouch[1] && Object.hasOwn(RECIPES, input.pouch[1]) ? input.pouch[1] : null,
-        input.pouch[2] && Object.hasOwn(RECIPES, input.pouch[2]) ? input.pouch[2] : null
-      ];
+      const pLen = base.blackMoon.pouchUpgrade ? 4 : 3;
+      base.pouch = [];
+      for (let i = 0; i < pLen; i++) {
+        const item = input.pouch[i];
+        if (item && Object.hasOwn(RECIPES, item)) {
+          base.pouch.push(item);
+        } else if (i === 0 && item !== null) {
+          base.pouch.push('vigor_broth');
+        } else {
+          base.pouch.push(null);
+        }
+      }
+    } else if (base.blackMoon.pouchUpgrade && base.pouch.length < 4) {
+      base.pouch.push(null);
     }
 
     if (Array.isArray(input.patients)) {
@@ -1115,10 +1412,12 @@
         logEn = `【Sky Poison Pearl Purification】 100% pure pill “${r.nameEn}” refined without impurities! ${res.en} (+25 alchemy XP)`;
       } else {
         // Crucible roll
+        const hasCauldronUpgrade = !!alc.blackMoon?.cauldronUpgrade;
         const rankBonus = (alc.level >= 2) ? 0.10 : 0;
-        const baseChance = Math.min(0.95, 0.70 + (alc.level - r.reqLevel) * 0.05 + rankBonus);
+        const baseChance = hasCauldronUpgrade ? 1.0 : Math.min(0.95, 0.70 + (alc.level - r.reqLevel) * 0.05 + rankBonus);
         const roll = Math.random();
-        const critThreshold = alc.level >= 5 ? 1.0 : 0.15;
+        const critBonus = hasCauldronUpgrade ? 0.20 : 0;
+        const critThreshold = alc.level >= 5 ? 1.0 : (0.15 + critBonus);
 
         if (roll < critThreshold) {
           isSuccess = true;
@@ -1438,9 +1737,13 @@
       s.resources.pills = Math.max(0, (s.resources.pills || 1) - 1);
     }
 
-    // Grant rewards
-    s.resources.gold += patient.rewardGold || 0;
-    s.resources.reputation = (s.resources.reputation || 0) + (patient.rewardRep || 0);
+    // Grant rewards (with +25% bonus under Miracle Doctor Mask disguise)
+    const maskBonus = alc.maskActive ? 1.25 : 1.0;
+    const goldEarned = Math.round((patient.rewardGold || 0) * maskBonus);
+    const repEarned = Math.round((patient.rewardRep || 0) * maskBonus);
+
+    s.resources.gold += goldEarned;
+    s.resources.reputation = (s.resources.reputation || 0) + repEarned;
     if (patient.rewardRelic) {
       s.resources.relics = (s.resources.relics || 0) + patient.rewardRelic;
     }
@@ -1474,37 +1777,277 @@
     // Rotate patient roster
     alc.patients = alc.patients.filter(p => p !== patientId);
     const allPatientKeys = Object.keys(PATIENTS);
-    const unserved = allPatientKeys.filter(p => p !== patientId && !alc.patients.includes(p));
+    const unserved = allPatientKeys.filter(p => {
+      if (p === patientId || alc.patients.includes(p)) return false;
+      if (PATIENTS[p].isVip && !alc.maskActive) return false;
+      return true;
+    });
     if (unserved.length > 0) {
       alc.patients.push(unserved[0]);
     } else if (alc.patients.length === 0) {
       alc.patients = ['ba_strained', 'hunter_poison'];
     }
 
+    const docTitleRu = alc.maskActive ? 'Божественный Лекарь Хуанфу Хэ' : 'Лекарь с Небес';
+    const docTitleEn = alc.maskActive ? 'Miracle Doctor Huangfu He' : 'Miracle Doctor';
+
     const logRu = usePearl
-      ? `【Лекарь с Небес · Очищение Жемчужиной】 «${patient.nameRu}» исцелен без токсинов! Получено: +${patient.rewardGold} монет, +${patient.rewardRep} репутации, +${patient.rewardXp} опыта.`
-      : `【Клиника Лекаря】 Снадобье «${patient.reqPillNameRu}» исцелило «${patient.nameRu}»! Получено: +${patient.rewardGold} монет, +${patient.rewardRep} репутации, +${patient.rewardXp} опыта.`;
+      ? `【${docTitleRu} · Очищение Жемчужиной】 «${patient.nameRu}» исцелен без токсинов! Получено: +${goldEarned} монет, +${repEarned} репутации, +${patient.rewardXp} опыта.`
+      : `【${docTitleRu}】 Снадобье «${patient.reqPillNameRu}» исцелило «${patient.nameRu}»! Получено: +${goldEarned} монет, +${repEarned} репутации, +${patient.rewardXp} опыта.`;
 
     const logEn = usePearl
-      ? `【Miracle Doctor · Pearl Purge】 “${patient.nameEn}” cured without impurities! Received: +${patient.rewardGold} coins, +${patient.rewardRep} rep, +${patient.rewardXp} XP.`
-      : `【Miracle Doctor Clinic】 Remedy “${patient.reqPillNameEn}” healed “${patient.nameEn}”! Received: +${patient.rewardGold} coins, +${patient.rewardRep} rep, +${patient.rewardXp} XP.`;
+      ? `【${docTitleEn} · Pearl Purge】 “${patient.nameEn}” cured without impurities! Received: +${goldEarned} coins, +${repEarned} rep, +${patient.rewardXp} XP.`
+      : `【${docTitleEn} Clinic】 Remedy “${patient.reqPillNameEn}” healed “${patient.nameEn}”! Received: +${goldEarned} coins, +${repEarned} rep, +${patient.rewardXp} XP.`;
 
     alc.log.unshift({ ru: logRu, en: logEn });
     alc.log = alc.log.slice(0, 10);
-    if (E && E.log) E.log(s, `Клиника: ${patient.nameRu} исцелен (+${patient.rewardGold} монет, +${patient.rewardRep} реп.)`);
+    if (E && E.log) E.log(s, `Клиника: ${patient.nameRu} исцелен (+${goldEarned} монет, +${repEarned} реп.)`);
     return true;
   }
 
   function equipPouch(s, recipeId, slotIndex = 0) {
     if (!s || !s.alchemy) return false;
-    slotIndex = Math.max(0, Math.min(2, Math.floor(slotIndex)));
+    const maxSlot = s.alchemy.blackMoon?.pouchUpgrade ? 3 : 2;
+    slotIndex = Math.max(0, Math.min(maxSlot, Math.floor(slotIndex)));
+    const targetLen = s.alchemy.blackMoon?.pouchUpgrade ? 4 : 3;
     if (!Array.isArray(s.alchemy.pouch)) s.alchemy.pouch = ['vigor_broth', null, null];
+    while (s.alchemy.pouch.length < targetLen) s.alchemy.pouch.push(null);
+
     if (!recipeId || recipeId === 'none') {
       s.alchemy.pouch[slotIndex] = null;
       return true;
     }
     if (!RECIPES[recipeId]) return false;
     s.alchemy.pouch[slotIndex] = recipeId;
+    return true;
+  }
+
+  function isMaskUnlocked(s) {
+    if (!s || !s.alchemy) return false;
+    return !!(s.alchemy.maskUnlocked || s.alchemy.level >= 2 || (s.stage || 0) >= 1);
+  }
+
+  function canToggleMask(s) {
+    return isMaskUnlocked(s);
+  }
+
+  function toggleMask(s, E = null) {
+    if (!canToggleMask(s)) return false;
+    const alc = s.alchemy;
+    alc.maskUnlocked = true;
+    alc.maskActive = !alc.maskActive;
+
+    if (alc.maskActive) {
+      // Add VIP patients if not present
+      for (const pId of ['vip_xiao_tiannan', 'vip_pu_he', 'vip_elder_ziji']) {
+        if (!alc.patients.includes(pId)) {
+          alc.patients.push(pId);
+        }
+      }
+    }
+
+    const logRu = alc.maskActive
+      ? '🎭 Маска Божественного Лекаря надета! Ты принимаешь облик легендарного мастера Хуанфу Хэ. Знатные кланы трепещут перед твоим искусством.'
+      : '🎭 Маска снята. Твоя истинная личность вновь открыта миру.';
+    const logEn = alc.maskActive
+      ? '🎭 Mask of the Divine Doctor donned! You assume the persona of Grandmaster Huangfu He. Noble clans revere your transcendent craft.'
+      : '🎭 Mask removed. Your true identity is revealed to the world once more.';
+
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canAccessAuction(s) {
+    if (!s || !s.alchemy) return false;
+    return !!(s.stage >= 1 || s.world?.location === 'city' || s.alchemy.level >= 2 || s.alchemy.blackMoon?.unlocked || s.alchemy.maskActive);
+  }
+
+  function canStartAuction(s, recipeId, count = 1, usePure = false) {
+    if (!canAccessAuction(s)) return false;
+    const alc = s.alchemy;
+    if (!alc.blackMoon) alc.blackMoon = fresh().blackMoon;
+    if (alc.blackMoon.activeAuction && !alc.blackMoon.activeAuction.settled) return false;
+    if (!RECIPES[recipeId]) return false;
+    count = Math.max(1, Math.floor(count));
+    if ((alc.inventory?.[recipeId] || 0) < count) return false;
+    if (usePure && (alc.pureInventory?.[recipeId] || 0) < count) return false;
+    return true;
+  }
+
+  function startAuction(s, recipeId, count = 1, usePure = false, E = null) {
+    if (!canStartAuction(s, recipeId, count, usePure)) return false;
+    const alc = s.alchemy;
+    const r = RECIPES[recipeId];
+    count = Math.max(1, Math.floor(count));
+
+    // Deduct inventory
+    alc.inventory[recipeId] -= count;
+    if (usePure) {
+      alc.pureInventory[recipeId] -= count;
+    }
+    s.resources.pills = Math.max(0, (s.resources.pills || count) - count);
+
+    // Calculate initial bid
+    const baseUnit = REGIONAL_MARKETS.city?.buys?.[recipeId] || 40;
+    const pureMult = usePure ? 3.5 : 1.0;
+    const maskMult = alc.maskActive ? 1.25 : 1.0;
+    const startBid = Math.round(baseUnit * count * pureMult * maskMult);
+
+    const firstBidder = AUCTION_BIDDERS[0];
+    alc.blackMoon.activeAuction = {
+      recipeId,
+      count,
+      isPure: !!usePure,
+      basePrice: startBid,
+      currentBid: startBid,
+      round: 1,
+      maxRounds: 3,
+      highestBidderRu: firstBidder.nameRu,
+      highestBidderEn: firstBidder.nameEn,
+      bidHistory: [
+        {
+          round: 1,
+          bidderRu: firstBidder.nameRu,
+          bidderEn: firstBidder.nameEn,
+          amount: startBid,
+          quoteRu: firstBidder.quoteRu,
+          quoteEn: firstBidder.quoteEn
+        }
+      ],
+      settled: false
+    };
+
+    const pureTagRu = usePure ? ' (100% чистота Жемчужины)' : '';
+    const pureTagEn = usePure ? ' (100% Pearl purity)' : '';
+    const logRu = `🏛 Палата Чёрной Луны: ${count} шт. «${r.nameRu}»${pureTagRu} выставлены на торги! Начальная ставка: ${startBid} монет (${firstBidder.nameRu}).`;
+    const logEn = `🏛 Black Moon Chamber: ${count}x “${r.nameEn}”${pureTagEn} listed for auction! Opening bid: ${startBid} coins (${firstBidder.nameEn}).`;
+
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canAuctionStep(s) {
+    if (!s || !s.alchemy?.blackMoon) return false;
+    const a = s.alchemy.blackMoon.activeAuction;
+    if (!a || a.settled) return false;
+    return a.round < a.maxRounds;
+  }
+
+  function auctionStep(s, E = null) {
+    if (!canAuctionStep(s)) return false;
+    const alc = s.alchemy;
+    const a = alc.blackMoon.activeAuction;
+    a.round++;
+
+    const bidderIndex = (a.round - 1) % AUCTION_BIDDERS.length;
+    const bidder = AUCTION_BIDDERS[bidderIndex];
+    const escalation = 1.35 + (a.round * 0.1);
+    const newBid = Math.round(a.currentBid * escalation);
+
+    a.currentBid = newBid;
+    a.highestBidderRu = bidder.nameRu;
+    a.highestBidderEn = bidder.nameEn;
+    a.bidHistory.push({
+      round: a.round,
+      bidderRu: bidder.nameRu,
+      bidderEn: bidder.nameEn,
+      amount: newBid,
+      quoteRu: bidder.quoteRu,
+      quoteEn: bidder.quoteEn
+    });
+
+    if (a.round >= a.maxRounds) {
+      a.settled = true;
+    }
+
+    const logRu = `🔨 Раунд ${a.round}/${a.maxRounds}: ${bidder.nameRu} поднимает ставку до ${newBid} монет!`;
+    const logEn = `🔨 Round ${a.round}/${a.maxRounds}: ${bidder.nameEn} raises the bid to ${newBid} coins!`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canAuctionCollect(s) {
+    if (!s || !s.alchemy?.blackMoon) return false;
+    const a = s.alchemy.blackMoon.activeAuction;
+    return !!(a && a.settled);
+  }
+
+  function auctionCollect(s, E = null) {
+    if (!canAuctionCollect(s)) return false;
+    const alc = s.alchemy;
+    const a = alc.blackMoon.activeAuction;
+    const tier = getBlackMoonVipTier(alc.blackMoon.totalAuctionGold);
+    const fee = Math.round(a.currentBid * tier.feeRate);
+    const netPayout = a.currentBid - fee;
+
+    s.resources.gold += netPayout;
+    alc.blackMoon.totalAuctionGold += a.currentBid;
+    alc.blackMoon.vipTier = getBlackMoonVipTier(alc.blackMoon.totalAuctionGold).id;
+    alc.stats.pillsTraded = (alc.stats.pillsTraded || 0) + a.count;
+
+    const r = RECIPES[a.recipeId];
+    const rNameRu = r ? r.nameRu : a.recipeId;
+    const rNameEn = r ? r.nameEn : a.recipeId;
+
+    const logRu = `🏛 Торги завершены! ${a.count} шт. «${rNameRu}» проданы с молотка за ${a.currentBid} монет (${a.highestBidderRu}). Комиссия палаты (${Math.round(tier.feeRate * 100)}%): -${fee}. Получено: +${netPayout} чистого золота!`;
+    const logEn = `🏛 Auction concluded! ${a.count}x “${rNameEn}” hammered down for ${a.currentBid} coins (${a.highestBidderEn}). Chamber fee (${Math.round(tier.feeRate * 100)}%): -${fee}. Received: +${netPayout} net gold!`;
+
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+
+    alc.blackMoon.activeAuction = null;
+    return true;
+  }
+
+  function canBuyAuctionLot(s, lotId) {
+    if (!canAccessAuction(s)) return false;
+    const lot = AUCTION_CATALOG[lotId];
+    if (!lot) return false;
+    const alc = s.alchemy;
+    if (!alc.blackMoon) alc.blackMoon = fresh().blackMoon;
+    if (['recipe', 'pouch_upgrade', 'cauldron_upgrade'].includes(lot.type)) {
+      if (alc.blackMoon.catalogPurchased.includes(lotId)) return false;
+    }
+    return (s.resources.gold || 0) >= lot.costGold;
+  }
+
+  function buyAuctionLot(s, lotId, E = null) {
+    if (!canBuyAuctionLot(s, lotId)) return false;
+    const alc = s.alchemy;
+    const lot = AUCTION_CATALOG[lotId];
+
+    s.resources.gold -= lot.costGold;
+    alc.blackMoon.catalogPurchased.push(lotId);
+
+    if (lot.type === 'recipe') {
+      if (!alc.unlockedRecipes.includes(lot.recipeId)) {
+        alc.unlockedRecipes.push(lot.recipeId);
+      }
+    } else if (lot.type === 'pouch_upgrade') {
+      alc.blackMoon.pouchUpgrade = true;
+      if (!Array.isArray(alc.pouch)) alc.pouch = ['vigor_broth', null, null];
+      while (alc.pouch.length < 4) alc.pouch.push(null);
+    } else if (lot.type === 'cauldron_upgrade') {
+      alc.blackMoon.cauldronUpgrade = true;
+    } else if (lot.type === 'seeds') {
+      if (!alc.garden) alc.garden = fresh().garden;
+      for (const [seedId, count] of Object.entries(lot.seeds)) {
+        alc.garden.seeds[seedId] = (alc.garden.seeds[seedId] || 0) + count;
+      }
+    }
+
+    const logRu = `📜 Приобретено на аукционе: «${lot.nameRu}» (-${lot.costGold} монет).`;
+    const logEn = `📜 Purchased at auction: “${lot.nameEn}” (-${lot.costGold} coins).`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
     return true;
   }
 
@@ -1930,7 +2473,23 @@
     meridianPurge,
     meridianPurity,
     getDanDuStatus,
-    consumePill
+    consumePill,
+    BLACK_MOON_VIP_TIERS,
+    AUCTION_CATALOG,
+    AUCTION_BIDDERS,
+    getBlackMoonVipTier,
+    isMaskUnlocked,
+    canToggleMask,
+    toggleMask,
+    canAccessAuction,
+    canStartAuction,
+    startAuction,
+    canAuctionStep,
+    auctionStep,
+    canAuctionCollect,
+    auctionCollect,
+    canBuyAuctionLot,
+    buyAuctionLot
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

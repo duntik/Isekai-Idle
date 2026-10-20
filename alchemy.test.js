@@ -500,5 +500,134 @@ test('Alchemy engine: Dan Du toxins, pure pills and Sky Poison Pearl meridian pu
   assert.equal(s.alchemy.inventory.vigor_broth, 0);
 });
 
+test('Alchemy engine: Mask of the Divine Doctor and VIP patient cases', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  s.resources.qi = 60;
+  s.resources.gold = 50;
+  s.resources.reputation = 0;
+
+  // Unlocked because stage >= 1
+  assert.equal(Alchemy.isMaskUnlocked(s), true);
+  assert.equal(s.alchemy.maskActive, false);
+
+  // Toggle mask
+  assert.equal(E.action(s, 'alchemy-mask-toggle'), true);
+  assert.equal(s.alchemy.maskActive, true);
+  assert.equal(s.alchemy.patients.includes('vip_xiao_tiannan'), true);
+
+  // Treat VIP patient under mask: Patriarch Xiao Tiannan
+  // Xiao Tiannan requires 'nine_revolutions' or pearl purge (35 Qi)
+  assert.equal(Alchemy.canTreatPatient(s, 'vip_xiao_tiannan', true), true);
+  const goldBefore = s.resources.gold;
+  const repBefore = s.resources.reputation;
+
+  // With mask bonus (+25%): 500 base gold * 1.25 = 625 gold, 10 base rep * 1.25 = 13 rep
+  assert.equal(Alchemy.treatPatient(s, 'vip_xiao_tiannan', true), true);
+  assert.equal(s.resources.gold, goldBefore + 625);
+  assert.equal(s.resources.reputation, repBefore + 13);
+  assert.equal(s.resources.qi, 25); // 60 - 35
+  assert.match(s.alchemy.log[0].ru, /Божественный Лекарь Хуанфу Хэ/);
+
+  // Toggle mask off
+  assert.equal(E.action(s, 'alchemy-mask-toggle'), true);
+  assert.equal(s.alchemy.maskActive, false);
+});
+
+test('Alchemy engine: Black Moon Auction House bidding and VIP progression', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  s.resources.gold = 100;
+  s.resources.pills = 2;
+  s.alchemy.inventory.breakthrough_pill = 2;
+  s.alchemy.pureInventory.breakthrough_pill = 1;
+
+  assert.equal(Alchemy.canAccessAuction(s), true);
+  const initialVip = Alchemy.getBlackMoonVipTier(0);
+  assert.equal(initialVip.id, 'iron');
+  assert.equal(initialVip.feeRate, 0.15);
+
+  // 1. Start auction with 100% pure breakthrough pill
+  assert.equal(E.action(s, 'alchemy-auction-list', 'breakthrough_pill:1:true'), true);
+  assert.equal(s.alchemy.inventory.breakthrough_pill, 1);
+  assert.equal(s.alchemy.pureInventory.breakthrough_pill, 0);
+
+  const auction = s.alchemy.blackMoon.activeAuction;
+  assert.notEqual(auction, null);
+  assert.equal(auction.isPure, true);
+  assert.equal(auction.round, 1);
+  assert.equal(auction.settled, false);
+  // Pure multiplier 3.5x on base (120 * 3.5 = 420)
+  assert(auction.currentBid >= 420);
+
+  // 2. Step 2 rounds of escalation bidding
+  assert.equal(E.action(s, 'alchemy-auction-step'), true);
+  assert.equal(auction.round, 2);
+  const round2Bid = auction.currentBid;
+  assert(round2Bid > 420);
+
+  assert.equal(E.action(s, 'alchemy-auction-step'), true);
+  assert.equal(auction.round, 3);
+  assert.equal(auction.settled, true);
+  const round3Bid = auction.currentBid;
+  assert(round3Bid > round2Bid);
+
+  // Cannot step further once settled
+  assert.equal(E.action(s, 'alchemy-auction-step'), false);
+
+  // 3. Collect auction proceeds
+  const goldBefore = s.resources.gold;
+  assert.equal(E.action(s, 'alchemy-auction-collect'), true);
+  assert.equal(s.alchemy.blackMoon.activeAuction, null);
+  assert(s.resources.gold > goldBefore + 500);
+  assert.equal(s.alchemy.blackMoon.totalAuctionGold, round3Bid);
+
+  // Check VIP progression (should have moved from iron to bronze if totalGold >= 300)
+  const newVip = Alchemy.getBlackMoonVipTier(s.alchemy.blackMoon.totalAuctionGold);
+  assert(newVip.id === 'bronze' || newVip.id === 'silver');
+});
+
+test('Alchemy engine: Black Moon rare catalog purchases and cauldron upgrade', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  s.resources.gold = 2000;
+  s.resources.herbs = 50;
+  s.resources.qi = 50;
+
+  // 1. Buy recipe
+  assert.equal(Alchemy.canBuyAuctionLot(s, 'recipe_dragon_vitality'), true);
+  assert.equal(E.action(s, 'alchemy-auction-buy', 'recipe_dragon_vitality'), true);
+  assert.equal(s.alchemy.unlockedRecipes.includes('dragon_vitality'), true);
+  assert.equal(s.resources.gold, 2000 - 250);
+
+  // Cannot rebuy unique lot
+  assert.equal(Alchemy.canBuyAuctionLot(s, 'recipe_dragon_vitality'), false);
+
+  // 2. Buy spatial ring (4-slot pouch upgrade)
+  assert.equal(E.action(s, 'alchemy-auction-buy', 'spatial_ring'), true);
+  assert.equal(s.alchemy.blackMoon.pouchUpgrade, true);
+  assert.equal(s.alchemy.pouch.length, 4);
+
+  // Test equipping into 4th slot (index 3)
+  assert.equal(E.action(s, 'alchemy-pouch', '3:dragon_vitality'), true);
+  assert.equal(s.alchemy.pouch[3], 'dragon_vitality');
+
+  // 3. Buy Star Jade Cauldron (0% failure rate)
+  assert.equal(E.action(s, 'alchemy-auction-buy', 'star_jade_cauldron'), true);
+  assert.equal(s.alchemy.blackMoon.cauldronUpgrade, true);
+
+  // Brewing with Star Jade Cauldron never fails
+  s.alchemy.ingredients.mountain_herb = 20;
+  s.alchemy.ingredients.spring_water = 20;
+  const failsBefore = s.alchemy.stats.fail;
+  for (let i = 0; i < 10; i++) {
+    Alchemy.brew(s, 'vigor_broth', 'crucible');
+  }
+  assert.equal(s.alchemy.stats.fail, failsBefore);
+});
+
 
 

@@ -712,6 +712,17 @@
       return Alchemy ? Alchemy.meridianPurge(s) : false;
     } else if (type === 'alchemy-consume') {
       return Alchemy ? Alchemy.consumePill(s, value) : false;
+    } else if (type === 'alchemy-mask-toggle') {
+      return Alchemy ? Alchemy.toggleMask(s, api) : false;
+    } else if (type === 'alchemy-auction-list') {
+      const [recipeId, countStr, pureStr] = (value || '').split(':');
+      return Alchemy ? Alchemy.startAuction(s, recipeId, Number(countStr) || 1, pureStr === 'true', api) : false;
+    } else if (type === 'alchemy-auction-step') {
+      return Alchemy ? Alchemy.auctionStep(s, api) : false;
+    } else if (type === 'alchemy-auction-collect') {
+      return Alchemy ? Alchemy.auctionCollect(s, api) : false;
+    } else if (type === 'alchemy-auction-buy') {
+      return Alchemy ? Alchemy.buyAuctionLot(s, value, api) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;

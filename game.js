@@ -1674,11 +1674,28 @@
 
     if(activeAlchemyTab==='clinic'){
       const treatedCount = alc.stats.patientsTreated || 0;
+      const isMaskUnlocked = Alc.isMaskUnlocked ? Alc.isMaskUnlocked(s) : false;
+      const maskActive = !!alc.maskActive;
+
+      const maskBanner = isMaskUnlocked ? `
+        <div class="clinic-mask-card ${maskActive ? 'mask-active' : ''}">
+          <div class="mask-card-head">
+            <span class="mask-avatar">${maskActive ? '🎭' : '👤'}</span>
+            <div class="mask-meta">
+              <strong>${maskActive ? uiText('Облик: Великий Мастер Хуанфу Хэ', 'Persona: Grandmaster Huangfu He') : uiText('Облик: Ученик смертного мира', 'Persona: Mortal Realm Disciple')}</strong>
+              <p class="mask-desc">${maskActive ? uiText('Личность скрыта: Знатные патриархи платят щедрое золото (+25% выплат).', 'Identity concealed: Noble patriarchs pay generous gold (+25% rewards).') : uiText('Истинная личность открыта. Надень маску, чтобы скрыть имя и привлечь знатных пациентов.', 'True identity exposed. Don the mask to conceal your name and attract elite patients.')}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-mask-toggle" data-alchemy-action="mask-toggle">
+            ${maskActive ? uiText('🎭 Снять Маску Лекаря', '🎭 Remove Doctor Mask') : uiText('🎭 Надеть Маску Лекаря', '🎭 Don Doctor Mask')}
+          </button>
+        </div>` : '';
+
       const clinicHeader = `
         <div class="clinic-header-card">
           <div class="clinic-eyebrow">🩺 ${uiText('КЛИНИКА ЛЕКАРЯ С НЕБЕС', 'MIRACLE DOCTOR CLINIC')} · ${uiText('ОЧИЩЕНИЕ ОТ ЯДОВ И ДАНЬ ДУ', 'VENOM & DAN DU PURGE')}</div>
-          <h3>${uiText('Лекарь с Небес · Очищение от ядов и Дань Ду', 'Miracle Doctor · Venom & Dan Du Purge')}</h3>
-          <p class="intro">${uiText('Пациенты стекаются со всей округи в надежде на божественное исцеление Жемчужиной Злого Неба или очищенные пилюли.', 'Patients gather from across the realm seeking divine healing through the Sky Poison Pearl or pure remedies.')}</p>
+          <h3>${maskActive ? uiText('Божественный Лекарь Хуанфу Хэ', 'Miracle Doctor Huangfu He') : uiText('Лекарь с Небес · Очищение от ядов и Дань Ду', 'Miracle Doctor · Venom & Dan Du Purge')}</h3>
+          <p class="intro">${maskActive ? uiText('Личность скрыта: Знатные патриархи платят щедрое золото (+25% выплат).', 'Identity concealed: Noble patriarchs pay generous gold (+25% rewards).') : uiText('Пациенты стекаются со всей округи в надежде на божественное исцеление Жемчужиной Злого Неба или очищенные пилюли.', 'Patients gather from across the realm seeking divine healing through the Sky Poison Pearl or pure remedies.')}</p>
           <div class="clinic-substats">
             <span>✨ ${uiText('Исцелено пациентов: ', 'Patients cured: ')}<strong>${treatedCount}</strong></span>
             <span>✦ ${uiText('Репутация: ', 'Reputation: ')}<strong>${s.resources.reputation || 0}</strong></span>
@@ -1701,11 +1718,11 @@
           : '';
 
         return `
-          <div class="clinic-patient-card">
+          <div class="clinic-patient-card ${p.isVip ? 'patient-card-vip' : ''}">
             <div class="patient-card-header">
-              <span class="patient-avatar">🩺</span>
+              <span class="patient-avatar">${p.isVip ? '👑' : '🩺'}</span>
               <div>
-                <h4 class="patient-name">${isEn ? p.nameEn : p.nameRu}</h4>
+                <h4 class="patient-name">${isEn ? p.nameEn : p.nameRu} ${p.isVip ? `<span class="patient-vip-tag">★ ${uiText('VIP', 'VIP')}</span>` : ''}</h4>
                 <div class="patient-condition">${isEn ? p.conditionEn : p.conditionRu}</div>
               </div>
             </div>
@@ -1741,7 +1758,7 @@
           </div>`;
       }
 
-      body.innerHTML = clinicHeader + patientSection + logHtml;
+      body.innerHTML = maskBanner + clinicHeader + patientSection + logHtml;
     } else if (activeAlchemyTab === 'market' || activeAlchemyTab === 'shop') {
       const curLoc = s.world?.location || 'village';
       const fTable = Alc.FORAGE_TABLES?.[curLoc] || Alc.FORAGE_TABLES?.village || { herbs: [] };
@@ -1889,8 +1906,10 @@
 
       body.innerHTML = forageSection + tradeSection + shopSection + logHtml;
     } else if (activeAlchemyTab === 'pouch') {
+      const maxSlots = alc.blackMoon?.pouchUpgrade ? 4 : 3;
+      const slotIndices = alc.blackMoon?.pouchUpgrade ? [0, 1, 2, 3] : [0, 1, 2];
       const pouchSlots = alc.pouch || ['vigor_broth', null, null];
-      const slotsHtml = [0, 1, 2].map(slotIdx => {
+      const slotsHtml = slotIndices.map(slotIdx => {
         const recId = pouchSlots[slotIdx];
         const r = recId ? Alc.RECIPES[recId] : null;
         const inStock = r ? (alc.inventory?.[recId] || 0) : 0;
@@ -1933,19 +1952,21 @@
             <p class="choice-combat-effect">⚔ ${isEn ? r.combatEffectEn : r.combatEffectRu}</p>
             <div class="choice-equip-buttons">
               <span class="choice-equip-label">${uiText('Снарядить в сумку:', 'Equip to pouch:')}</span>
-              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="0">${uiText('В слот 1', 'To slot 1')}</button>
-              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="1">${uiText('В слот 2', 'To slot 2')}</button>
-              <button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="2">${uiText('В слот 3', 'To slot 3')}</button>
+              ${slotIndices.map(sIdx => `<button type="button" class="btn-slot-equip" data-alchemy-action="equip-pouch" data-recipe="${recId}" data-slot="${sIdx}">${uiText(`В слот ${sIdx + 1}`, `To slot ${sIdx + 1}`)}</button>`).join('')}
             </div>
           </div>`;
       }).join('');
+
+      const pouchIntro = maxSlots === 4
+        ? uiText('Снаряди до 4 пилюль в быстрые слоты пояса для мгновенного применения в тактических поединках.', 'Equip up to 4 pills into quick belt slots for instant tactical combat use.')
+        : uiText('Снаряди до 3 пилюль в быстрые слоты пояса для мгновенного применения в тактических поединках.', 'Equip up to 3 pills into quick belt slots for instant tactical combat use.');
 
       const pouchHtml = `
         <div class="pouch-container">
           <div class="pouch-header-card">
             <div class="pouch-eyebrow">🎒 ${uiText('ПОЯСНАЯ СУМКА АЛХИМИКА', 'ALCHEMIST’S TACTICAL BELT POUCH')}</div>
             <h3>${uiText('Поясная сумка пилюль', 'Belt Pill Pouch')}</h3>
-            <p class="intro">${uiText('Снаряди до 3 пилюль в быстрые слоты пояса для мгновенного применения в тактических поединках.', 'Equip up to 3 pills into quick belt slots for instant tactical combat use.')}</p>
+            <p class="intro">${pouchIntro}</p>
           </div>
           <div class="section-head"><h3>${uiText('Быстрые слоты пояса', 'Quick Belt Slots')}</h3></div>
           <div class="pouch-slots-grid">${slotsHtml}</div>
@@ -2150,6 +2171,205 @@
         </div>`;
 
       body.innerHTML = gardenHtml;
+    } else if (activeAlchemyTab === 'auction') {
+      const canAccess = Alc.canAccessAuction ? Alc.canAccessAuction(s) : false;
+
+      if (!canAccess) {
+        body.innerHTML = `
+          <div class="auction-container">
+            <div class="auction-locked-card">
+              <div class="auction-locked-emblem">🏛</div>
+              <h3>${uiText('Аукцион Чёрной Луны', 'Black Moon Auction')}</h3>
+              <p class="intro">${uiText('Аукцион Чёрной Луны пока недоступен. Достигни 2 ранга алхимии или посети Город.', 'Black Moon Auction is not yet available. Reach alchemy rank 2 or visit the City.')}</p>
+              <div class="auction-lock-reqs">
+                <div class="req-item">✦ ${uiText('Требуется: Ступень 1 (Секта), 2 ранг алхимии или надетая Маска Лекаря.', 'Requires: Stage 1 (Sect), Alchemy rank 2, or active Doctor Mask.')}</div>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        const bm = alc.blackMoon || (Alc.fresh ? Alc.fresh().blackMoon : { totalAuctionGold: 0, vipTier: 'iron', activeAuction: null, catalogPurchased: [] });
+        const vipTier = Alc.getBlackMoonVipTier ? Alc.getBlackMoonVipTier(bm.totalAuctionGold) : Alc.BLACK_MOON_VIP_TIERS.iron;
+        const tierName = isEn ? vipTier.nameEn : vipTier.nameRu;
+        const tierDesc = isEn ? vipTier.descEn : vipTier.descRu;
+        const feePct = Math.round(vipTier.feeRate * 100);
+
+        const headerHtml = `
+          <div class="auction-header-card">
+            <div class="auction-eyebrow">🏛 ${uiText('АУКЦИОННЫЙ ДОМ ЧЁРНОЙ ЛУНЫ', 'BLACK MOON AUCTION HOUSE')}</div>
+            <h3>${uiText('Аукцион Чёрной Луны', 'Black Moon Auction')}</h3>
+            <p class="intro">${uiText('Тайная обитель торговли, где за 100% чистые пилюли ведут войну патриархи и старейшины великих сект.', 'The supreme mercantile powerhouse where clan patriarchs and grand sect elders wage bidding wars for 100% pure remedies.')}</p>
+            <div class="auction-vip-card ${vipTier.badgeClass}">
+              <div class="vip-card-head">
+                <span class="vip-icon">${vipTier.icon}</span>
+                <div>
+                  <strong>${uiText('VIP-статус Палаты Чёрной Луны', 'Black Moon Chamber VIP Tier')}: <span class="vip-name">${tierName}</span></strong>
+                  <div class="vip-desc">${tierDesc}</div>
+                </div>
+              </div>
+              <div class="vip-stats-bar">
+                <span>💰 ${uiText('Оборот на торгах: ', 'Auction turnover: ')}<strong>${bm.totalAuctionGold || 0}</strong> ${uiText('монет', 'coins')}</span>
+                <span>⚖️ ${uiText('Текущая комиссия: ', 'Current commission: ')}<strong>${feePct}%</strong></span>
+                ${alc.maskActive
+                  ? `<span class="vip-disguise-tag">🎭 ${uiText('Личность скрыта: Лекарь Хуанфу Хэ (+25% к ставкам)', 'Identity concealed: Doctor Huangfu He (+25% to bids)')}</span>`
+                  : `<span class="vip-disguise-tag off">👤 ${uiText('Облик: Ученик смертного мира (без бонуса к ставкам)', 'Persona: Mortal Realm Disciple (no bid bonus)')}</span>`}
+              </div>
+            </div>
+          </div>`;
+
+        // Active Lot Bidding War or Listing Selection
+        let lotSectionHtml = '';
+        if (bm.activeAuction) {
+          const act = bm.activeAuction;
+          const r = Alc.RECIPES[act.recipeId];
+          const rName = isEn ? r?.nameEn : r?.nameRu;
+          const bidderName = isEn ? act.highestBidderEn : act.highestBidderRu;
+          const lastHistory = act.bidHistory?.[act.bidHistory.length - 1];
+          const quote = lastHistory ? (isEn ? lastHistory.quoteEn : lastHistory.quoteRu) : '';
+          const fee = Math.round(act.currentBid * vipTier.feeRate);
+          const net = act.currentBid - fee;
+
+          lotSectionHtml = `
+            <div class="auction-active-panel">
+              <div class="section-head">
+                <h3>🔨 ${uiText('Активные торги лота', 'Active Auction Lot')}</h3>
+                <span class="round-badge">${uiText('Раунд торгов: ', 'Bidding round: ')}${act.round}/${act.maxRounds}</span>
+              </div>
+              <div class="active-lot-card">
+                <div class="lot-header">
+                  <span class="lot-pill-icon">${r?.icon || '💊'}</span>
+                  <div>
+                    <h4 class="lot-title">${act.count}× «${rName}»</h4>
+                    <div class="lot-tags">
+                      ${act.isPure
+                        ? `<span class="pill-pure-tag">✨ ${uiText('100% чистота Жемчужины (х3.5 к ставкам)', '100% Pearl Purity (3.5x to bids)')}</span>`
+                        : `<span class="pill-std-tag">⚗ ${uiText('Обычная варка (с примесями)', 'Crucible Brew (with impurities)')}</span>`}
+                    </div>
+                  </div>
+                </div>
+                <div class="lot-bid-info">
+                  <div class="bid-current-box">
+                    <span class="bid-lbl">${uiText('Текущая ставка: ', 'Current bid: ')}</span>
+                    <strong class="bid-val">💰 ${act.currentBid} ${uiText('монет', 'coins')}</strong>
+                  </div>
+                  <div class="bid-leader-box">
+                    <span class="bid-lbl">${uiText('Лидирует: ', 'Highest bidder: ')}</span>
+                    <strong class="bid-leader">${bidderName}</strong>
+                  </div>
+                </div>
+                ${quote ? `
+                  <div class="auction-bid-bubble">
+                    <div class="bubble-speaker">💬 ${bidderName}:</div>
+                    <div class="bubble-quote">${quote}</div>
+                  </div>` : ''}
+                <div class="auction-actions-row">
+                  ${act.settled
+                    ? `<button type="button" class="btn-auction-collect" data-alchemy-action="auction-collect">
+                        💰 ${uiText('💰 Забрать выручку с торгов', '💰 Collect Auction Proceeds')} (+${net} ${uiText('монет', 'coins')}, ${uiText('Комиссия: ', 'Fee: ')}-${fee})
+                      </button>`
+                    : `<button type="button" class="btn-auction-step" data-alchemy-action="auction-step">
+                        🔨 ${uiText('🔨 Следующий раунд торгов (Поднять молоток)', '🔨 Next Bidding Round (Raise Hammer)')}
+                      </button>`}
+                </div>
+              </div>
+            </div>`;
+        } else {
+          // Pills available to list
+          const inventoryPills = Object.keys(alc.inventory || {}).filter(rId => (alc.inventory[rId] || 0) > 0);
+          const listCards = inventoryPills.map(rId => {
+            const r = Alc.RECIPES[rId];
+            if (!r) return '';
+            const totalStock = alc.inventory[rId] || 0;
+            const pureStock = alc.pureInventory?.[rId] || 0;
+            const standardStock = Math.max(0, totalStock - pureStock);
+
+            return `
+              <div class="auction-list-item-card">
+                <div class="list-item-head">
+                  <span class="alchemy-ing-icon">${r.icon}</span>
+                  <div>
+                    <strong class="list-item-name">${isEn ? r.nameEn : r.nameRu}</strong>
+                    <div class="list-item-stock">${uiText('В запасе: ', 'In stock: ')}<strong>${totalStock}</strong> ${uiText('шт.', 'pcs')} ${pureStock > 0 ? `(${pureStock} ${uiText('100% чист.', '100% pure')})` : ''}</div>
+                  </div>
+                </div>
+                <div class="list-item-actions">
+                  ${standardStock > 0 ? `
+                    <button type="button" class="btn-list-std" data-alchemy-action="auction-list" data-recipe="${rId}" data-count="1" data-pure="false">
+                      ⚗ ${uiText('Выставить на торги Чёрной Луны', 'List on Black Moon Auction')} (1 ${uiText('шт.', 'pc')})
+                    </button>` : ''}
+                  ${pureStock > 0 ? `
+                    <button type="button" class="btn-list-pure" data-alchemy-action="auction-list" data-recipe="${rId}" data-count="1" data-pure="true">
+                      ✨ ${uiText('100% чистота Жемчужины (х3.5 к ставкам)', '100% Pearl Purity (3.5x to bids)')}
+                    </button>` : ''}
+                </div>
+              </div>`;
+          }).join('');
+
+          lotSectionHtml = `
+            <div class="auction-listing-section">
+              <div class="section-head">
+                <h3>📦 ${uiText('Выставить снадобья на аукцион', 'List Remedies for Auction')}</h3>
+                <small>${uiText('Выбери пилюлю из запаса:', 'Choose pill from inventory:')}</small>
+              </div>
+              <div class="auction-listing-grid">
+                ${listCards || `<p class="intro">${uiText('Нет подходящих пилюль в запасе для выставления на торги.', 'No suitable pills in stock to list for auction.')}</p>`}
+              </div>
+            </div>`;
+        }
+
+        // Rare Catalog
+        const catalogCards = Object.keys(Alc.AUCTION_CATALOG).map(cId => {
+          const item = Alc.AUCTION_CATALOG[cId];
+          const isPurchased = (bm.catalogPurchased || []).includes(cId);
+          const canBuy = Alc.canBuyAuctionLot ? Alc.canBuyAuctionLot(s, cId) : false;
+
+          return `
+            <div class="auction-catalog-card ${isPurchased ? 'catalog-purchased' : ''}">
+              <div class="catalog-card-head">
+                <span class="catalog-item-icon">${item.icon}</span>
+                <div>
+                  <strong class="catalog-item-title">${isEn ? item.nameEn : item.nameRu}</strong>
+                  <div class="catalog-item-desc">${isEn ? item.descEn : item.descRu}</div>
+                </div>
+              </div>
+              <div class="catalog-card-action">
+                ${isPurchased
+                  ? `<span class="catalog-bought-tag">✓ ${uiText('Куплено', 'Purchased')}</span>`
+                  : `<button type="button" class="btn-buy-lot" data-alchemy-action="auction-buy" data-lot="${cId}" ${canBuy ? '' : 'disabled'}>
+                      💰 ${item.costGold} ${uiText('монет', 'coins')} (${uiText('Купить', 'Buy')})
+                    </button>`}
+              </div>
+            </div>`;
+        }).join('');
+
+        const catalogSection = `
+          <div class="auction-catalog-section">
+            <div class="section-head">
+              <h3>💎 ${uiText('Редкие лоты Палаты Чёрной Луны', 'Black Moon Chamber Rare Lots')}</h3>
+              <small>${uiText('Древние манускрипты, пространственные артефакты и реликтовые семена.', 'Ancient manuscripts, spatial artifacts, and relic seeds.')}</small>
+            </div>
+            <div class="auction-catalog-grid">
+              ${catalogCards}
+            </div>
+          </div>`;
+
+        // Auction Log
+        let logHtml = '';
+        if (alc.log && alc.log.length > 0) {
+          logHtml = `
+            <div class="alchemy-log-box" style="margin-top:20px">
+              <h4>${uiText('История торгов', 'Auction History')}</h4>
+              ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+            </div>`;
+        }
+
+        body.innerHTML = `
+          <div class="auction-container">
+            ${headerHtml}
+            ${lotSectionHtml}
+            ${catalogSection}
+            ${logHtml}
+          </div>`;
+      }
     } else {
       // cauldron tab
       const rankTitle=isEn?currentRank.en:currentRank.ru;
@@ -2655,6 +2875,50 @@
           toast(uiText('Пилюля принята!', 'Pill consumed!'));
         } else {
           toast(uiText('Нет пилюли в запасе!', 'No pill in stock!'));
+        }
+      } else if (act === 'mask-toggle') {
+        if (E.action(s, 'alchemy-mask-toggle')) {
+          Sound.playParchment?.();
+          save();
+          toast(uiText('Маска Божественного Лекаря переключена!', 'Mask of the Divine Doctor toggled!'));
+        } else {
+          toast(uiText('Аукцион Чёрной Луны пока недоступен. Достигни 2 ранга алхимии или посети Город.', 'Black Moon Auction is not yet available. Reach alchemy rank 2 or visit the City.'));
+        }
+      } else if (act === 'auction-list') {
+        const recipeId = b.dataset.recipe;
+        const pure = b.dataset.pure === 'true';
+        const count = parseInt(b.dataset.count || '1', 10);
+        if (E.action(s, 'alchemy-auction-list', `${recipeId}:${count}:${pure}`)) {
+          Sound.playBowl?.();
+          save();
+          toast(uiText('Лот выставлен на аукцион!', 'Lot submitted to auction!'));
+        } else {
+          toast(uiText('Недостаточно пилюль для торгов!', 'Not enough pills to auction!'));
+        }
+      } else if (act === 'auction-step') {
+        if (E.action(s, 'alchemy-auction-step')) {
+          Sound.playClash?.();
+          save();
+          toast(uiText('Раунд торгов проведён!', 'Bidding round completed!'));
+        } else {
+          toast(uiText('Торги завершены! Молот опущен.', 'Auction concluded! Hammer struck.'));
+        }
+      } else if (act === 'auction-collect') {
+        if (E.action(s, 'alchemy-auction-collect')) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Выручка с аукциона получена!', 'Auction proceeds collected!'));
+        } else {
+          toast(uiText('Аукцион не проводился. Выстави пилюли на торги.', 'No auction held yet. Submit pills to start bidding.'));
+        }
+      } else if (act === 'auction-buy') {
+        const lotId = b.dataset.lot;
+        if (E.action(s, 'alchemy-auction-buy', lotId)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Предмет приобретён на аукционе!', 'Item purchased from auction!'));
+        } else {
+          toast(uiText('Не хватает золота для покупки!', 'Not enough gold to purchase!'));
         }
       }
       renderAlchemy();
