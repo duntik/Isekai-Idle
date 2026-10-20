@@ -413,4 +413,92 @@ test('Alchemy engine: Garden plot unlocking and Jasmine dialogue interaction', (
   assert.match(quoteCentury, /absorbed century qi/);
 });
 
+test('Alchemy engine: Dan Du toxins, pure pills and Sky Poison Pearl meridian purge', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.resources.qi = 50;
+  s.resources.gold = 500;
+  s.found = true;
+
+  // Initial state: 0 Dan Du, 100 Purity, 0 purges
+  assert.equal(Alchemy.meridianPurity(s), 100);
+  assert.equal(s.alchemy.meridians.danDu, 0);
+  assert.equal(s.alchemy.meridians.pearlPurges, 0);
+
+  // Before any Pearl purge, status is clean mortal channels
+  const initialStatus = Alchemy.getDanDuStatus(s, 'en');
+  assert.equal(initialStatus.tier, 'clean');
+
+  // Add Dan Du
+  Alchemy.addDanDu(s, 35);
+  assert.equal(s.alchemy.meridians.danDu, 35);
+  assert.equal(Alchemy.meridianPurity(s), 65);
+  const slightStatus = Alchemy.getDanDuStatus(s, 'en');
+  assert.equal(slightStatus.tier, 'slight');
+
+  // Herbal cleanse (e.g. calm_tea -8)
+  const cleansed = Alchemy.cleanseDanDu(s, 8);
+  assert.equal(cleansed, 8);
+  assert.equal(s.alchemy.meridians.danDu, 27);
+  assert.equal(Alchemy.meridianPurity(s), 73);
+
+  // Accumulate to crisis level (>= 80)
+  Alchemy.addDanDu(s, 60); // 27 + 60 = 87
+  assert.equal(s.alchemy.meridians.danDu, 87);
+  assert.equal(Alchemy.getDanDuStatus(s, 'ru').tier, 'crisis');
+
+  // Crisis blocks breakthrough
+  s.xp = E.needed(s);
+  s.resources.herbs = 50;
+  assert.equal(E.action(s, 'breakthrough'), false);
+
+  // Sky Poison Pearl Meridian Purge
+  assert.equal(Alchemy.canMeridianPurge(s), true);
+  const purged = Alchemy.meridianPurge(s);
+  assert.equal(purged, true);
+  assert.equal(s.resources.qi, 35); // 50 - 15
+  assert.equal(s.alchemy.meridians.danDu, 57); // 87 - 30
+  assert.equal(s.alchemy.meridians.pearlPurges, 1);
+  assert.equal(s.alchemy.meridians.totalCleansed, 38); // 8 + 30
+
+  // Breakthrough now unblocked (danDu < 80)
+  const realmBefore = s.realm;
+  const breakOk = E.action(s, 'breakthrough');
+  assert.equal(breakOk, true);
+  assert.equal(s.realm, realmBefore + 1);
+  // Breakthrough cleanses 25 Dan Du
+  assert.equal(s.alchemy.meridians.danDu, 32); // 57 - 25
+
+  // Complete purge down to 0
+  Alchemy.meridianPurge(s); // 32 - 30 = 2
+  s.resources.qi = 50;
+  Alchemy.meridianPurge(s); // 2 - 2 = 0
+  assert.equal(s.alchemy.meridians.danDu, 0);
+  assert.equal(Alchemy.meridianPurity(s), 100);
+
+  // Now unlocks Immaculate Celestial Meridians (+15% meditation speed, +10 poise)
+  const immStatus = Alchemy.getDanDuStatus(s, 'en');
+  assert.equal(immStatus.tier, 'immaculate');
+  assert.match(immStatus.name, /Immaculate Celestial Meridians/);
+
+  // Test speed boost in meditation
+  s.activity = 'meditate';
+  const spd = E.speed(s);
+  assert(spd >= 1.15);
+
+  // Consume pill: pure pill adds 0 Dan Du, impure pill adds 5 Dan Du
+  s.alchemy.inventory.vigor_broth = 2;
+  s.alchemy.pureInventory.vigor_broth = 1;
+  Alchemy.consumePill(s, 'vigor_broth');
+  assert.equal(s.alchemy.meridians.danDu, 0); // Pure pill consumed first!
+  assert.equal(s.alchemy.pureInventory.vigor_broth, 0);
+  assert.equal(s.alchemy.inventory.vigor_broth, 1);
+
+  // Second pill is impure
+  Alchemy.consumePill(s, 'vigor_broth');
+  assert.equal(s.alchemy.meridians.danDu, 4); // +4 Dan Du from mortal dregs
+  assert.equal(s.alchemy.inventory.vigor_broth, 0);
+});
+
+
 

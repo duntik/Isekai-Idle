@@ -1191,6 +1191,11 @@
     if (tab === 'hero') {
       if (['meditate', 'train', 'technique', 'work', 'explore', 'laws'].includes(s.activity)) lastMaintainedActivity = s.activity;
       const need = E.needed(s), bc = E.breakthroughCost(s);
+      const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || Alchemy);
+      const danDu = s.alchemy?.meridians?.danDu || 0;
+      const purity = s.alchemy?.meridians?.purity !== undefined ? s.alchemy.meridians.purity : Math.max(0, 100 - danDu);
+      const danDuStatus = Alc && Alc.getDanDuStatus ? Alc.getDanDuStatus(s, L?.language || 'ru') : { name: '', desc: '', badgeClass: '' };
+      const canBreak = s.found && s.xp >= need && E.affordable(s, bc) && danDu < 80;
       const pillar1Html = `
         <div class="pillar-card pillar-spirit">
           <div class="pillar-header">
@@ -1207,13 +1212,24 @@
             </div>
             <progress max="${need}" value="${s.xp}" aria-label="${uiText('Понимание для прорыва', 'Insight for breakthrough')}"></progress>
           </div>
+          <div class="pillar-gauge meridian-gauge">
+            <div class="pillar-gauge-labels">
+              <span>${uiText('Чистота меридианов', 'Meridian Purity')}</span>
+              <strong>${purity}% ${danDu > 0 ? `(${uiText('Дань Ду: ', 'Dan Du: ')}${danDu}/100)` : (s.alchemy?.meridians?.pearlPurges > 0 ? `(✧ ${uiText('Безупречные Небесные Меридианы', 'Immaculate Celestial Meridians')})` : `(${uiText('Чистые меридианы', 'Clean Meridians')})`)}</strong>
+            </div>
+            <progress class="${danDu === 0 ? 'progress-pure' : (danDu > 50 ? 'progress-toxic' : 'progress-warning')}" max="100" value="${purity}" aria-label="${uiText('Чистота меридианов', 'Meridian purity')}"></progress>
+          </div>
+          <div class="pillar-meridian-badge ${danDuStatus.badgeClass}">
+            <span>${danDuStatus.name}</span> · <small>${danDuStatus.desc}</small>
+          </div>
           <div class="pillar-substats">
             <span class="pillar-substat">✦ ${uiText('Скорость развития: ', 'Cultivation speed: ')}<strong>×${fmt(E.speed(s))}</strong></span>
             <span class="pillar-substat">✧ ${uiText('Спокойствие разума: ', 'Mind tranquility: ')}<strong>${fmt(s.calm)} / 100</strong></span>
           </div>
-          <p class="pillar-hint">${s.found ? uiText(`Для прорыва: ${costs(bc)}. На пределе понимание перестаёт накапливаться.`, `For breakthrough: ${costs(bc)}. At the cap, insight ceases to accumulate.`) : uiText(`Исследуй руины: ${duration(s.explored)} / 10 мин до первой находки.`, `Explore ruins: ${duration(s.explored)} / 10 min to first find.`)}</p>
+          <p class="pillar-hint">${danDu >= 80 ? uiText('Кризис Дань Ду: прорыв заблокирован! Очисти меридианы Небесной Жемчужиной.', 'Dan Du crisis: breakthrough blocked! Purge meridians with the Sky Poison Pearl.') : (s.found ? uiText(`Для прорыва: ${costs(bc)}. На пределе понимание перестаёт накапливаться.`, `For breakthrough: ${costs(bc)}. At the cap, insight ceases to accumulate.`) : uiText(`Исследуй руины: ${duration(s.explored)} / 10 мин до первой находки.`, `Explore ruins: ${duration(s.explored)} / 10 min to first find.`))}</p>
           <div class="pillar-action">
-            ${button('breakthrough', '', uiText('Совершить прорыв', 'Perform breakthrough'), s.found && s.xp >= need && E.affordable(s, bc))}
+            ${danDu > 0 ? button('meridian-purge', '', uiText('Очистить Жемчужиной', 'Purge with Pearl'), (s.resources.qi || 0) >= 15) : ''}
+            ${button('breakthrough', '', uiText('Совершить прорыв', 'Perform breakthrough'), canBreak)}
           </div>
         </div>`;
 
@@ -2156,6 +2172,29 @@
           </div>
         </div>`;
 
+      const danDu = alc.meridians?.danDu || 0;
+      const purity = alc.meridians?.purity !== undefined ? alc.meridians.purity : Math.max(0, 100 - danDu);
+      const danDuStatus = Alc && Alc.getDanDuStatus ? Alc.getDanDuStatus(s, lang) : { name: '', desc: '', badgeClass: '' };
+      const canPurge = Alc && Alc.canMeridianPurge ? Alc.canMeridianPurge(s) : false;
+
+      const meridianBanner = `
+        <div class="alchemy-meridian-card">
+          <div class="meridian-card-header">
+            <div>
+              <span class="meridian-eyebrow">✧ ${uiText('СОСТОЯНИЕ МЕРИДИАНОВ И ТОКСИНОВ ДАНЬ ДУ', 'MERIDIAN PURITY & DAN DU TOXINS')}</span>
+              <h4>${uiText('Чистота меридианов', 'Meridian purity')}: ${purity}% ${danDu > 0 ? `(${uiText('Дань Ду: ', 'Dan Du: ')}${danDu}/100)` : (alc.meridians?.pearlPurges > 0 ? `(✧ ${uiText('Безупречные Небесные Меридианы', 'Immaculate Celestial Meridians')})` : `(${uiText('Чистые меридианы', 'Clean Meridians')})`)}</h4>
+            </div>
+            <div class="pillar-meridian-badge ${danDuStatus.badgeClass}">
+              <span>${danDuStatus.name}</span>
+            </div>
+          </div>
+          <progress class="${danDu === 0 ? 'progress-pure' : (danDu > 50 ? 'progress-toxic' : 'progress-warning')}" max="100" value="${purity}" aria-label="${uiText('Чистота меридианов', 'Meridian purity')}"></progress>
+          <div class="meridian-card-footer">
+            <span class="meridian-effect-hint">✦ ${danDuStatus.desc}</span>
+            ${danDu > 0 ? `<button type="button" class="btn-pearl" data-alchemy-action="meridian-purge" ${canPurge ? '' : 'disabled'}>✨ ${uiText('Очистить Жемчужиной (15 Ци)', 'Purge with Pearl (15 Qi)')}</button>` : ''}
+          </div>
+        </div>`;
+
       const ingKeys=Object.keys(Alc.INGREDIENTS);
       const ingCards=ingKeys.map(k=>{
         const ing=Alc.INGREDIENTS[k];
@@ -2213,7 +2252,8 @@
         }).join(' ');
 
         const inStock = alc.inventory?.[rId] || 0;
-        const stockTag = `<span class="alchemy-stock-tag">💊 ${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${uiText('шт.', 'pcs')}</span>`;
+        const pureStock = alc.pureInventory?.[rId] || 0;
+        const stockTag = `<span class="alchemy-stock-tag">💊 ${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong> ${pureStock > 0 ? `(${pureStock} ✧ ${uiText('100% чист.', '100% pure')})` : ''}</span>`;
 
         const crucibleBtn=!r.requiresPearl
           ? `<button type="button" class="btn-crucible" data-alchemy-action="craft" data-recipe="${rId}" data-pearl="false" ${canCrucible?'':'disabled'}>${crucibleText}</button>`
@@ -2235,6 +2275,7 @@
             <div class="alchemy-recipe-actions">
               ${crucibleBtn}
               ${pearlBtn}
+              ${inStock > 0 ? `<button type="button" class="btn-consume-pill" data-alchemy-action="consume-pill" data-recipe="${rId}">💊 ${uiText('Принять пилюлю', 'Consume pill')}</button>` : ''}
             </div>
           </div>`;
       }).join('');
@@ -2253,7 +2294,7 @@
           </div>`;
       }
 
-      body.innerHTML=rankBanner+ingSection+recipesSection+logHtml;
+      body.innerHTML=rankBanner+meridianBanner+ingSection+recipesSection+logHtml;
     }
   }
   function openAlchemyDialog(){
@@ -2598,6 +2639,23 @@
         } else {
           toast(uiText('Не выполнены условия разблокировки!', 'Unlock requirements not met!'));
         }
+      } else if (act === 'meridian-purge') {
+        if (E.action(s, 'meridian-purge')) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Меридианы очищены Небесной Жемчужиной!', 'Meridians purged by the Sky Poison Pearl!'));
+        } else {
+          toast(uiText('Не хватает Ци или меридианы уже чисты!', 'Not enough Qi or meridians already clean!'));
+        }
+      } else if (act === 'consume-pill') {
+        const recipeId = b.dataset.recipe;
+        if (E.action(s, 'alchemy-consume', recipeId)) {
+          Sound.playBowl?.();
+          save();
+          toast(uiText('Пилюля принята!', 'Pill consumed!'));
+        } else {
+          toast(uiText('Нет пилюли в запасе!', 'No pill in stock!'));
+        }
       }
       renderAlchemy();
       render();
@@ -2714,6 +2772,10 @@
         if (act === 'activity' && val === 'meditate') Sound.playBowl();
         if (act === 'rest') Sound.playBowl(260, 2.2);
         if (act === 'breakthrough') Sound.playBreakthrough();
+        if (act === 'meridian-purge') {
+          Sound.playBreakthrough?.();
+          toast(uiText('Меридианы очищены Небесной Жемчужиной!', 'Meridians purged by the Sky Poison Pearl!'));
+        }
         if (s.realm > realmBefore) {
           const modal = $('breakthrough-modal');
           if (modal && view !== 'data') {
@@ -2724,7 +2786,7 @@
         }
         save();
       } else {
-        toast(act === 'travel' ? E.world.travelReason(s, val, L?.language || 'ru') || 'Условия пока не выполнены' : 'Условия пока не выполнены');
+        toast(act === 'travel' ? E.world.travelReason(s, val, L?.language || 'ru') || uiText('Условия пока не выполнены', 'Requirements are not met yet') : uiText('Условия пока не выполнены', 'Requirements are not met yet'));
       }
       if (s.stage === 0 && !['hero', 'combat', 'world', 'roadmap'].includes(tab)) tab = 'hero';
       render();

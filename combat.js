@@ -19,7 +19,8 @@
   function freshCombat(s, E) {
     const foe = E.enemy(s);
     const pMaxHp = Math.max(50, Math.floor(100 + s.body * 16 + (s.realm + 1) * 24 + s.weapon * 12));
-    const pMaxPoise = Math.max(30, Math.floor(40 + s.body * 8 + s.weapon * 4));
+    const isImmaculate = (s.alchemy?.meridians?.pearlPurges > 0) && ((s.alchemy?.meridians?.danDu || 0) === 0);
+    const pMaxPoise = Math.max(30, Math.floor(40 + s.body * 8 + s.weapon * 4 + (isImmaculate ? 10 : 0)));
     const eMaxHp = Math.max(60, Math.floor(foe.power * 2.4 + 70));
     const eMaxPoise = Math.max(25, Math.floor(foe.power * 0.75 + 35));
 
@@ -272,48 +273,67 @@
       if (!hasGenericPills && !hasSpecificPill) return false;
 
       // Consume from inventory & sync with generic pills
+      let isPure = false;
       if (requestedRecipe && s.alchemy?.inventory?.[requestedRecipe] > 0) {
         s.alchemy.inventory[requestedRecipe]--;
+        if (s.alchemy.pureInventory?.[requestedRecipe] > 0) {
+          s.alchemy.pureInventory[requestedRecipe]--;
+          isPure = true;
+        }
       }
       s.resources.pills = Math.max(0, (s.resources.pills || 1) - 1);
 
+      if (!isPure) {
+        const Alc = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : globalThis.IsekaiAlchemy;
+        if (Alc && Alc.addDanDu) {
+          Alc.addDanDu(s, 5);
+        } else if (s.alchemy) {
+          if (!s.alchemy.meridians) s.alchemy.meridians = { danDu: 0, purity: 100, totalCleansed: 0, pearlPurges: 0 };
+          s.alchemy.meridians.danDu = Math.min(100, (s.alchemy.meridians.danDu || 0) + 5);
+          s.alchemy.meridians.purity = Math.max(0, 100 - s.alchemy.meridians.danDu);
+        }
+      }
+
+      const danDuSuffixRu = isPure ? ' (100% чистота Жемчужины: 0 Дань Ду)' : ' (Осадок смертного котла: +5 Дань Ду)';
+      const danDuSuffixEn = isPure ? ' (100% Pearl purity: 0 Dan Du)' : ' (Mortal cauldron residue: +5 Dan Du)';
+
       if (requestedRecipe === 'vigor_broth') {
-        const heal = Math.floor(c.playerMaxHp * 0.50);
+        const heal = Math.floor(c.playerMaxHp * (isPure ? 0.60 : 0.50));
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
         c.playerStamina = c.playerMaxStamina;
-        pLogRu = `【Отвар бодрости и сытости】 Свежий эликсир Мэй мгновенно восстанавливает +${heal} HP и наполняет выносливость на 100%!`;
-        pLogEn = `【Vigor and Satiety Broth】 Mei’s nourishing broth instantly restores +${heal} HP and refills stamina to 100%!`;
+        pLogRu = `【Отвар бодрости и сытости】 Свежий эликсир Мэй мгновенно восстанавливает +${heal} HP и наполняет выносливость на 100%!${danDuSuffixRu}`;
+        pLogEn = `【Vigor and Satiety Broth】 Mei’s nourishing broth instantly restores +${heal} HP and refills stamina to 100%!${danDuSuffixEn}`;
       } else if (requestedRecipe === 'body_pill') {
         const heal = Math.floor(c.playerMaxHp * 0.25);
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
         c.playerPoise = c.playerMaxPoise;
         c.guardBuff = 0.40;
-        pLogRu = `【Пилюля закалки костей】 Кости Жэня твердеют, как гранит: +${heal} HP, стойка восстановлена (100%), защита усилена (-40% входящего урона)!`;
-        pLogEn = `【Bone-Tempering Pill】 Ren’s tempered bone formula: +${heal} HP, poise fully restored (100%), defense fortified (-40% damage taken)!`;
+        pLogRu = `【Пилюля закалки костей】 Кости Жэня твердеют, как гранит: +${heal} HP, стойка восстановлена (100%), защита усилена (-40% входящего урона)!${danDuSuffixRu}`;
+        pLogEn = `【Bone-Tempering Pill】 Ren’s tempered bone formula: +${heal} HP, poise fully restored (100%), defense fortified (-40% damage taken)!${danDuSuffixEn}`;
       } else if (requestedRecipe === 'evil_god_pill') {
         c.momentum = 3;
         s.resources.qi = (s.resources.qi || 0) + 20;
         c.evilGodPillSurge = true;
-        pLogRu = `【Пилюля Первородного Пламени】 Багровое пламя Сутры Злого Бога охватывает клинки: боевой кураж МАКСИМАЛЕН (импульс 3), Ци +20, сила ударов +40%!`;
-        pLogEn = `【Primordial Flame Pill】 Crimson fire of the Evil God Sutra ignites your weapon: MAX momentum (3), Qi +20, damage +40%!`;
+        pLogRu = `【Пилюля Первородного Пламени】 Багровое пламя Сутры Злого Бога охватывает клинки: боевой кураж МАКСИМАЛЕН (импульс 3), Ци +20, сила ударов +40%!${danDuSuffixRu}`;
+        pLogEn = `【Primordial Flame Pill】 Crimson fire of the Evil God Sutra ignites your weapon: MAX momentum (3), Qi +20, damage +40%!${danDuSuffixEn}`;
       } else if (requestedRecipe === 'calm_tea') {
         s.resources.qi = (s.resources.qi || 0) + 25;
         c.playerPoise = Math.min(c.playerMaxPoise, c.playerPoise + Math.floor(c.playerMaxPoise * 0.5));
         c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 40);
-        pLogRu = `【Настой ясного сердца】 Лазурная прохлада Линя очищает каналы: истинная Ци +25, стойка стабилизирована (+50%), выносливость +40!`;
-        pLogEn = `【Clear Heart Infusion】 Lin’s azure tranquility purges turmoil: profound Qi +25, poise stabilized (+50%), stamina +40!`;
+        pLogRu = `【Настой ясного сердца】 Лазурная прохлада Линя очищает каналы: истинная Ци +25, стойка стабилизирована (+50%), выносливость +40!${danDuSuffixRu}`;
+        pLogEn = `【Clear Heart Infusion】 Lin’s azure tranquility purges turmoil: profound Qi +25, poise stabilized (+50%), stamina +40!${danDuSuffixEn}`;
       } else if (requestedRecipe === 'breakthrough_pill') {
         pDamage = Math.max(30, Math.floor(c.foePower * 0.4));
         pPoiseDmg = Math.floor(c.enemyMaxPoise * 0.6);
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + Math.floor(c.playerMaxHp * 0.3));
-        pLogRu = `【Пилюля сокрушения преград】 Эссенция мастера Хо взрывается духовной волной: нанесено ${pDamage} урона барьеру врага (${pPoiseDmg} пробоя стойки), здоровье +30%!`;
-        pLogEn = `【Barrier-Shattering Pill】 Master Huo’s essence erupts into a profound shockwave: dealt ${pDamage} damage (${pPoiseDmg} poise damage), health +30%!`;
+        pLogRu = `【Пилюля сокрушения преград】 Эссенция мастера Хо взрывается духовной волной: нанесено ${pDamage} урона барьеру врага (${pPoiseDmg} пробоя стойки), здоровье +30%!${danDuSuffixRu}`;
+        pLogEn = `【Barrier-Shattering Pill】 Master Huo’s essence erupts into a profound shockwave: dealt ${pDamage} damage (${pPoiseDmg} poise damage), health +30%!${danDuSuffixEn}`;
       } else {
         const heal = Math.floor(c.playerMaxHp * 0.45);
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
         c.playerStamina = c.playerMaxStamina;
-        pLogRu = `Глоток алхимической пилюли чистоты! Эликсир мгновенно восстанавливает +${heal} HP и наполняет мышцы неутомимой силой!`;
-        pLogEn = `Swallowing a pure alchemical pill! The elixir instantly restores +${heal} HP and surges through your veins with fresh vigour!`;
+        pLogRu = `Глоток алхимической пилюли! Эликсир мгновенно восстанавливает +${heal} HP и наполняет мышцы неутомимой силой!${danDuSuffixRu}`;
+        pLogEn = `Swallowing an alchemical pill! The elixir instantly restores +${heal} HP and surges through your veins with fresh vigour!${danDuSuffixEn}`;
       }
     } else {
       return false;

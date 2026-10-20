@@ -44,7 +44,14 @@
       row(uiText('Тренировочный распорядок','Training routine'),E.routineReady(s)?uiText('Доступен','Available'):'—',E.automationHint(s,root.IsekaiLocale?.language||'ru'));
       if(s.employment.order&&E.workMastered(s,s.employment.order.kind))row(uiText('Освоенная работа','Familiar work'),'—',E.guidance(s,'claim-order','',root.IsekaiLocale?.language||'ru'),btn('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')));
       row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
-      row('Уровень',s.realm,`${f(s.xp)} / ${f(E.needed(s))}; ${cost(E.breakthroughCost(s))}`,btn('breakthrough','','Повысить',s.found&&s.xp>=E.needed(s)&&E.affordable(s,E.breakthroughCost(s))));
+      const bc = E.breakthroughCost(s);
+      const danDu = s.alchemy?.meridians?.danDu || 0;
+      const canBreak = s.found && s.xp >= E.needed(s) && E.affordable(s, bc) && danDu < 80;
+      row('Уровень', s.realm, `${f(s.xp)} / ${f(E.needed(s))}; ${cost(bc)}`, btn('breakthrough', '', 'Повысить', canBreak));
+      const purity = s.alchemy?.meridians?.purity !== undefined ? s.alchemy.meridians.purity : Math.max(0, 100 - danDu);
+      if (danDu > 0) {
+        row(uiText('Чистота меридианов', 'Meridian purity'), `${purity}% (Дань Ду: ${danDu}/100)`, danDu >= 80 ? uiText('Кризис Дань Ду: прорыв заблокирован!', 'Dan Du crisis: breakthrough blocked!') : uiText('Осадок пилюльных шлаков снижает приток ци', 'Pill toxin residue impedes qi flow'), btn('meridian-purge', '', uiText('Очистить Жемчужиной', 'Purge with Pearl'), (s.resources.qi || 0) >= 15));
+      }
       row('Тело',`${f(s.body)} / ${(s.realm+1)*10}`,uiText('Растёт от физических действий, работы и двигательных техник. Медитация тело не развивает.','Grows through physical actions, work and movement techniques. Meditation does not train the body.'));
       row('Освоение техники',`${f(s.mastery)} / ${(s.realm+1)*10}`,`Скорость развития: ${f(E.speed(s))}`);
       row('Древнее наследие',s.found?'Найдено':`${Math.min(100,Math.floor(s.explored/6))}%`,'600 сек исследования до находки');

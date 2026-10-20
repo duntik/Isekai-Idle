@@ -243,6 +243,135 @@
     { rank: 5, xpReq: 750, ru: 'Владыка Небесного Котла', en: 'Celestial Crucible Sovereign', perkRu: 'Гарантированный критический успех в котле.', perkEn: 'Guaranteed critical success in normal crucible.' }
   ];
 
+  function addDanDu(s, amount) {
+    if (!s || !s.alchemy) return 0;
+    if (!s.alchemy.meridians) s.alchemy.meridians = fresh().meridians;
+    const m = s.alchemy.meridians;
+    const prev = m.danDu || 0;
+    m.danDu = Math.max(0, Math.min(100, prev + amount));
+    m.purity = Math.max(0, 100 - m.danDu);
+    return m.danDu - prev;
+  }
+
+  function cleanseDanDu(s, amount) {
+    if (!s || !s.alchemy) return 0;
+    if (!s.alchemy.meridians) s.alchemy.meridians = fresh().meridians;
+    const m = s.alchemy.meridians;
+    const cleansed = Math.min(m.danDu || 0, amount);
+    m.danDu = Math.max(0, (m.danDu || 0) - cleansed);
+    m.purity = Math.max(0, 100 - m.danDu);
+    m.totalCleansed = (m.totalCleansed || 0) + cleansed;
+    return cleansed;
+  }
+
+  function canMeridianPurge(s) {
+    if (!s || !s.alchemy) return false;
+    const m = s.alchemy.meridians || { danDu: 0 };
+    return (m.danDu > 0) && ((s.resources?.qi || 0) >= 15);
+  }
+
+  function meridianPurge(s) {
+    if (!canMeridianPurge(s)) return false;
+    s.resources.qi -= 15;
+    const m = s.alchemy.meridians;
+    const cleansed = Math.min(m.danDu, 30);
+    m.danDu = Math.max(0, m.danDu - cleansed);
+    m.purity = Math.max(0, 100 - m.danDu);
+    m.totalCleansed = (m.totalCleansed || 0) + cleansed;
+    m.pearlPurges = (m.pearlPurges || 0) + 1;
+    s.alchemy.xp = (s.alchemy.xp || 0) + 15;
+    const logRu = `【Очищение Жемчужиной Яда】 Багрово-изумрудный свет Небесной Жемчужины омыл 54 глубоких входа: растворено ${cleansed} токсинов Дань Ду! Чистота меридианов: ${m.purity}%.`;
+    const logEn = `【Sky Poison Pearl Purge】 Emerald-crimson radiance cleansed the 54 profound entrances: purged ${cleansed} Dan Du toxins! Meridian purity: ${m.purity}%.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    const E = typeof module !== 'undefined' && module.exports ? require('./engine.js') : root.IsekaiEngine;
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function meridianPurity(s) {
+    if (!s || !s.alchemy || !s.alchemy.meridians) return 100;
+    return s.alchemy.meridians.purity !== undefined ? s.alchemy.meridians.purity : Math.max(0, 100 - (s.alchemy.meridians.danDu || 0));
+  }
+
+  function getDanDuStatus(s, lang = 'ru') {
+    const danDu = s?.alchemy?.meridians?.danDu || 0;
+    const pearlPurges = s?.alchemy?.meridians?.pearlPurges || 0;
+    const isEn = lang === 'en';
+    if (danDu === 0 && pearlPurges > 0) {
+      return {
+        tier: 'immaculate',
+        name: isEn ? 'Immaculate Celestial Meridians' : 'Безупречные Небесные Меридианы',
+        desc: isEn ? 'Flawless qi channels (+15% meditation speed, +10 poise)' : 'Безупречные каналы (+15% к скорости ци, +10 стойки)',
+        badgeClass: 'meridian-badge-immaculate'
+      };
+    }
+    if (danDu <= 20) {
+      return {
+        tier: 'clean',
+        name: isEn ? 'Clean Meridians' : 'Чистые меридианы',
+        desc: isEn ? 'Normal qi circulation, minimal residue' : 'Нормальная циркуляция ци, минимальный осадок',
+        badgeClass: 'meridian-badge-clean'
+      };
+    }
+    if (danDu <= 50) {
+      return {
+        tier: 'slight',
+        name: isEn ? 'Mild Alchemical Dregs' : 'Пилюльный осадок',
+        desc: isEn ? '-10% meditation speed' : '-10% к скорости медитации',
+        badgeClass: 'meridian-badge-slight'
+      };
+    }
+    if (danDu <= 80) {
+      return {
+        tier: 'calcified',
+        name: isEn ? 'Channel Calcification' : 'Окаменение каналов',
+        desc: isEn ? '-25% meditation speed, -15% stamina recovery' : '-25% к скорости медитации, -15% восстановления выносливости',
+        badgeClass: 'meridian-badge-calcified'
+      };
+    }
+    return {
+      tier: 'crisis',
+      name: isEn ? 'Dan Du Crisis' : 'Кризис Дань Ду',
+      desc: isEn ? '-40% meditation speed, breakthrough BLOCKED!' : '-40% к скорости медитации, прорыв ЗАБЛОКИРОВАН!',
+      badgeClass: 'meridian-badge-crisis'
+    };
+  }
+
+  function consumePill(s, recipeId) {
+    if (!s || !s.alchemy) return false;
+    const alc = s.alchemy;
+    if (!alc.inventory || (alc.inventory[recipeId] || 0) < 1) return false;
+    const r = RECIPES[recipeId];
+    if (!r) return false;
+
+    alc.inventory[recipeId]--;
+    s.resources.pills = Math.max(0, (s.resources.pills || 1) - 1);
+
+    const isPure = (alc.pureInventory?.[recipeId] || 0) > 0;
+    if (isPure) {
+      alc.pureInventory[recipeId]--;
+    } else {
+      addDanDu(s, 4);
+    }
+
+    const res = r.apply(s, isPure, false);
+    const danDuNoteRu = isPure ? ' (100% чистота Жемчужины, 0 Дань Ду)' : ' (+4 токсина Дань Ду)';
+    const danDuNoteEn = isPure ? ' (100% Pearl purity, 0 Dan Du)' : ' (+4 Dan Du toxins)';
+    const logRu = isPure 
+      ? `【Приём 100% чистой пилюли】 Проглочена пилюля «${r.nameRu}» без примесей! ${res.ru}${danDuNoteRu}`
+      : `【Приём пилюли】 Проглочена пилюля «${r.nameRu}». ${res.ru}${danDuNoteRu}`;
+    const logEn = isPure
+      ? `【Consuming 100% Pure Pill】 Swallowed pure “${r.nameEn}”! ${res.en}${danDuNoteEn}`
+      : `【Consuming Pill】 Swallowed “${r.nameEn}”. ${res.en}${danDuNoteEn}`;
+
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    const E = typeof module !== 'undefined' && module.exports ? require('./engine.js') : root.IsekaiEngine;
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
   const RECIPES = {
     vigor_broth: {
       id: 'vigor_broth',
@@ -313,9 +442,12 @@
         s.calm = Math.min(100, (s.calm || 0) + calmGain);
         if (!s.alchemy.buffs) s.alchemy.buffs = {};
         s.alchemy.buffs.meditationBoostUntil = Date.now() + (isPearl ? 1800000 : 900000);
+        const cleansed = cleanseDanDu(s, isPearl ? 12 : 8);
+        const purgeNoteRu = cleansed > 0 ? ` Меридианы омыты от токсинов Дань Ду (-${cleansed}).` : '';
+        const purgeNoteEn = cleansed > 0 ? ` Meridians cleansed of Dan Du toxins (-${cleansed}).` : '';
         return {
-          ru: `Настой ясного сердца принят: Спокойствие +${calmGain}, медитация ускорена!`,
-          en: `Clear Heart Infusion drunk: Calm +${calmGain}, meditation accelerated!`
+          ru: `Настой ясного сердца принят: Спокойствие +${calmGain}, медитация ускорена!${purgeNoteRu}`,
+          en: `Clear Heart Infusion drunk: Calm +${calmGain}, meditation accelerated!${purgeNoteEn}`
         };
       }
     },
@@ -390,9 +522,12 @@
         s.staminaMax = Math.min(250, (s.staminaMax || 100) + bonus);
         s.stamina = s.staminaMax;
         s.resources.pills = (s.resources.pills || 0) + 1;
+        const cleansed = cleanseDanDu(s, isPearl ? 20 : 15);
+        const purgeNoteRu = cleansed > 0 ? ` Вековой сбор растворил токсины Дань Ду (-${cleansed})!` : '';
+        const purgeNoteEn = cleansed > 0 ? ` Century harvest dissolved Dan Du toxins (-${cleansed})!` : '';
         return {
-          ru: `Пилюля Столетней Жизни усвоена: макс. выносливость увеличена на +${bonus.toFixed(1)}!`,
-          en: `Century Vitality Dan absorbed: max stamina increased by +${bonus.toFixed(1)}!`
+          ru: `Пилюля Столетней Жизни усвоена: макс. выносливость увеличена на +${bonus.toFixed(1)}!${purgeNoteRu}`,
+          en: `Century Vitality Dan absorbed: max stamina increased by +${bonus.toFixed(1)}!${purgeNoteEn}`
         };
       }
     },
@@ -704,6 +839,17 @@
         nine_revolutions: 0,
         sky_nirvana: 0
       },
+      pureInventory: {
+        vigor_broth: 0,
+        body_pill: 0,
+        calm_tea: 0,
+        breakthrough_pill: 0,
+        evil_god_pill: 0,
+        century_vitality: 0,
+        iron_dragon_pill: 0,
+        nine_revolutions: 0,
+        sky_nirvana: 0
+      },
       pouch: ['vigor_broth', null, null],
       patients: ['ba_strained', 'hunter_poison'],
       forageCooldown: 0,
@@ -759,6 +905,12 @@
         evilGodFights: 0,
         meditationBoostUntil: 0
       },
+      meridians: {
+        danDu: 0,
+        purity: 100,
+        totalCleansed: 0,
+        pearlPurges: 0
+      },
       stats: {
         brews: 0,
         success: 0,
@@ -794,6 +946,12 @@
     if (input.inventory && typeof input.inventory === 'object') {
       for (const k of Object.keys(base.inventory)) {
         base.inventory[k] = Math.max(0, Math.floor(input.inventory[k] || 0));
+      }
+    }
+
+    if (input.pureInventory && typeof input.pureInventory === 'object') {
+      for (const k of Object.keys(base.pureInventory)) {
+        base.pureInventory[k] = Math.max(0, Math.floor(input.pureInventory[k] || 0));
       }
     }
 
@@ -855,6 +1013,13 @@
     if (input.buffs && typeof input.buffs === 'object') {
       base.buffs.evilGodFights = Math.max(0, Math.floor(input.buffs.evilGodFights || 0));
       base.buffs.meditationBoostUntil = Math.max(0, Math.floor(input.buffs.meditationBoostUntil || 0));
+    }
+
+    if (input.meridians && typeof input.meridians === 'object') {
+      base.meridians.danDu = Math.max(0, Math.min(100, Math.floor(input.meridians.danDu || 0)));
+      base.meridians.purity = Math.max(0, Math.min(100, Math.floor(input.meridians.purity !== undefined ? input.meridians.purity : (100 - base.meridians.danDu))));
+      base.meridians.totalCleansed = Math.max(0, Math.floor(input.meridians.totalCleansed || 0));
+      base.meridians.pearlPurges = Math.max(0, Math.floor(input.meridians.pearlPurges || 0));
     }
 
     if (input.stats && typeof input.stats === 'object') {
@@ -985,6 +1150,12 @@
         successfulCount++;
         if (!alc.inventory) alc.inventory = {};
         alc.inventory[recipeId] = (alc.inventory[recipeId] || 0) + 1;
+        if (isPearl) {
+          if (!alc.pureInventory) alc.pureInventory = fresh().pureInventory;
+          alc.pureInventory[recipeId] = (alc.pureInventory[recipeId] || 0) + 1;
+        } else {
+          addDanDu(s, isCrit ? 2 : 4);
+        }
       }
 
       // Add XP and level up if threshold reached
@@ -1082,6 +1253,16 @@
     }
 
     if (kind === 'pure') {
+      if (s.alchemy && s.alchemy.pureInventory) {
+        let remaining = count;
+        for (const recId of Object.keys(s.alchemy.pureInventory)) {
+          const has = s.alchemy.pureInventory[recId] || 0;
+          const take = Math.min(has, remaining);
+          s.alchemy.pureInventory[recId] -= take;
+          remaining -= take;
+          if (remaining <= 0) break;
+        }
+      }
       // 100% Pure pearl pill: 45 gold + 1 reputation
       const goldGain = 45 * count;
       const repGain = 1 * count;
@@ -1742,7 +1923,14 @@
     canUnlockPlot,
     unlockPlot,
     getJasmineGardenQuote,
-    advance
+    advance,
+    addDanDu,
+    cleanseDanDu,
+    canMeridianPurge,
+    meridianPurge,
+    meridianPurity,
+    getDanDuStatus,
+    consumePill
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

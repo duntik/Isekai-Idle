@@ -260,7 +260,12 @@
   const techniqueBonus=(s,effect)=>{const k=s.cultivation.active,t=techniques[k],rank=s.cultivation.learned[k]?.rank||0;return (1+rank*(t?.effect===effect ? .08 : t?.secondary===effect ? .04 : 0))*(s.stage>=2&&S.schools[s.world.admission]?.bonus===effect?1.15:1);};
   const canLearn=(s,k)=>Object.hasOwn(techniques,k)&&(techniques[k].available(s)||!!s.cultivation.learned[k])&&affordable(s,techniqueCost(s,k))&&(!s.cultivation.learned[k]||(s.cultivation.learned[k].rank<5&&s.cultivation.learned[k].progress>=techniqueNeeded(s.cultivation.learned[k].rank)));
   const log = (s, text) => { s.events.unshift({ text, day: Math.floor(s.age / 3600) + 1 }); s.events = s.events.slice(0, 30); };
-  const speed = s => [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2) * (s.alchemy?.buffs?.meditationBoostUntil > Date.now() && s.activity === 'meditate' ? 1.25 : 1);
+  const speed = s => {
+    const danDu = s.alchemy?.meridians?.danDu || 0;
+    const isImmaculate = (s.alchemy?.meridians?.pearlPurges > 0) && (danDu === 0);
+    const meridianMult = isImmaculate ? 1.15 : (danDu > 80 ? 0.60 : (danDu > 50 ? 0.75 : (danDu > 20 ? 0.90 : 1.0)));
+    return [1, 1, 1, 2, 12, 100, 1000, 10000][s.stage] * (1 + s.souls * .1) * (1 + s.study * .15) * (1 + s.buildings.observatory * .2) * (s.alchemy?.buffs?.meditationBoostUntil > Date.now() && s.activity === 'meditate' ? 1.25 : 1) * (s.activity === 'meditate' ? meridianMult : 1);
+  };
   const needed = s => Math.ceil(60 * 2 ** s.realm);
   const power = s => Math.floor((8 + s.body * 2 + s.mastery * 3 + s.weapon * 12) * 1.55 ** s.realm * techniqueBonus(s,'power'));
   const enemy = s => ({ name: ['Дорожный разбойник', 'Страж руин', 'Ученик Белого Клыка', 'Первый соперник', 'Внутренний ученик', 'Наследник клана', 'Старейшина соперников', 'Чемпион долины', 'Лорд приграничья', 'Владыка города', 'Хранитель континента', 'Небесный посланник', 'Владыка океанов', 'Страж мирового ядра', 'Звёздный захватчик', 'Лорд спутника', 'Пожиратель миров', 'Страж портала', 'Чемпион звёзд', 'Владыка системы', 'Адмирал пустоты', 'Галактический претендент', 'Хранитель законов', 'Древний бессмертный', 'Судья пространства', 'Страж вечности'][s.wins] || 'Эхо бесконечности', power: Math.floor(18 * 1.75 ** s.wins), type: ['swift', 'armored', 'mystic'][s.wins % 3] });
@@ -493,6 +498,8 @@
     }
     if(action==='breakthrough'){
       if(!s.found)return say('Сначала найди древнюю технику: отправься в руины и исследуй их 600 секунд. Осмотр развалин ускоряет поиск.','First discover the ancient technique: travel to the ruins and research for 600 seconds. Inspecting ruins speeds up the search.');
+      const danDu = s.alchemy?.meridians?.danDu || 0;
+      if(danDu >= 80) return say(`Токсины Дань Ду заблокировали 54 глубоких входа (${danDu}/100). Очисти меридианы Небесной Жемчужиной перед прорывом!`, `Dan Du toxins have calcified the 54 profound entrances (${danDu}/100). Purge your meridians with the Sky Poison Pearl before breaking through!`);
       const parts=[];
       if(s.xp<needed(s))parts.push(say(`Понимание ${n(s.xp)}/${needed(s)}. Выбери «Медитировать» и подожди.`,`Understanding ${n(s.xp)}/${needed(s)}. Select Meditate and wait.`));
       const deficit=resourcesHint(breakthroughCost(s));if(deficit)parts.push(deficit);
@@ -644,8 +651,11 @@
       if(s.stage===2&&!s.world.admissionGiftAwarded){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);s.world.admissionGiftAwarded=true;log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
       const c = breakthroughCost(s);
-      if (!s.found || s.xp < needed(s) || !affordable(s, c)) return false;
-      spend(s, c); s.xp -= needed(s); s.realm++; log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития.`);
+      const danDu = s.alchemy?.meridians?.danDu || 0;
+      if (!s.found || s.xp < needed(s) || !affordable(s, c) || danDu >= 80) return false;
+      spend(s, c); s.xp -= needed(s); s.realm++;
+      if (Alchemy && Alchemy.cleanseDanDu) Alchemy.cleanseDanDu(s, 25);
+      log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития. Токсины Дань Ду рассеяны небесным прорывом (-25 токсинов)!`);
     } else if (type === 'combat-start') {
       if (!canFight(s)) return false;
       s.combat = Combat.freshCombat(s, api);
@@ -698,6 +708,10 @@
       return Alchemy ? Alchemy.infusePlot(s, Number(value), api) : false;
     } else if (type === 'alchemy-garden-unlock') {
       return Alchemy ? Alchemy.unlockPlot(s, Number(value), api) : false;
+    } else if (type === 'meridian-purge' || type === 'alchemy-meridian-purge') {
+      return Alchemy ? Alchemy.meridianPurge(s) : false;
+    } else if (type === 'alchemy-consume') {
+      return Alchemy ? Alchemy.consumePill(s, value) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;

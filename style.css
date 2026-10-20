@@ -787,5 +787,37 @@ html[data-interface="data"] .alchemy-rank-banner,html[data-interface="data"] .al
 html[data-interface="data"] .garden-header-card,
 html[data-interface="data"] .garden-plot-card,
 html[data-interface="data"] .garden-seed-card,
-html[data-interface="data"] .jasmine-garden-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+html[data-interface="data"] .jasmine-garden-card,
+html[data-interface="data"] .alchemy-meridian-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+
+/* ══════════════════════════════════════════════════════════════
+   DAN DU (PILL TOXINS) & MERIDIAN PURITY STYLING
+   ══════════════════════════════════════════════════════════════ */
+.meridian-gauge{margin-top:6px}
+.meridian-gauge progress.progress-pure::-webkit-progress-value{background:linear-gradient(90deg,#2edba2,#06b6d4)}
+.meridian-gauge progress.progress-pure::-moz-progress-bar{background:linear-gradient(90deg,#2edba2,#06b6d4)}
+.meridian-gauge progress.progress-warning::-webkit-progress-value{background:linear-gradient(90deg,#f59e0b,#eab308)}
+.meridian-gauge progress.progress-warning::-moz-progress-bar{background:linear-gradient(90deg,#f59e0b,#eab308)}
+.meridian-gauge progress.progress-toxic::-webkit-progress-value{background:linear-gradient(90deg,#e24b4b,#a855f7)}
+.meridian-gauge progress.progress-toxic::-moz-progress-bar{background:linear-gradient(90deg,#e24b4b,#a855f7)}
+
+.pillar-meridian-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;margin:6px 0 8px}
+.pillar-meridian-badge small{font-size:10.5px;font-weight:400;opacity:0.85}
+.meridian-badge-immaculate{background:rgba(46,219,162,0.14);border:1px solid rgba(46,219,162,0.45);color:#5eead4;box-shadow:0 0 10px rgba(46,219,162,0.2)}
+.meridian-badge-clean{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7}
+.meridian-badge-slight{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#fde047}
+.meridian-badge-calcified{background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.4);color:#fca5a5}
+.meridian-badge-crisis{background:linear-gradient(135deg,rgba(226,75,75,0.25),rgba(168,85,247,0.2));border:1px solid #e24b4b;color:#fecaca;animation:alertPulse 2s ease-in-out infinite}
+
+.alchemy-meridian-card{background:linear-gradient(135deg,rgba(46,219,162,0.06),var(--panel));border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.meridian-card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
+.meridian-card-header h4{margin:4px 0 0;font-size:13.5px;color:var(--text)}
+.meridian-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:0.06em;color:var(--muted)}
+.meridian-card-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding-top:4px}
+.meridian-effect-hint{font-size:11.5px;color:var(--gold)}
+
+.btn-consume-pill{background:linear-gradient(135deg,rgba(229,195,130,0.18),rgba(229,195,130,0.06));border:1px solid rgba(229,195,130,0.45);color:var(--gold);padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-consume-pill:hover:not(:disabled){background:rgba(229,195,130,0.3);border-color:var(--gold);box-shadow:0 0 10px rgba(229,195,130,0.25)}
+.btn-consume-pill:disabled{opacity:0.4;cursor:not-allowed}
+
 
