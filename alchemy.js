@@ -880,6 +880,17 @@
       costGold: 600,
       type: 'cauldron_upgrade',
       icon: '🏺'
+    },
+    evil_god_fire_seed: {
+      id: 'evil_god_fire_seed',
+      nameRu: 'Семя Пламени Злого Бога',
+      nameEn: 'Evil God Fire Seed',
+      descRu: 'Легендарное божественное семя первородного огня. Разжигает Пламя Злого Бога и Феникса (0% неудач, +30% крита, 25% второй пилюли).',
+      descEn: 'Legendary divine primordial fire seed. Awakens Evil God Phoenix Flame (0% failure, +30% crit, 25% bonus pill).',
+      costGold: 1000,
+      type: 'flame_upgrade',
+      flameId: 'evil_god_phoenix',
+      icon: '🔥'
     }
   };
 
@@ -920,6 +931,248 @@
       quoteEn: '“My vaults overflow with gold. Name your price, honored auctioneer, I take it all!”'
     }
   ];
+
+  const FLAMES = {
+    mortal_hearth: {
+      id: 'mortal_hearth',
+      nameRu: 'Земное Пламя Очага',
+      nameEn: 'Mortal Hearth Flame',
+      descRu: 'Обычный огонь очага. Требует внимания, легко пережигает нежные травы.',
+      descEn: 'Ordinary natural hearth flame. Unstable and prone to burning fragile herbs.',
+      icon: '🪵',
+      critBonus: 0,
+      successBonus: 0,
+      duReduction: 0,
+      extraPillChance: 0,
+      pearlDiscount: 0
+    },
+    crimson_beast: {
+      id: 'crimson_beast',
+      nameRu: 'Багряное Пламя Зверя',
+      nameEn: 'Crimson Beast Flame',
+      descRu: 'Огонь пламенных тварей Звериного Хребта. Нагревает котёл быстрее (+10% успеха, +10% крита).',
+      descEn: 'Flame of fire beasts from the Beast Range. Heats the crucible faster (+10% success, +10% crit).',
+      icon: '🐺',
+      critBonus: 0.10,
+      successBonus: 0.10,
+      duReduction: 0,
+      extraPillChance: 0.05,
+      pearlDiscount: 0
+    },
+    pure_yang: {
+      id: 'pure_yang',
+      nameRu: 'Пламя Чистого Ян',
+      nameEn: 'Pure Yang Sect Flame',
+      descRu: 'Истинный духовный огонь секты: выжигает примеси трав (-20% Дань Ду, +20% успеха, 15% шанс второй пилюли).',
+      descEn: 'True spiritual sect flame: purges herb impurities (-20% Dan Du, +20% success, 15% bonus pill chance).',
+      icon: '🔥',
+      critBonus: 0.18,
+      successBonus: 0.20,
+      duReduction: 0.20,
+      extraPillChance: 0.15,
+      pearlDiscount: 0
+    },
+    evil_god_phoenix: {
+      id: 'evil_god_phoenix',
+      nameRu: 'Первородное Пламя Злого Бога и Феникса',
+      nameEn: 'Evil God Phoenix Flame',
+      descRu: 'Божественное золотисто-багряное пламя бессмертия. 0% неудач, +30% крита, 25% шанс второй пилюли и скидка Ци Жемчужины.',
+      descEn: 'Divine golden-crimson flame of immortality. Eliminates failures, +30% crit, 25% bonus pill chance, Pearl Qi discount.',
+      icon: '🦅',
+      critBonus: 0.30,
+      successBonus: 1.0,
+      duReduction: 0.50,
+      extraPillChance: 0.25,
+      pearlDiscount: 0.25
+    }
+  };
+
+  const CAULDRONS = {
+    novice_iron: {
+      id: 'novice_iron',
+      nameRu: 'Чугунный Котёл Новичка',
+      nameEn: 'Novice Iron Cauldron',
+      descRu: 'Простой тяжёлый котёл из пористого чугуна. Нередко даёт микротрещины от жара.',
+      descEn: 'A simple heavy cauldron of porous cast iron. Prone to micro-cracks under intense heat.',
+      icon: '⚗️',
+      failReduction: 0,
+      critBonus: 0,
+      maxBatch: 1
+    },
+    bronze_herbal: {
+      id: 'bronze_herbal',
+      nameRu: 'Бронзовый Котёл Ста Трав',
+      nameEn: 'Bronze Hundred-Herb Cauldron',
+      descRu: 'Кованый котёл с гравировкой ста трав. Вмещает крупные партии и дарует +10% к успеху варки.',
+      descEn: 'Forged bronze cauldron inscribed with a hundred herbs. Supports larger batches and +10% brewing success.',
+      icon: '🏺',
+      failReduction: 0.10,
+      critBonus: 0.05,
+      maxBatch: 5,
+      costGold: 150
+    },
+    basalt_bastion: {
+      id: 'basalt_bastion',
+      nameRu: 'Котёл Базальтового Бастиона',
+      nameEn: 'Basalt Bastion Cauldron',
+      descRu: 'Высечен из вулканического базальта. Снижает шанс шлака на 50% и сохраняет до 20% сырья.',
+      descEn: 'Carved from volcanic basalt. Reduces slag failure chance by 50% and preserves up to 20% of herbs.',
+      icon: '🗿',
+      failReduction: 0.50,
+      critBonus: 0.10,
+      herbPreserve: 0.20,
+      maxBatch: 10,
+      costGold: 350
+    },
+    star_jade: {
+      id: 'star_jade',
+      nameRu: 'Котёл Звёздного Нефрита',
+      nameEn: 'Star Jade Cauldron',
+      descRu: 'Древний артефактный котёл: снижает шанс неудачи варки до 0% и дарует +20% к криту!',
+      descEn: 'Ancient artifact crucible: eliminates crucible failures (0%) and grants +20% crit chance!',
+      icon: '✨',
+      failReduction: 1.0,
+      critBonus: 0.20,
+      maxBatch: 20,
+      costGold: 600
+    },
+    phoenix_solar: {
+      id: 'phoenix_solar',
+      nameRu: 'Солнечный Котёл Нирваны',
+      nameEn: 'Solar Phoenix Nirvana Cauldron',
+      descRu: 'Величайший артефакт эпохи Богов. 0% неудач, +35% крита, удвоенный опыт и гарантированная вторая пилюля при крите!',
+      descEn: 'Supreme god-era artifact. 0% failure, +35% crit, double alchemy XP and guaranteed bonus pill on crit!',
+      icon: '👑',
+      failReduction: 1.0,
+      critBonus: 0.35,
+      doubleXp: true,
+      bonusPillOnCrit: true,
+      maxBatch: 50,
+      costGold: 1500
+    }
+  };
+
+  const COMMISSIONS = {
+    contract_scout_salve: {
+      id: 'contract_scout_salve',
+      nameRu: 'Срочный заказ стражи внешнего круга',
+      nameEn: 'Urgent Outer Guard Order',
+      descRu: 'Разведчики заставы попали в засаду свирепых волков на перевале. Требуется 2 порции Отвара бодрости.',
+      descEn: 'Garrison scouts were ambushed by fierce wolves at the pass. 2 portions of Vigor Broth required.',
+      reqRecipe: 'vigor_broth',
+      reqCount: 2,
+      reqPure: false,
+      rewardGold: 120,
+      rewardMerits: 30,
+      rewardXp: 40,
+      rewardIngredient: { spirit_clover: 2 },
+      unlocksFlame: 'crimson_beast'
+    },
+    contract_bone_temper: {
+      id: 'contract_bone_temper',
+      nameRu: 'Заказ инструктора боевого помоста',
+      nameEn: 'Martial Instructor’s Commission',
+      descRu: 'Ученики ломают кости о железные сваи перед турниром. Требуется 2 пилюли закалки костей.',
+      descEn: 'Disciples are fracturing bones against iron stakes before the tournament. 2 Body Tempering Pills needed.',
+      reqRecipe: 'body_pill',
+      reqCount: 2,
+      reqPure: false,
+      rewardGold: 180,
+      rewardMerits: 50,
+      rewardXp: 60,
+      rewardIngredient: { iron_root: 2 }
+    },
+    contract_clear_mind: {
+      id: 'contract_clear_mind',
+      nameRu: 'Заказ архивариуса запретных свитков',
+      nameEn: 'Forbidden Archive Keeper’s Request',
+      descRu: 'Чтение древних рукописей воспламеняет разум. Требуется 2 порции Настоя ясного сердца.',
+      descEn: 'Deciphering ancient scriptures overheats the mind. 2 Clear Heart Infusions required.',
+      reqRecipe: 'calm_tea',
+      reqCount: 2,
+      reqPure: false,
+      rewardGold: 240,
+      rewardMerits: 70,
+      rewardXp: 80,
+      rewardRelic: 1
+    },
+    contract_elder_breakthrough: {
+      id: 'contract_elder_breakthrough',
+      nameRu: 'Тайный наказ Главного Старейшины',
+      nameEn: 'Grand Elder’s Secret Mandate',
+      descRu: 'Старейшина алхимии упёрся в стену земного царства. Нужна 1 пилюля сокрушения преград 100% чистоты.',
+      descEn: 'The alchemy elder has hit an Earth Realm bottleneck. 1 100% pure Barrier-Shattering Pill required.',
+      reqRecipe: 'breakthrough_pill',
+      reqCount: 1,
+      reqPure: true,
+      rewardGold: 500,
+      rewardMerits: 150,
+      rewardXp: 120,
+      rewardFlame: 'pure_yang',
+      rewardSeed: { primordial_seed: 1 }
+    },
+    contract_sect_master_nirvana: {
+      id: 'contract_sect_master_nirvana',
+      nameRu: 'Спасение Главы Секты от ледяного яда',
+      nameEn: 'Saving the Sect Master from Frost Venom',
+      descRu: 'Глава секты отравлен скрытым ядом. Лишь 100% чистая Пилюля Нирваны или Девяти Превращений спасёт владыку.',
+      descEn: 'The Sect Master was struck by hidden venom. Only a 100% pure Nirvana or Nine Revolutions Dan can save him.',
+      reqRecipe: 'nine_revolutions',
+      reqCount: 1,
+      reqPure: true,
+      rewardGold: 1200,
+      rewardMerits: 350,
+      rewardXp: 200,
+      rewardCauldron: 'phoenix_solar',
+      rewardSeed: { primordial_seed: 2 }
+    }
+  };
+
+  const PAVILION_TREASURES = {
+    merit_flame_essence: {
+      id: 'merit_flame_essence',
+      nameRu: 'Эссенция Земного Пламени',
+      nameEn: 'Earth Flame Essence',
+      descRu: 'Концентрированное пламя недр. Мгновенно дарует +1 уровень жара активному пламени.',
+      descEn: 'Concentrated subterranean fire. Instantly grants +1 stoke level to the active flame.',
+      costMerits: 80,
+      type: 'flame_level',
+      icon: '🔥'
+    },
+    merit_cauldron_basalt: {
+      id: 'merit_cauldron_basalt',
+      nameRu: 'Чертежи Котла Базальтового Бастиона',
+      nameEn: 'Basalt Bastion Cauldron Blueprints',
+      descRu: 'Разблокирует Котёл Базальтового Бастиона (-50% шлака, сохранение 20% трав).',
+      descEn: 'Unlocks the Basalt Bastion Cauldron (-50% slag, preserves 20% herbs).',
+      costMerits: 150,
+      type: 'cauldron_unlock',
+      cauldronId: 'basalt_bastion',
+      icon: '🗿'
+    },
+    merit_primordial_seeds: {
+      id: 'merit_primordial_seeds',
+      nameRu: 'Священные Семена Сада (2 шт.)',
+      nameEn: 'Sacred Garden Seeds (2 pcs)',
+      descRu: '2 редких семени Хаоса для духовного сада Жемчужины.',
+      descEn: '2 rare Primordial Seeds for the Pearl spiritual garden.',
+      costMerits: 100,
+      type: 'seeds',
+      seeds: { primordial_seed: 2 },
+      icon: '🌱'
+    },
+    merit_dragon_scroll: {
+      id: 'merit_dragon_scroll',
+      nameRu: 'Свиток: Пилюля Драконьей Жизненной Силы',
+      nameEn: 'Scroll: Dragon Vitality Dan',
+      descRu: 'Рецепт постоянного усиления Тела и выносливости.',
+      descEn: 'Recipe for permanent Body and stamina enhancement.',
+      costMerits: 200,
+      type: 'recipe',
+      recipeId: 'dragon_vitality',
+      icon: '📜'
+    }
+  };
 
   const FORAGE_TABLES = {
     village: {
@@ -1101,6 +1354,21 @@
         catalogPurchased: [],
         cauldronUpgrade: false,
         pouchUpgrade: false
+      },
+      flame: {
+        current: 'mortal_hearth',
+        level: 1,
+        unlocked: ['mortal_hearth'],
+        stokes: 0
+      },
+      cauldron: {
+        current: 'novice_iron',
+        unlocked: ['novice_iron']
+      },
+      pavilion: {
+        merits: 0,
+        completedCommissions: [],
+        activeCommissions: ['contract_scout_salve', 'contract_bone_temper', 'contract_clear_mind']
       },
       ingredients: {
         mountain_herb: 5,
@@ -1325,6 +1593,49 @@
       }
     }
 
+    if (input.flame && typeof input.flame === 'object') {
+      const curFlame = input.flame.current && Object.hasOwn(FLAMES, input.flame.current) ? input.flame.current : 'mortal_hearth';
+      const unlFlames = Array.isArray(input.flame.unlocked)
+        ? [...new Set(['mortal_hearth', ...input.flame.unlocked.filter(f => Object.hasOwn(FLAMES, f))])]
+        : ['mortal_hearth'];
+      base.flame = {
+        current: unlFlames.includes(curFlame) ? curFlame : 'mortal_hearth',
+        level: Math.max(1, Math.min(5, Math.floor(input.flame.level || 1))),
+        unlocked: unlFlames,
+        stokes: Math.max(0, Math.floor(input.flame.stokes || 0))
+      };
+    }
+
+    if (input.cauldron && typeof input.cauldron === 'object') {
+      const curC = input.cauldron.current && Object.hasOwn(CAULDRONS, input.cauldron.current) ? input.cauldron.current : 'novice_iron';
+      const unlC = Array.isArray(input.cauldron.unlocked)
+        ? [...new Set(['novice_iron', ...input.cauldron.unlocked.filter(c => Object.hasOwn(CAULDRONS, c))])]
+        : ['novice_iron'];
+      base.cauldron = {
+        current: unlC.includes(curC) ? curC : 'novice_iron',
+        unlocked: unlC
+      };
+    }
+
+    if (base.blackMoon.cauldronUpgrade && !base.cauldron.unlocked.includes('star_jade')) {
+      base.cauldron.unlocked.push('star_jade');
+      base.cauldron.current = 'star_jade';
+    }
+
+    if (input.pavilion && typeof input.pavilion === 'object') {
+      const active = Array.isArray(input.pavilion.activeCommissions)
+        ? [...new Set(input.pavilion.activeCommissions.filter(c => Object.hasOwn(COMMISSIONS, c)))]
+        : ['contract_scout_salve', 'contract_bone_temper', 'contract_clear_mind'];
+      const completed = Array.isArray(input.pavilion.completedCommissions)
+        ? [...new Set(input.pavilion.completedCommissions.filter(c => Object.hasOwn(COMMISSIONS, c)))]
+        : [];
+      base.pavilion = {
+        merits: Math.max(0, Math.floor(input.pavilion.merits || 0)),
+        completedCommissions: completed,
+        activeCommissions: active.length > 0 ? active : ['contract_scout_salve', 'contract_bone_temper', 'contract_clear_mind']
+      };
+    }
+
     if (Array.isArray(input.log)) {
       base.log = input.log.slice(0, 10).map(e => ({
         ru: String(e.ru || '').slice(0, 250),
@@ -1348,7 +1659,11 @@
     }
 
     if (mode === 'pearl') {
-      if ((s.resources.qi || 0) < r.pearlQi) return false;
+      const curFlameId = s.alchemy.flame?.current || 'mortal_hearth';
+      const flameDef = FLAMES[curFlameId] || FLAMES.mortal_hearth;
+      const discount = flameDef.pearlDiscount || 0;
+      const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
+      if ((s.resources.qi || 0) < qiCost) return false;
     } else {
       if (r.requiresPearl) return false; // Poison requires divine pearl
     }
@@ -1366,8 +1681,16 @@
       maxCount = Math.min(maxCount, Math.floor(has / count));
     }
     if (mode === 'pearl') {
+      const curFlameId = s.alchemy.flame?.current || 'mortal_hearth';
+      const flameDef = FLAMES[curFlameId] || FLAMES.mortal_hearth;
+      const discount = flameDef.pearlDiscount || 0;
+      const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
       const qi = s.resources.qi || 0;
-      maxCount = Math.min(maxCount, Math.floor(qi / (r.pearlQi || 1)));
+      maxCount = Math.min(maxCount, Math.floor(qi / qiCost));
+    } else {
+      const curCauldronId = s.alchemy.cauldron?.current || 'novice_iron';
+      const cDef = CAULDRONS[curCauldronId] || CAULDRONS.novice_iron;
+      maxCount = Math.min(maxCount, cDef.maxBatch || 1);
     }
     return Math.max(0, maxCount);
   }
@@ -1378,6 +1701,17 @@
     const alc = s.alchemy;
     const isPearl = (mode === 'pearl');
 
+    // Equipped Flame
+    const curFlameId = alc.flame?.current || 'mortal_hearth';
+    const flameDef = FLAMES[curFlameId] || FLAMES.mortal_hearth;
+    const flameLvl = Math.max(1, Math.min(5, alc.flame?.level || 1));
+    const stokeCritBonus = (flameLvl - 1) * 0.02;
+    const stokeXpBonus = (flameLvl - 1) * 2;
+
+    // Equipped Cauldron
+    const curCauldronId = alc.cauldron?.current || 'novice_iron';
+    const cauldronDef = CAULDRONS[curCauldronId] || CAULDRONS.novice_iron;
+
     const totalToBrew = Math.max(1, Math.min(batchCount || 1, maxBrew(s, recipeId, mode) || 1));
     let anySuccess = false;
     let successfulCount = 0;
@@ -1386,8 +1720,11 @@
       if (!canBrew(s, recipeId, mode)) break;
       alc.stats.brews++;
 
-      // Spend ingredients (with level 4 ingredient saving perk)
-      const saveIngredients = alc.level >= 4 && Math.random() < 0.25;
+      // Spend ingredients (with cauldron preservation or rank 4 perk)
+      const basePreserve = cauldronDef.herbPreserve || 0;
+      const rankPreserve = (alc.level >= 4) ? 0.25 : 0;
+      const preserveChance = Math.min(0.75, basePreserve + rankPreserve);
+      const saveIngredients = Math.random() < preserveChance;
       if (!saveIngredients) {
         for (const [ingId, count] of Object.entries(r.ingredients)) {
           alc.ingredients[ingId] = Math.max(0, alc.ingredients[ingId] - count);
@@ -1402,45 +1739,58 @@
 
       if (isPearl) {
         // 100% Sky Poison Pearl divine purification
-        s.resources.qi = Math.max(0, (s.resources.qi || 0) - r.pearlQi);
+        const discount = flameDef.pearlDiscount || 0;
+        const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
+        s.resources.qi = Math.max(0, (s.resources.qi || 0) - qiCost);
         isSuccess = true;
         alc.stats.success++;
         alc.stats.pearlPurified++;
-        xpGained = 25;
+        xpGained = (25 + stokeXpBonus) * (cauldronDef.doubleXp ? 2 : 1);
         const res = r.apply(s, true, false);
-        logRu = `【Очищение Жемчужиной Яда】 100% чистая пилюля «${r.nameRu}» создана без токсинов! ${res.ru} (+25 опыта алхимии)`;
-        logEn = `【Sky Poison Pearl Purification】 100% pure pill “${r.nameEn}” refined without impurities! ${res.en} (+25 alchemy XP)`;
+        logRu = `【Очищение Жемчужиной Яда】 100% чистая пилюля «${r.nameRu}» создана без токсинов! ${res.ru} (+${xpGained} опыта алхимии)`;
+        logEn = `【Sky Poison Pearl Purification】 100% pure pill “${r.nameEn}” refined without impurities! ${res.en} (+${xpGained} alchemy XP)`;
       } else {
         // Crucible roll
-        const hasCauldronUpgrade = !!alc.blackMoon?.cauldronUpgrade;
+        const hasCauldronUpgrade = !!alc.blackMoon?.cauldronUpgrade || (cauldronDef.failReduction >= 1.0) || (flameDef.successBonus >= 1.0);
         const rankBonus = (alc.level >= 2) ? 0.10 : 0;
-        const baseChance = hasCauldronUpgrade ? 1.0 : Math.min(0.95, 0.70 + (alc.level - r.reqLevel) * 0.05 + rankBonus);
-        const roll = Math.random();
-        const critBonus = hasCauldronUpgrade ? 0.20 : 0;
-        const critThreshold = alc.level >= 5 ? 1.0 : (0.15 + critBonus);
+        const flameSuccessBonus = flameDef.successBonus || 0;
+        let baseChance = 0.70 + (alc.level - r.reqLevel) * 0.05 + rankBonus + flameSuccessBonus;
+        if (hasCauldronUpgrade) {
+          baseChance = 1.0;
+        } else if (cauldronDef.failReduction > 0) {
+          baseChance = Math.min(0.98, baseChance + (1.0 - baseChance) * cauldronDef.failReduction);
+        } else {
+          baseChance = Math.min(0.95, baseChance);
+        }
 
+        const cauldronCrit = cauldronDef.critBonus || 0;
+        const flameCrit = (flameDef.critBonus || 0) + stokeCritBonus;
+        const critBonus = (alc.blackMoon?.cauldronUpgrade ? 0.20 : 0) + cauldronCrit + flameCrit;
+        const critThreshold = alc.level >= 5 ? 1.0 : Math.min(0.95, 0.15 + critBonus);
+
+        const roll = Math.random();
         if (roll < critThreshold) {
           isSuccess = true;
           isCrit = true;
           alc.stats.success++;
           alc.stats.crit++;
-          xpGained = 20;
+          xpGained = (20 + stokeXpBonus) * (cauldronDef.doubleXp ? 2 : 1);
           const res = r.apply(s, false, true);
-          logRu = `【Критический успех в котле】 Превосходное качество «${r.nameRu}»! ${res.ru} (+20 опыта)`;
-          logEn = `【Crucible Critical Success】 Superior quality “${r.nameEn}”! ${res.en} (+20 XP)`;
+          logRu = `【Критический успех в котле】 Превосходное качество «${r.nameRu}»! ${res.ru} (+${xpGained} опыта)`;
+          logEn = `【Crucible Critical Success】 Superior quality “${r.nameEn}”! ${res.en} (+${xpGained} XP)`;
         } else if (roll < baseChance) {
           isSuccess = true;
           alc.stats.success++;
-          xpGained = 15;
+          xpGained = (15 + stokeXpBonus) * (cauldronDef.doubleXp ? 2 : 1);
           const res = r.apply(s, false, false);
-          logRu = `【Успешная варка】 Сварено лекарство «${r.nameRu}». ${res.ru} (+15 опыта)`;
-          logEn = `【Crucible Success】 Brewed remedy “${r.nameEn}”. ${res.en} (+15 XP)`;
+          logRu = `【Успешная варка】 Сварено лекарство «${r.nameRu}». ${res.ru} (+${xpGained} опыта)`;
+          logEn = `【Crucible Success】 Brewed remedy “${r.nameEn}”. ${res.en} (+${xpGained} XP)`;
         } else {
           // Failure
           alc.stats.fail++;
-          xpGained = 8;
-          logRu = `【Неудача в котле】 Пламя взметнулось выше меры: сырьё обратилось в алхимический шлак. Ты извлекаешь ценный урок (+8 опыта).`;
-          logEn = `【Crucible Failure】 The flame flared too high: ingredients burned into slag. You extract a valuable lesson (+8 XP).`;
+          xpGained = 8 + Math.floor(stokeXpBonus / 2);
+          logRu = `【Неудача в котле】 Пламя взметнулось выше меры: сырьё обратилось в алхимический шлак. Ты извлекаешь ценный урок (+${xpGained} опыта).`;
+          logEn = `【Crucible Failure】 The flame flared too high: ingredients burned into slag. You extract a valuable lesson (+${xpGained} XP).`;
         }
       }
 
@@ -1448,12 +1798,31 @@
         anySuccess = true;
         successfulCount++;
         if (!alc.inventory) alc.inventory = {};
-        alc.inventory[recipeId] = (alc.inventory[recipeId] || 0) + 1;
+
+        // Extra pill duplication
+        let pillsYielded = 1;
+        const guaranteedDouble = !!cauldronDef.bonusPillOnCrit && isCrit;
+        const extraChance = flameDef.extraPillChance || 0;
+        if (guaranteedDouble || (extraChance > 0 && Math.random() < extraChance)) {
+          pillsYielded = 2;
+        }
+
+        alc.inventory[recipeId] = (alc.inventory[recipeId] || 0) + pillsYielded;
         if (isPearl) {
           if (!alc.pureInventory) alc.pureInventory = fresh().pureInventory;
-          alc.pureInventory[recipeId] = (alc.pureInventory[recipeId] || 0) + 1;
+          alc.pureInventory[recipeId] = (alc.pureInventory[recipeId] || 0) + pillsYielded;
         } else {
-          addDanDu(s, isCrit ? 2 : 4);
+          const baseDanDu = isCrit ? 2 : 4;
+          const duRed = flameDef.duReduction || 0;
+          const danDuToAdd = Math.max(0, Math.round(baseDanDu * (1 - duRed)));
+          if (danDuToAdd > 0) {
+            addDanDu(s, danDuToAdd);
+          }
+        }
+
+        if (pillsYielded > 1) {
+          logRu += ' ★ Двойной выход пилюль!';
+          logEn += ' ★ Bonus duplicate pill created!';
         }
       }
 
@@ -1472,8 +1841,8 @@
       }
 
       if (saveIngredients) {
-        logRu += ' (Секреты Серебряного Моста сберегли сырьё!)';
-        logEn += ' (Silver Bridge mastery preserved your ingredients!)';
+        logRu += ' (Секреты мастерства сберегли сырьё!)';
+        logEn += ' (Mastery preserved your ingredients!)';
       }
 
       alc.log.unshift({ ru: logRu, en: logEn });
@@ -2012,7 +2381,7 @@
     if (!lot) return false;
     const alc = s.alchemy;
     if (!alc.blackMoon) alc.blackMoon = fresh().blackMoon;
-    if (['recipe', 'pouch_upgrade', 'cauldron_upgrade'].includes(lot.type)) {
+    if (['recipe', 'pouch_upgrade', 'cauldron_upgrade', 'flame_upgrade'].includes(lot.type)) {
       if (alc.blackMoon.catalogPurchased.includes(lotId)) return false;
     }
     return (s.resources.gold || 0) >= lot.costGold;
@@ -2036,6 +2405,11 @@
       while (alc.pouch.length < 4) alc.pouch.push(null);
     } else if (lot.type === 'cauldron_upgrade') {
       alc.blackMoon.cauldronUpgrade = true;
+      unlockCauldron(s, 'star_jade');
+      selectCauldron(s, 'star_jade');
+    } else if (lot.type === 'flame_upgrade') {
+      unlockFlame(s, lot.flameId);
+      selectFlame(s, lot.flameId);
     } else if (lot.type === 'seeds') {
       if (!alc.garden) alc.garden = fresh().garden;
       for (const [seedId, count] of Object.entries(lot.seeds)) {
@@ -2045,6 +2419,267 @@
 
     const logRu = `📜 Приобретено на аукционе: «${lot.nameRu}» (-${lot.costGold} монет).`;
     const logEn = `📜 Purchased at auction: “${lot.nameEn}” (-${lot.costGold} coins).`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function getFlameStokeCost(level) {
+    const nextLvl = (level || 1) + 1;
+    if (nextLvl > 5) return null;
+    return {
+      nextLevel: nextLvl,
+      gold: nextLvl === 2 ? 40 : nextLvl === 3 ? 100 : nextLvl === 4 ? 200 : 450,
+      qi: nextLvl === 2 ? 15 : nextLvl === 3 ? 30 : nextLvl === 4 ? 60 : 100,
+      herb: 'flame_bloom',
+      herbCount: Math.max(1, nextLvl - 1),
+      fallbackHerb: 'mountain_herb',
+      fallbackCount: (nextLvl - 1) * 3
+    };
+  }
+
+  function canStokeFlame(s) {
+    if (!s || !s.alchemy || !s.alchemy.flame) return false;
+    const curLvl = s.alchemy.flame.level || 1;
+    if (curLvl >= 5) return false;
+    const cost = getFlameStokeCost(curLvl);
+    if (!cost) return false;
+    if ((s.resources.gold || 0) < cost.gold) return false;
+    if ((s.resources.qi || 0) < cost.qi) return false;
+    const hasHerb = (s.alchemy.ingredients[cost.herb] || 0) >= cost.herbCount;
+    const hasFallback = (s.alchemy.ingredients[cost.fallbackHerb] || 0) >= cost.fallbackCount;
+    if (!hasHerb && !hasFallback) return false;
+    return true;
+  }
+
+  function stokeFlame(s, E = null) {
+    if (!canStokeFlame(s)) return false;
+    const alc = s.alchemy;
+    const curLvl = alc.flame.level || 1;
+    const cost = getFlameStokeCost(curLvl);
+    s.resources.gold -= cost.gold;
+    s.resources.qi -= cost.qi;
+    if ((alc.ingredients[cost.herb] || 0) >= cost.herbCount) {
+      alc.ingredients[cost.herb] -= cost.herbCount;
+    } else {
+      alc.ingredients[cost.fallbackHerb] -= cost.fallbackCount;
+    }
+    alc.flame.level = cost.nextLevel;
+    alc.flame.stokes = (alc.flame.stokes || 0) + 1;
+    const curFlame = FLAMES[alc.flame.current] || FLAMES.mortal_hearth;
+    const logRu = `【Распалка пламени】 Пламя «${curFlame.nameRu}» закалено до ${cost.nextLevel}-го ранга! Жар усилился (+${(cost.nextLevel - 1) * 2}% крита, +${(cost.nextLevel - 1) * 2} опыта варки).`;
+    const logEn = `【Flame Stoking】 Flame “${curFlame.nameEn}” stoked to rank ${cost.nextLevel}! Heat increased (+${(cost.nextLevel - 1) * 2}% crit, +${(cost.nextLevel - 1) * 2} brewing XP).`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function selectFlame(s, flameId) {
+    if (!s || !s.alchemy || !s.alchemy.flame) return false;
+    if (!Object.hasOwn(FLAMES, flameId)) return false;
+    if (!s.alchemy.flame.unlocked.includes(flameId)) return false;
+    s.alchemy.flame.current = flameId;
+    return true;
+  }
+
+  function unlockFlame(s, flameId) {
+    if (!s || !s.alchemy || !s.alchemy.flame) return false;
+    if (!Object.hasOwn(FLAMES, flameId)) return false;
+    if (!s.alchemy.flame.unlocked.includes(flameId)) {
+      s.alchemy.flame.unlocked.push(flameId);
+    }
+    return true;
+  }
+
+  function selectCauldron(s, cauldronId) {
+    if (!s || !s.alchemy || !s.alchemy.cauldron) return false;
+    if (!Object.hasOwn(CAULDRONS, cauldronId)) return false;
+    if (!s.alchemy.cauldron.unlocked.includes(cauldronId)) return false;
+    s.alchemy.cauldron.current = cauldronId;
+    return true;
+  }
+
+  function unlockCauldron(s, cauldronId) {
+    if (!s || !s.alchemy || !s.alchemy.cauldron) return false;
+    if (!Object.hasOwn(CAULDRONS, cauldronId)) return false;
+    if (!s.alchemy.cauldron.unlocked.includes(cauldronId)) {
+      s.alchemy.cauldron.unlocked.push(cauldronId);
+    }
+    return true;
+  }
+
+  function canAccessPavilion(s) {
+    if (!s || !s.alchemy) return false;
+    return (s.stage >= 1) || (s.alchemy.level >= 2) || !!s.sect;
+  }
+
+  function canCompleteCommission(s, commId) {
+    if (!canAccessPavilion(s)) return false;
+    const pav = s.alchemy.pavilion;
+    if (!pav || !pav.activeCommissions.includes(commId)) return false;
+    if (pav.completedCommissions.includes(commId)) return false;
+    const comm = COMMISSIONS[commId];
+    if (!comm) return false;
+
+    // Check pill requirements
+    if (comm.reqRecipe && comm.reqCount) {
+      if (comm.reqPure) {
+        const pureCount = s.alchemy.pureInventory?.[comm.reqRecipe] || 0;
+        if (pureCount < comm.reqCount) return false;
+      } else {
+        const totalCount = (s.alchemy.inventory?.[comm.reqRecipe] || 0) + (s.alchemy.pureInventory?.[comm.reqRecipe] || 0);
+        if (totalCount < comm.reqCount) return false;
+      }
+    }
+
+    // Check herb requirements if any
+    if (comm.reqHerb && comm.reqHerbCount) {
+      const hasHerb = s.alchemy.ingredients?.[comm.reqHerb] || 0;
+      if (hasHerb < comm.reqHerbCount) return false;
+    }
+
+    return true;
+  }
+
+  function completeCommission(s, commId, E = null) {
+    if (!canCompleteCommission(s, commId)) return false;
+    const pav = s.alchemy.pavilion;
+    const comm = COMMISSIONS[commId];
+    const alc = s.alchemy;
+
+    // Deduct pills
+    if (comm.reqRecipe && comm.reqCount) {
+      let needed = comm.reqCount;
+      if (comm.reqPure) {
+        alc.pureInventory[comm.reqRecipe] = Math.max(0, (alc.pureInventory[comm.reqRecipe] || 0) - needed);
+        alc.inventory[comm.reqRecipe] = Math.max(0, (alc.inventory[comm.reqRecipe] || 0) - needed);
+      } else {
+        const norm = alc.inventory[comm.reqRecipe] || 0;
+        const fromNorm = Math.min(norm, needed);
+        alc.inventory[comm.reqRecipe] -= fromNorm;
+        needed -= fromNorm;
+        if (needed > 0 && alc.pureInventory?.[comm.reqRecipe]) {
+          alc.pureInventory[comm.reqRecipe] = Math.max(0, alc.pureInventory[comm.reqRecipe] - needed);
+        }
+      }
+    }
+
+    // Deduct herbs if any
+    if (comm.reqHerb && comm.reqHerbCount) {
+      alc.ingredients[comm.reqHerb] = Math.max(0, (alc.ingredients[comm.reqHerb] || 0) - comm.reqHerbCount);
+    }
+
+    // Rewards
+    pav.merits = (pav.merits || 0) + (comm.rewardMerits || 0);
+    s.resources.gold = (s.resources.gold || 0) + (comm.rewardGold || 0);
+    alc.xp = (alc.xp || 0) + (comm.rewardXp || 0);
+
+    if (comm.rewardIngredient) {
+      for (const [k, v] of Object.entries(comm.rewardIngredient)) {
+        alc.ingredients[k] = (alc.ingredients[k] || 0) + v;
+      }
+    }
+
+    const flameToUnlock = comm.unlocksFlame || comm.rewardFlame;
+    if (flameToUnlock) {
+      unlockFlame(s, flameToUnlock);
+      selectFlame(s, flameToUnlock);
+    }
+
+    const cauldronToUnlock = comm.unlocksCauldron || comm.rewardCauldron;
+    if (cauldronToUnlock) {
+      unlockCauldron(s, cauldronToUnlock);
+      selectCauldron(s, cauldronToUnlock);
+    }
+
+    // Move to completed
+    pav.activeCommissions = pav.activeCommissions.filter(c => c !== commId);
+    if (!pav.completedCommissions.includes(commId)) {
+      pav.completedCommissions.push(commId);
+    }
+
+    // Narrative progression: unlock subsequent commissions
+    if (commId === 'contract_scout_salve' || commId === 'contract_bone_temper') {
+      if (!pav.completedCommissions.includes('contract_clear_mind') && !pav.activeCommissions.includes('contract_clear_mind')) {
+        pav.activeCommissions.push('contract_clear_mind');
+      }
+    }
+    if (commId === 'contract_clear_mind') {
+      if (!pav.completedCommissions.includes('contract_elder_breakthrough') && !pav.activeCommissions.includes('contract_elder_breakthrough')) {
+        pav.activeCommissions.push('contract_elder_breakthrough');
+      }
+    }
+    if (commId === 'contract_elder_breakthrough') {
+      if (!pav.completedCommissions.includes('contract_sect_master_nirvana') && !pav.activeCommissions.includes('contract_sect_master_nirvana')) {
+        pav.activeCommissions.push('contract_sect_master_nirvana');
+      }
+    }
+
+    const logRu = `【Павильон Секты】 Контракт «${comm.nameRu}» выполнен! Получено: +${comm.rewardMerits} заслуг, +${comm.rewardGold} золота, +${comm.rewardXp} опыта.`;
+    const logEn = `【Sect Pavilion】 Commission “${comm.nameEn}” completed! Rewards: +${comm.rewardMerits} merits, +${comm.rewardGold} gold, +${comm.rewardXp} XP.`;
+    alc.log.unshift({ ru: logRu, en: logEn });
+    alc.log = alc.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canBuyPavilionTreasure(s, treasureId) {
+    if (!canAccessPavilion(s)) return false;
+    const pav = s.alchemy.pavilion;
+    if (!pav) return false;
+    const t = PAVILION_TREASURES[treasureId];
+    if (!t) return false;
+    if ((pav.merits || 0) < t.costMerits) return false;
+
+    if (t.type === 'flame_unlock') {
+      if (s.alchemy.flame?.unlocked.includes(t.flameId)) return false;
+    } else if (t.type === 'cauldron_unlock') {
+      if (s.alchemy.cauldron?.unlocked.includes(t.cauldronId)) return false;
+    } else if (t.type === 'recipe') {
+      if (s.alchemy.unlockedRecipes.includes(t.recipeId)) return false;
+    }
+
+    return true;
+  }
+
+  function buyPavilionTreasure(s, treasureId, E = null) {
+    if (!canBuyPavilionTreasure(s, treasureId)) return false;
+    const pav = s.alchemy.pavilion;
+    const t = PAVILION_TREASURES[treasureId];
+    const alc = s.alchemy;
+
+    pav.merits -= t.costMerits;
+
+    let logRu = '';
+    let logEn = '';
+
+    if (t.type === 'flame_unlock') {
+      unlockFlame(s, t.flameId);
+      selectFlame(s, t.flameId);
+      logRu = `【Сокровищница Павильона】 Приобретено и разожжено пламя «${FLAMES[t.flameId]?.nameRu || t.nameRu}»! Затрачено ${t.costMerits} заслуг.`;
+      logEn = `【Pavilion Treasury】 Purchased and stoked flame “${FLAMES[t.flameId]?.nameEn || t.nameEn}”! Cost: ${t.costMerits} merits.`;
+    } else if (t.type === 'cauldron_unlock') {
+      unlockCauldron(s, t.cauldronId);
+      selectCauldron(s, t.cauldronId);
+      logRu = `【Сокровищница Павильона】 Получен котёл «${CAULDRONS[t.cauldronId]?.nameRu || t.nameRu}»! Затрачено ${t.costMerits} заслуг.`;
+      logEn = `【Pavilion Treasury】 Obtained cauldron “${CAULDRONS[t.cauldronId]?.nameEn || t.nameEn}”! Cost: ${t.costMerits} merits.`;
+    } else if (t.type === 'seeds') {
+      for (const [seedId, count] of Object.entries(t.seeds)) {
+        if (!alc.garden.seeds) alc.garden.seeds = fresh().garden.seeds;
+        alc.garden.seeds[seedId] = (alc.garden.seeds[seedId] || 0) + count;
+      }
+      logRu = `【Сокровищница Павильона】 Получены «${t.nameRu}»! Затрачено ${t.costMerits} заслуг.`;
+      logEn = `【Pavilion Treasury】 Obtained “${t.nameEn}”! Cost: ${t.costMerits} merits.`;
+    } else if (t.type === 'recipe') {
+      if (!alc.unlockedRecipes.includes(t.recipeId)) {
+        alc.unlockedRecipes.push(t.recipeId);
+      }
+      logRu = `【Сокровищница Павильона】 Изучен «${t.nameRu}»! Затрачено ${t.costMerits} заслуг.`;
+      logEn = `【Pavilion Treasury】 Learned “${t.nameEn}”! Cost: ${t.costMerits} merits.`;
+    }
+
     alc.log.unshift({ ru: logRu, en: logEn });
     alc.log = alc.log.slice(0, 10);
     if (E && E.log) E.log(s, logRu);
@@ -2439,6 +3074,10 @@
     PATIENTS,
     FORAGE_TABLES,
     REGIONAL_MARKETS,
+    FLAMES,
+    CAULDRONS,
+    COMMISSIONS,
+    PAVILION_TREASURES,
     fresh,
     validate,
     canBrew,
@@ -2489,7 +3128,19 @@
     canAuctionCollect,
     auctionCollect,
     canBuyAuctionLot,
-    buyAuctionLot
+    buyAuctionLot,
+    canStokeFlame,
+    stokeFlame,
+    selectFlame,
+    unlockFlame,
+    getFlameStokeCost,
+    selectCauldron,
+    unlockCauldron,
+    canAccessPavilion,
+    canCompleteCommission,
+    completeCommission,
+    canBuyPavilionTreasure,
+    buyPavilionTreasure
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -629,5 +629,83 @@ test('Alchemy engine: Black Moon rare catalog purchases and cauldron upgrade', (
   assert.equal(s.alchemy.stats.fail, failsBefore);
 });
 
+test('Alchemy engine: Flame Cultivation and Artifact Cauldrons', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  assert.equal(s.alchemy.flame.current, 'mortal_hearth');
+  assert.equal(s.alchemy.flame.level, 1);
+  assert.equal(s.alchemy.cauldron.current, 'novice_iron');
+
+  // Stoking flame requires gold, qi, and herb (or fallback)
+  assert.equal(Alchemy.canStokeFlame(s), false);
+  s.resources.gold = 100;
+  s.resources.qi = 50;
+  s.alchemy.ingredients.mountain_herb = 10;
+  assert.equal(Alchemy.canStokeFlame(s), true);
+  assert.equal(E.action(s, 'alchemy-flame-stoke'), true);
+  assert.equal(s.alchemy.flame.level, 2);
+  assert.equal(s.alchemy.flame.stokes, 1);
+
+  // Unlocking and selecting flame
+  Alchemy.unlockFlame(s, 'crimson_beast');
+  assert.equal(s.alchemy.flame.unlocked.includes('crimson_beast'), true);
+  assert.equal(E.action(s, 'alchemy-flame-select', 'crimson_beast'), true);
+  assert.equal(s.alchemy.flame.current, 'crimson_beast');
+
+  // Cauldrons and batch size
+  assert.equal(Alchemy.maxBrew(s, 'vigor_broth', 'crucible') <= 1, true);
+  Alchemy.unlockCauldron(s, 'basalt_bastion');
+  assert.equal(E.action(s, 'alchemy-cauldron-select', 'basalt_bastion'), true);
+  assert.equal(s.alchemy.cauldron.current, 'basalt_bastion');
+
+  s.alchemy.ingredients.mountain_herb = 50;
+  s.alchemy.ingredients.spring_water = 50;
+  assert.equal(Alchemy.maxBrew(s, 'vigor_broth', 'crucible'), 10);
+});
+
+test('Alchemy engine: Sect Pill Pavilion and Story Commissions', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  assert.equal(Alchemy.canAccessPavilion(s), true);
+
+  // Initial active commissions
+  assert.equal(s.alchemy.pavilion.activeCommissions.includes('contract_scout_salve'), true);
+  assert.equal(Alchemy.canCompleteCommission(s, 'contract_scout_salve'), false);
+
+  // Brew required 2 vigor_broth
+  s.alchemy.inventory.vigor_broth = 2;
+  assert.equal(Alchemy.canCompleteCommission(s, 'contract_scout_salve'), true);
+  assert.equal(E.action(s, 'alchemy-commission-complete', 'contract_scout_salve'), true);
+
+  // Check rewards & flame unlock
+  assert.equal(s.alchemy.pavilion.completedCommissions.includes('contract_scout_salve'), true);
+  assert.equal(s.alchemy.pavilion.merits, 30);
+  assert.equal(s.alchemy.flame.unlocked.includes('crimson_beast'), true);
+  assert.equal(s.alchemy.inventory.vigor_broth, 0);
+
+  // Story commission chain: contract_clear_mind unlocked
+  assert.equal(s.alchemy.pavilion.activeCommissions.includes('contract_clear_mind'), true);
+
+  // Spend merits in treasury: buy basalt cauldron blueprint
+  s.alchemy.pavilion.merits = 200;
+  assert.equal(Alchemy.canBuyPavilionTreasure(s, 'merit_cauldron_basalt'), true);
+  assert.equal(E.action(s, 'alchemy-pavilion-buy', 'merit_cauldron_basalt'), true);
+  assert.equal(s.alchemy.cauldron.unlocked.includes('basalt_bastion'), true);
+  assert.equal(s.alchemy.cauldron.current, 'basalt_bastion');
+  assert.equal(s.alchemy.pavilion.merits, 50);
+
+  // Pure pill requirement test: elder breakthrough commission
+  s.alchemy.pavilion.activeCommissions.push('contract_elder_breakthrough');
+  s.alchemy.inventory.breakthrough_pill = 1; // Impure pill
+  assert.equal(Alchemy.canCompleteCommission(s, 'contract_elder_breakthrough'), false);
+
+  // Provide 100% pure pill
+  s.alchemy.pureInventory.breakthrough_pill = 1;
+  assert.equal(Alchemy.canCompleteCommission(s, 'contract_elder_breakthrough'), true);
+  assert.equal(E.action(s, 'alchemy-commission-complete', 'contract_elder_breakthrough'), true);
+  assert.equal(s.alchemy.pavilion.activeCommissions.includes('contract_sect_master_nirvana'), true);
+});
+
 
 

@@ -723,6 +723,16 @@
       return Alchemy ? Alchemy.auctionCollect(s, api) : false;
     } else if (type === 'alchemy-auction-buy') {
       return Alchemy ? Alchemy.buyAuctionLot(s, value, api) : false;
+    } else if (type === 'alchemy-flame-select') {
+      return Alchemy ? Alchemy.selectFlame(s, value) : false;
+    } else if (type === 'alchemy-flame-stoke') {
+      return Alchemy ? Alchemy.stokeFlame(s, api) : false;
+    } else if (type === 'alchemy-cauldron-select') {
+      return Alchemy ? Alchemy.selectCauldron(s, value) : false;
+    } else if (type === 'alchemy-commission-complete') {
+      return Alchemy ? Alchemy.completeCommission(s, value, api) : false;
+    } else if (type === 'alchemy-pavilion-buy') {
+      return Alchemy ? Alchemy.buyPavilionTreasure(s, value, api) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;

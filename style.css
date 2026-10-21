@@ -914,6 +914,80 @@ html[data-interface="data"] .auction-vip-card,
 html[data-interface="data"] .auction-active-panel,
 html[data-interface="data"] .auction-list-item-card,
 html[data-interface="data"] .auction-catalog-card,
-html[data-interface="data"] .auction-locked-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+html[data-interface="data"] .auction-locked-card,
+html[data-interface="data"] .flame-status-box,
+html[data-interface="data"] .cauldron-status-box,
+html[data-interface="data"] .pavilion-header-card,
+html[data-interface="data"] .commission-card,
+html[data-interface="data"] .treasury-card{background:#f8f9fa;border-color:#d4d8dc;border-radius:2px}
+
+/* ══════════════════════════════════════════════════════════════
+   FLAME CULTIVATION & ARTIFACT CAULDRON STYLING
+   ══════════════════════════════════════════════════════════════ */
+.alchemy-flame-cauldron-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.flame-status-box,.cauldron-status-box{background:linear-gradient(135deg,rgba(255,140,0,0.05),var(--panel));border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cauldron-status-box{background:linear-gradient(135deg,rgba(100,149,237,0.05),var(--panel))}
+.equip-box-head{display:flex;justify-content:space-between;align-items:center}
+.equip-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:0.06em;color:var(--muted)}
+.flame-stars{color:#f59e0b;font-size:13px;letter-spacing:1px}
+.batch-capacity-badge{font-size:11px;font-weight:600;color:var(--text);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:10px;border:1px solid var(--line)}
+.equip-title-row{display:flex;align-items:flex-start;gap:10px}
+.equip-icon{font-size:24px;line-height:1}
+.equip-title-row h5{margin:0 0 2px;font-size:13.5px;color:var(--text)}
+.equip-desc{margin:0;font-size:11.5px;color:var(--muted);line-height:1.35}
+.equip-action-row{margin-top:2px}
+.btn-stoke-flame{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11.5px;font-weight:600;cursor:pointer;transition:transform 0.1s ease}
+.btn-stoke-flame:hover:not(:disabled){transform:scale(1.02);filter:brightness(1.1)}
+.btn-stoke-flame:disabled{opacity:0.5;cursor:not-allowed}
+.max-heat-badge{font-size:11px;color:#f59e0b;font-weight:600}
+.flame-switcher,.cauldron-switcher{margin-top:4px;display:flex;flex-direction:column;gap:4px}
+.switcher-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+.switcher-pills{display:flex;flex-wrap:wrap;gap:5px}
+.btn-flame-switch,.btn-cauldron-switch{background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:12px;padding:2px 8px;font-size:10.5px;color:var(--text);cursor:pointer}
+.btn-flame-switch.active,.btn-cauldron-switch.active{background:rgba(245,158,11,0.2);border-color:#f59e0b;color:#f59e0b;font-weight:600}
+
+/* ══════════════════════════════════════════════════════════════
+   SECT PILL PAVILION & COMMISSIONS STYLING
+   ══════════════════════════════════════════════════════════════ */
+.pavilion-container{display:flex;flex-direction:column;gap:14px}
+.pavilion-header-card{background:linear-gradient(135deg,rgba(25,30,50,0.8),var(--panel));border:1px solid rgba(100,149,237,0.3);border-radius:10px;padding:16px}
+.pavilion-header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.pavilion-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:0.08em;color:#60a5fa;margin-bottom:4px;display:block}
+.pavilion-header-top h3{margin:0 0 6px;font-size:17px;color:var(--text)}
+.pavilion-desc{margin:0;font-size:12px;color:var(--muted);max-width:480px;line-height:1.4}
+.pavilion-merits-badge{display:flex;flex-direction:column;align-items:center;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:8px 16px;min-width:110px}
+.merit-num{font-size:22px;font-weight:700;color:#60a5fa}
+.merit-lbl{font-size:10.5px;color:var(--muted)}
+.pavilion-stats-strip{margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);font-size:11.5px;color:var(--muted)}
+.pavilion-stats-strip strong{color:var(--text)}
+
+.commissions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:8px}
+.commission-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.commission-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.commission-head h5{margin:0;font-size:13.5px;color:var(--text)}
+.comm-pure-pill-badge{font-size:9.5px;font-weight:700;color:#10b981;background:rgba(16,185,129,0.15);padding:2px 6px;border-radius:4px;border:1px solid rgba(16,185,129,0.3)}
+.commission-desc{margin:0;font-size:11.5px;color:var(--muted);line-height:1.35}
+.commission-details{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;font-size:11px}
+.req-row,.reward-row{display:flex;justify-content:space-between;gap:6px}
+.detail-label{color:var(--muted)}
+.detail-val{font-weight:600;color:var(--text)}
+.reward-row .detail-val{color:#60a5fa}
+.btn-turnin-commission{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-turnin-commission:hover:not(:disabled){filter:brightness(1.15)}
+.btn-turnin-commission:disabled{opacity:0.4;cursor:not-allowed}
+
+.treasury-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:8px}
+.treasury-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;gap:10px}
+.treasury-card.purchased{opacity:0.6}
+.treasury-icon{font-size:24px;line-height:1}
+.treasury-body{flex:1;display:flex;flex-direction:column;gap:4px}
+.treasury-body h5{margin:0;font-size:13px;color:var(--text)}
+.treasury-desc{margin:0;font-size:11px;color:var(--muted);line-height:1.3}
+.treasury-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.treasury-cost{font-size:11.5px;font-weight:600;color:#60a5fa}
+.btn-merit-buy{background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.4);color:#60a5fa;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer}
+.btn-merit-buy:hover:not(:disabled){background:rgba(96,165,250,0.25)}
+.btn-merit-buy:disabled{opacity:0.4;cursor:not-allowed}
+
 
 

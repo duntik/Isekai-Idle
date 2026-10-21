@@ -1658,6 +1658,8 @@
         if(btn.dataset.alchemyTab==='market'||btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Рынки и Сбор','Markets & Gathering');
         if(btn.dataset.alchemyTab==='pouch')btn.textContent=uiText('Боевая Сумка','Combat Pouch');
         if(btn.dataset.alchemyTab==='garden')btn.textContent=uiText('Сад Жемчужины','Pearl Garden');
+        if(btn.dataset.alchemyTab==='auction')btn.textContent=uiText('Аукцион Чёрной Луны','Black Moon Auction');
+        if(btn.dataset.alchemyTab==='pavilion')btn.textContent=uiText('Павильон Секты','Sect Pavilion');
       });
     }
 
@@ -2370,6 +2372,144 @@
             ${logHtml}
           </div>`;
       }
+    } else if (activeAlchemyTab === 'pavilion') {
+      const canAccess = Alc.canAccessPavilion ? Alc.canAccessPavilion(s) : false;
+
+      if (!canAccess) {
+        body.innerHTML = `
+          <div class="pavilion-container">
+            <div class="auction-locked-card">
+              <div class="auction-locked-emblem">🏛</div>
+              <h3>${uiText('Павильон Пилюль Секты', 'Sect Pill Pavilion')}</h3>
+              <p class="intro">${uiText('Павильон Секты пока недоступен. Достигни 1 ступени (Секта) или 2 ранга алхимии.', 'Sect Pavilion is not yet available. Reach Stage 1 (Sect) or Alchemy rank 2.')}</p>
+              <div class="auction-lock-reqs">
+                <div class="req-item">✦ ${uiText('Требуется: Ступень 1 (Секта) или 2 ранг алхимии.', 'Requires: Stage 1 (Sect) or Alchemy rank 2.')}</div>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        const pav = alc.pavilion || (Alc.fresh ? Alc.fresh().pavilion : { merits: 0, completedCommissions: [], activeCommissions: [] });
+        const merits = pav.merits || 0;
+        const completedCount = pav.completedCommissions?.length || 0;
+
+        const headerHtml = `
+          <div class="pavilion-header-card">
+            <div class="pavilion-header-top">
+              <div>
+                <span class="pavilion-eyebrow">🏛 ${uiText('ПАВИЛЬОН ПИЛЮЛЬ СЕКТЫ', 'SECT PILL PAVILION')}</span>
+                <h3>${uiText('Павильон Секты', 'Sect Pavilion')}</h3>
+                <p class="pavilion-desc">${uiText('Обитель высших алхимических поручений секты, снабжения учеников и тайных сокровищниц.', 'The sanctuary of elite sect alchemy commissions, disciple requisitions, and hidden merit vaults.')}</p>
+              </div>
+              <div class="pavilion-merits-badge">
+                <span class="merit-num">${merits}</span>
+                <span class="merit-lbl">${uiText('Заслуги секты: ', 'Sect Merits: ')}</span>
+              </div>
+            </div>
+            <div class="pavilion-stats-strip">
+              <span>✦ ${uiText('Выполнено контрактов: ', 'Commissions completed: ')}<strong>${completedCount}</strong></span>
+            </div>
+          </div>`;
+
+        // Commissions section
+        const activeList = pav.activeCommissions || [];
+        const commCards = activeList.map(commId => {
+          const comm = Alc.COMMISSIONS?.[commId];
+          if (!comm) return '';
+          const canTurnIn = Alc.canCompleteCommission ? Alc.canCompleteCommission(s, commId) : false;
+          const reqRecipe = Alc.RECIPES?.[comm.reqRecipe];
+          const recName = reqRecipe ? (isEn ? reqRecipe.nameEn : reqRecipe.nameRu) : comm.reqRecipe;
+
+          const pureTag = comm.reqPure ? `<span class="comm-pure-pill-badge">${uiText('★ 100% ЧИСТАЯ ПИЛЮЛЯ', '★ 100% PURE PILL')}</span>` : '';
+          const pillReqStr = `${recName} ×${comm.reqCount}`;
+          const herbReqStr = comm.reqHerb ? `, ${Alc.INGREDIENTS?.[comm.reqHerb] ? (isEn ? Alc.INGREDIENTS[comm.reqHerb].nameEn : Alc.INGREDIENTS[comm.reqHerb].nameRu) : comm.reqHerb} ×${comm.reqHerbCount}` : '';
+
+          return `
+            <div class="commission-card">
+              <div class="commission-head">
+                <h5>${isEn ? comm.nameEn : comm.nameRu}</h5>
+                ${pureTag}
+              </div>
+              <p class="commission-desc">${isEn ? comm.descEn : comm.descRu}</p>
+              <div class="commission-details">
+                <div class="req-row">
+                  <span class="detail-label">${uiText('Требуется: ', 'Requires: ')}</span>
+                  <span class="detail-val">${pillReqStr}${herbReqStr}</span>
+                </div>
+                <div class="reward-row">
+                  <span class="detail-label">${uiText('Награда: ', 'Reward: ')}</span>
+                  <span class="detail-val">+${comm.rewardMerits} ${uiText('заслуг', 'merits')}, +${comm.rewardGold} 🪙, +${comm.rewardXp} XP</span>
+                </div>
+              </div>
+              <div class="commission-actions">
+                <button type="button" class="btn-turnin-commission" data-alchemy-action="commission-complete" data-commission="${commId}" ${canTurnIn ? '' : 'disabled'}>
+                  ${uiText('Сдать заказ', 'Turn In Commission')}
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+
+        const commissionsSection = `
+          <div class="pavilion-section">
+            <div class="section-head">
+              <h3>${uiText('Срочные Заказы и Сюжетные Контракты', 'Urgent Requisitions & Story Commissions')}</h3>
+            </div>
+            <div class="commissions-grid">
+              ${commCards || `<p class="intro">${uiText('Все доступные контракты секты выполнены!', 'All available sect commissions completed!')}</p>`}
+            </div>
+          </div>`;
+
+        // Treasury shop section
+        const treasures = Object.values(Alc.PAVILION_TREASURES || {});
+        const treasuryCards = treasures.map(t => {
+          const canBuy = Alc.canBuyPavilionTreasure ? Alc.canBuyPavilionTreasure(s, t.id) : false;
+          let alreadyBought = false;
+          if (t.type === 'flame_unlock' && alc.flame?.unlocked?.includes(t.flameId)) alreadyBought = true;
+          if (t.type === 'cauldron_unlock' && alc.cauldron?.unlocked?.includes(t.cauldronId)) alreadyBought = true;
+          if (t.type === 'recipe' && alc.unlockedRecipes?.includes(t.recipeId)) alreadyBought = true;
+
+          return `
+            <div class="treasury-card ${alreadyBought ? 'purchased' : ''}">
+              <div class="treasury-icon">${t.icon}</div>
+              <div class="treasury-body">
+                <h5>${isEn ? t.nameEn : t.nameRu}</h5>
+                <p class="treasury-desc">${isEn ? t.descEn : t.descRu}</p>
+                <div class="treasury-footer">
+                  <span class="treasury-cost">✦ ${t.costMerits} ${uiText('заслуг', 'merits')}</span>
+                  <button type="button" class="btn-merit-buy" data-alchemy-action="pavilion-buy" data-treasure="${t.id}" ${canBuy ? '' : 'disabled'}>
+                    ${alreadyBought ? uiText('Куплено', 'Purchased') : `${uiText('Получить за ', 'Acquire for ')}${t.costMerits} ${uiText('заслуг', 'merits')}`}
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        const treasurySection = `
+          <div class="pavilion-section">
+            <div class="section-head">
+              <h3>${uiText('Сокровищница Заслуг Павильона', 'Pavilion Merit Treasury')}</h3>
+            </div>
+            <div class="treasury-grid">
+              ${treasuryCards}
+            </div>
+          </div>`;
+
+        let logHtml = '';
+        if (alc.log && alc.log.length > 0) {
+          logHtml = `
+            <div class="alchemy-log-box" style="margin-top:20px">
+              <h4>${uiText('История варки', 'Brewing Log')}</h4>
+              ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+            </div>`;
+        }
+
+        body.innerHTML = `
+          <div class="pavilion-container">
+            ${headerHtml}
+            ${commissionsSection}
+            ${treasurySection}
+            ${logHtml}
+          </div>`;
+      }
     } else {
       // cauldron tab
       const rankTitle=isEn?currentRank.en:currentRank.ru;
@@ -2412,6 +2552,85 @@
           <div class="meridian-card-footer">
             <span class="meridian-effect-hint">✦ ${danDuStatus.desc}</span>
             ${danDu > 0 ? `<button type="button" class="btn-pearl" data-alchemy-action="meridian-purge" ${canPurge ? '' : 'disabled'}>✨ ${uiText('Очистить Жемчужиной (15 Ци)', 'Purge with Pearl (15 Qi)')}</button>` : ''}
+          </div>
+        </div>`;
+
+      // Flame & Cauldron equipment bar
+      const curFlameId = alc.flame?.current || 'mortal_hearth';
+      const curFlame = Alc.FLAMES?.[curFlameId] || Alc.FLAMES?.mortal_hearth || { nameRu: 'Пламя', nameEn: 'Flame', icon: '🔥' };
+      const flameLvl = alc.flame?.level || 1;
+      const canStoke = Alc.canStokeFlame ? Alc.canStokeFlame(s) : false;
+      const stokeCost = Alc.getFlameStokeCost ? Alc.getFlameStokeCost(flameLvl) : null;
+      const unlFlames = alc.flame?.unlocked || ['mortal_hearth'];
+
+      const curCauldronId = alc.cauldron?.current || 'novice_iron';
+      const curCauldron = Alc.CAULDRONS?.[curCauldronId] || Alc.CAULDRONS?.novice_iron || { nameRu: 'Котёл', nameEn: 'Cauldron', icon: '⚗️', maxBatch: 1 };
+      const unlCauldrons = alc.cauldron?.unlocked || ['novice_iron'];
+
+      const flameSwitchHtml = unlFlames.length > 1 ? `
+        <div class="flame-switcher">
+          <span class="switcher-label">${uiText('Сменить пламя:', 'Switch Flame:')}</span>
+          <div class="switcher-pills">
+            ${unlFlames.map(fId => {
+              const f = Alc.FLAMES[fId];
+              if (!f) return '';
+              const isCur = fId === curFlameId;
+              return `<button type="button" class="btn-flame-switch ${isCur ? 'active' : ''}" data-alchemy-action="flame-select" data-flame="${fId}" ${isCur ? 'disabled' : ''}>${f.icon} ${isEn ? f.nameEn : f.nameRu}</button>`;
+            }).join('')}
+          </div>
+        </div>` : '';
+
+      const cauldronSwitchHtml = unlCauldrons.length > 1 ? `
+        <div class="cauldron-switcher">
+          <span class="switcher-label">${uiText('Сменить котёл:', 'Switch Cauldron:')}</span>
+          <div class="switcher-pills">
+            ${unlCauldrons.map(cId => {
+              const c = Alc.CAULDRONS[cId];
+              if (!c) return '';
+              const isCur = cId === curCauldronId;
+              return `<button type="button" class="btn-cauldron-switch ${isCur ? 'active' : ''}" data-alchemy-action="cauldron-select" data-cauldron="${cId}" ${isCur ? 'disabled' : ''}>${c.icon} ${isEn ? c.nameEn : c.nameRu}</button>`;
+            }).join('')}
+          </div>
+        </div>` : '';
+
+      const flameCauldronBar = `
+        <div class="alchemy-flame-cauldron-bar">
+          <div class="flame-status-box">
+            <div class="equip-box-head">
+              <span class="equip-eyebrow">🔥 ${uiText('Текущее пламя:', 'Equipped Flame:')}</span>
+              <span class="flame-stars" title="${uiText('Ранг жара:', 'Heat Rank:')} ${flameLvl}/5">${'★'.repeat(flameLvl)}${'☆'.repeat(5 - flameLvl)}</span>
+            </div>
+            <div class="equip-title-row">
+              <span class="equip-icon">${curFlame.icon}</span>
+              <div>
+                <h5>${isEn ? curFlame.nameEn : curFlame.nameRu}</h5>
+                <p class="equip-desc">${isEn ? curFlame.descEn : curFlame.descRu}</p>
+              </div>
+            </div>
+            <div class="equip-action-row">
+              ${flameLvl < 5 && stokeCost ? `
+                <button type="button" class="btn-stoke-flame" data-alchemy-action="flame-stoke" ${canStoke ? '' : 'disabled'}>
+                  🔥 ${uiText('Распалить жар пламени', 'Stoke Flame Heat')} (${stokeCost.gold} 🪙, ${stokeCost.qi} ☯)
+                </button>
+              ` : `
+                <span class="max-heat-badge">✦ ${uiText('Максимальный жар (Ранг 5)', 'Max Heat (Rank 5)')}</span>
+              `}
+            </div>
+            ${flameSwitchHtml}
+          </div>
+          <div class="cauldron-status-box">
+            <div class="equip-box-head">
+              <span class="equip-eyebrow">⚗️ ${uiText('Текущий котёл:', 'Equipped Cauldron:')}</span>
+              <span class="batch-capacity-badge">${uiText('Партия котла: до ', 'Cauldron batch: up to ')}${curCauldron.maxBatch}${uiText(' шт.', ' pcs')}</span>
+            </div>
+            <div class="equip-title-row">
+              <span class="equip-icon">${curCauldron.icon}</span>
+              <div>
+                <h5>${isEn ? curCauldron.nameEn : curCauldron.nameRu}</h5>
+                <p class="equip-desc">${isEn ? curCauldron.descEn : curCauldron.descRu}</p>
+              </div>
+            </div>
+            ${cauldronSwitchHtml}
           </div>
         </div>`;
 
@@ -2514,7 +2733,7 @@
           </div>`;
       }
 
-      body.innerHTML=rankBanner+meridianBanner+ingSection+recipesSection+logHtml;
+      body.innerHTML=rankBanner+meridianBanner+flameCauldronBar+ingSection+recipesSection+logHtml;
     }
   }
   function openAlchemyDialog(){
@@ -2919,6 +3138,46 @@
           toast(uiText('Предмет приобретён на аукционе!', 'Item purchased from auction!'));
         } else {
           toast(uiText('Не хватает золота для покупки!', 'Not enough gold to purchase!'));
+        }
+      } else if (act === 'flame-stoke') {
+        if (E.action(s, 'alchemy-flame-stoke')) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Пламя успешно распалено!', 'Flame successfully stoked!'));
+        } else {
+          toast(uiText('Недостаточно ресурсов для распалки пламени!', 'Not enough resources to stoke flame!'));
+        }
+      } else if (act === 'flame-select') {
+        const flameId = b.dataset.flame;
+        if (E.action(s, 'alchemy-flame-select', flameId)) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Алхимическое пламя выбрано!', 'Alchemy flame selected!'));
+        }
+      } else if (act === 'cauldron-select') {
+        const cId = b.dataset.cauldron;
+        if (E.action(s, 'alchemy-cauldron-select', cId)) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Котёл экипирован!', 'Cauldron equipped!'));
+        }
+      } else if (act === 'commission-complete') {
+        const commId = b.dataset.commission;
+        if (E.action(s, 'alchemy-commission-complete', commId)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Контракт секты успешно сдан!', 'Sect commission completed!'));
+        } else {
+          toast(uiText('Условия контракта ещё не выполнены!', 'Commission requirements not met!'));
+        }
+      } else if (act === 'pavilion-buy') {
+        const treasureId = b.dataset.treasure;
+        if (E.action(s, 'alchemy-pavilion-buy', treasureId)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Сокровище Павильона получено!', 'Pavilion treasure acquired!'));
+        } else {
+          toast(uiText('Недостаточно заслуг секты!', 'Not enough sect merits!'));
         }
       }
       renderAlchemy();
