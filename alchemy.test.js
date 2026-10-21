@@ -707,5 +707,121 @@ test('Alchemy engine: Sect Pill Pavilion and Story Commissions', () => {
   assert.equal(s.alchemy.pavilion.activeCommissions.includes('contract_sect_master_nirvana'), true);
 });
 
+test('Alchemy engine: Jasmine Soul Sanctuary and Divine Healing', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+
+  // Save validation invariance
+  assert.deepEqual(Alchemy.validate(Alchemy.fresh()), Alchemy.fresh());
+
+  // Initial state: Level 0 slumbering
+  assert.equal(s.alchemy.jasmine.level, 0);
+  assert.equal(s.alchemy.jasmine.soulPurity, 0);
+  assert.equal(Alchemy.canFeedJasmine(s, 'dew'), false);
+  assert.equal(Alchemy.canFeedJasmine(s, 'pure_pill'), false);
+
+  // Feed Garden Dew
+  s.alchemy.garden.dew = 25;
+  assert.equal(Alchemy.canFeedJasmine(s, 'dew'), true);
+  assert.equal(E.action(s, 'alchemy-jasmine-feed', 'dew'), true);
+  assert.equal(s.alchemy.garden.dew, 15);
+  assert.equal(s.alchemy.jasmine.soulPurity, 5);
+
+  // Feed 100% Pure Pill
+  s.alchemy.inventory.vigor_broth = 1;
+  s.alchemy.pureInventory.vigor_broth = 1;
+  assert.equal(Alchemy.canFeedJasmine(s, 'pure_pill'), true);
+  assert.equal(E.action(s, 'alchemy-jasmine-feed', 'pure_pill'), true);
+  assert.equal(s.alchemy.pureInventory.vigor_broth, 0);
+  assert.equal(s.alchemy.inventory.vigor_broth, 0);
+  assert.equal(s.alchemy.jasmine.soulPurity, 13); // 5 + 8
+
+  // Push to Tier 1 (Purity 20)
+  s.alchemy.garden.dew = 50;
+  Alchemy.feedJasmine(s, 'dew'); // 18
+  Alchemy.feedJasmine(s, 'dew'); // 23
+  assert.equal(s.alchemy.jasmine.level, 1);
+  assert.equal(s.alchemy.jasmine.unlockedPerks.includes('soul_awakening'), true);
+
+  // Push to Tier 2 (Purity 40): Star God's Broken Shadow
+  s.alchemy.garden.dew = 100;
+  for (let i = 0; i < 4; i++) Alchemy.feedJasmine(s, 'dew');
+  assert.equal(s.alchemy.jasmine.level, 2);
+  assert.equal(s.alchemy.jasmine.unlockedPerks.includes('star_god_shadow'), true);
+
+  // Quotes check
+  const quoteRu = Alchemy.getJasmineSanctuaryQuote(s, 'ru');
+  const quoteEn = Alchemy.getJasmineSanctuaryQuote(s, 'en');
+  assert(quoteRu.length > 5);
+  assert(quoteEn.length > 5);
+  assert(!/[А-Яа-яЁё]/.test(quoteEn));
+});
+
+test('Alchemy engine: Poison Workshop and Weapon Venom Coatings', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  s.resources.qi = 50;
+
+  // Add ingredients for viper fang
+  s.alchemy.ingredients.poison_sac = 3;
+  s.alchemy.ingredients.mountain_herb = 2;
+  assert.equal(Alchemy.canCraftVenom(s, 'viper_fang'), true);
+  assert.equal(E.action(s, 'alchemy-venom-craft', 'viper_fang'), true);
+  assert.equal(s.alchemy.venoms.inventory.viper_fang, 1);
+  assert.equal(s.alchemy.ingredients.poison_sac, 2);
+
+  // Coat weapon
+  assert.equal(Alchemy.canCoatWeapon(s, 'viper_fang'), true);
+  assert.equal(E.action(s, 'alchemy-venom-coat', 'viper_fang'), true);
+  assert.equal(s.alchemy.venoms.inventory.viper_fang, 0);
+  assert.equal(s.alchemy.venoms.coated.id, 'viper_fang');
+  assert.equal(s.alchemy.venoms.coated.charges, 6);
+
+  // Save validation with coated weapon
+  const validated = Alchemy.validate(s.alchemy);
+  assert.equal(validated.venoms.coated.id, 'viper_fang');
+  assert.equal(validated.venoms.coated.charges, 6);
+});
+
+test('Alchemy engine: Beast Range Expeditions and Beast Cores', () => {
+  const E = require('./engine.js');
+  const s = E.fresh();
+  s.stage = 1;
+  s.alchemy.level = 2;
+
+  // Start expedition at Depth 1
+  assert.equal(Alchemy.canStartExpedition(s), true);
+  assert.equal(E.action(s, 'alchemy-expedition-start', 1), true);
+  assert.equal(s.alchemy.expedition.inProgress, true);
+  assert.equal(s.alchemy.expedition.currentDepth, 1);
+
+  // Step 1: Hunt for Beast Cores
+  assert.equal(Alchemy.canExpeditionStep(s), true);
+  assert.equal(E.action(s, 'alchemy-expedition-step', 'hunt'), true);
+  assert(s.alchemy.expedition.loot.beast_core_low >= 1);
+  assert(s.alchemy.expedition.danger > 15);
+
+  // Step 2: Forage for Herbs
+  assert.equal(E.action(s, 'alchemy-expedition-step', 'forage'), true);
+
+  // Safe extraction: delivered to alchemy inventory
+  assert.equal(Alchemy.canExpeditionExtract(s), true);
+  assert.equal(E.action(s, 'alchemy-expedition-extract'), true);
+  assert.equal(s.alchemy.expedition.inProgress, false);
+  assert(s.alchemy.ingredients.beast_core_low >= 1);
+  assert.equal(s.alchemy.expedition.maxDepth, 2); // Unlocked Depth 2
+
+  // Brew Beast Tempering Pill with Beast Core via Pearl
+  s.resources.qi = 50;
+  s.alchemy.ingredients.iron_root = 5;
+  s.alchemy.ingredients.mountain_herb = 5;
+  assert.equal(Alchemy.canBrew(s, 'beast_temper_pill', 'pearl'), true);
+  assert.equal(Alchemy.brew(s, 'beast_temper_pill', 'pearl'), true);
+  assert.equal(s.alchemy.pureInventory.beast_temper_pill, 1);
+});
+
+
 
 

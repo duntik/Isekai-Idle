@@ -48,6 +48,10 @@
       bossPhaseTriggered: false,
       guardBuff: 0,
       evasion: false,
+      enemyPoisonStacks: 0,
+      enemyPoisonType: null,
+      starBarrierUsed: false,
+      burningHeartAwakened: false,
       log: [
         {
           round: 1,
@@ -87,6 +91,10 @@
       bossPhaseTriggered: !!input.bossPhaseTriggered,
       guardBuff: Math.max(0, Number(input.guardBuff) || 0),
       evasion: !!input.evasion,
+      enemyPoisonStacks: Math.max(0, Math.floor(input.enemyPoisonStacks || 0)),
+      enemyPoisonType: (input.enemyPoisonType && typeof input.enemyPoisonType === 'string') ? input.enemyPoisonType.slice(0, 40) : null,
+      starBarrierUsed: !!input.starBarrierUsed,
+      burningHeartAwakened: !!input.burningHeartAwakened,
       log: Array.isArray(input.log) ? input.log.slice(0, 15).map(e => ({
         round: Number(e.round) || 1,
         ru: String(e.ru || '').slice(0, 300),
@@ -104,6 +112,8 @@
     const styleMult = counterMatches ? 1.35 : 1.0;
     const evilGodMult = (c.evilGodAwakened ? 1.35 : 1.0) * (c.evilGodPillSurge ? 1.40 : 1.0);
     const momentumMult = 1.0 + (c.momentum || 0) * 0.1;
+    const jasmineLevel = s.alchemy?.jasmine?.level || 0;
+    const burningHeartMult = (jasmineLevel >= 4 && c.playerHp <= Math.floor(c.playerMaxHp * 0.5)) ? 1.30 : 1.0;
 
     let pDamage = 0;
     let pPoiseDmg = 0;
@@ -127,7 +137,7 @@
       } else {
         c.playerStamina -= stamCost;
       }
-      let baseDmg = Math.max(8, Math.floor((8 + (s.mastery || 0) * 2 + (s.weapon || 0) * 3) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult));
+      let baseDmg = Math.max(8, Math.floor((8 + (s.mastery || 0) * 2 + (s.weapon || 0) * 3) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult * burningHeartMult));
       if (exhausted) baseDmg = Math.max(4, Math.floor(baseDmg * 0.45));
 
       if (critBurst) {
@@ -148,6 +158,22 @@
         pLogRu = `Молниеносный выпад пронзает защиту: нанесено ${pDamage} урона (сбито ${pPoiseDmg} стойкости).`;
         pLogEn = `Lightning thrust pierces the guard: dealt ${pDamage} damage (${pPoiseDmg} poise shattered).`;
       }
+
+      if (s.alchemy?.venoms?.coated?.charges > 0 && s.alchemy.venoms.coated.id) {
+        s.alchemy.venoms.coated.charges--;
+        c.enemyPoisonType = s.alchemy.venoms.coated.id;
+        c.enemyPoisonStacks = Math.min(5, (c.enemyPoisonStacks || 0) + 1);
+        const vId = c.enemyPoisonType;
+        if (s.alchemy.venoms.coated.charges <= 0) {
+          s.alchemy.venoms.coated = { id: null, charges: 0 };
+        }
+        const Alc = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : globalThis.IsekaiAlchemy;
+        const vDef = Alc?.VENOMS?.[vId];
+        const vNameRu = vDef ? vDef.nameRu : vId;
+        const vNameEn = vDef ? vDef.nameEn : vId;
+        pLogRu += ` 【ЯД: Клинок заражает противника «${vNameRu}» (${c.enemyPoisonStacks} стак)!】`;
+        pLogEn += ` 【VENOM: Blade infects foe with “${vNameEn}” (${c.enemyPoisonStacks} stack)!】`;
+      }
     } else if (actionKey === 'heavy') {
       const stamCost = 28;
       const exhausted = c.playerStamina < stamCost;
@@ -156,7 +182,7 @@
       } else {
         c.playerStamina -= stamCost;
       }
-      let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult));
+      let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult * burningHeartMult));
       if (exhausted) baseDmg = Math.max(5, Math.floor(baseDmg * 0.4));
 
       if (critBurst) {
@@ -175,6 +201,22 @@
         pPoiseDmg = Math.floor(baseDmg * 1.8);
         pLogRu = `Тяжёлый сокрушающий раскол сотрясает кости врага: нанесён тяжелейший удар на ${pDamage} урона!`;
         pLogEn = `Heavy crushing blow rattles the opponent’s bones: a devastating strike dealt ${pDamage} damage!`;
+      }
+
+      if (s.alchemy?.venoms?.coated?.charges > 0 && s.alchemy.venoms.coated.id) {
+        s.alchemy.venoms.coated.charges--;
+        c.enemyPoisonType = s.alchemy.venoms.coated.id;
+        c.enemyPoisonStacks = Math.min(5, (c.enemyPoisonStacks || 0) + 1);
+        const vId = c.enemyPoisonType;
+        if (s.alchemy.venoms.coated.charges <= 0) {
+          s.alchemy.venoms.coated = { id: null, charges: 0 };
+        }
+        const Alc = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : globalThis.IsekaiAlchemy;
+        const vDef = Alc?.VENOMS?.[vId];
+        const vNameRu = vDef ? vDef.nameRu : vId;
+        const vNameEn = vDef ? vDef.nameEn : vId;
+        pLogRu += ` 【ЯД: Клинок заражает противника «${vNameRu}» (${c.enemyPoisonStacks} стак)!】`;
+        pLogEn += ` 【VENOM: Blade infects foe with “${vNameEn}” (${c.enemyPoisonStacks} stack)!】`;
       }
     } else if (actionKey === 'parry') {
       c.playerStamina = Math.min(c.playerMaxStamina, c.playerStamina + 28);
@@ -328,6 +370,14 @@
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + Math.floor(c.playerMaxHp * 0.3));
         pLogRu = `【Пилюля сокрушения преград】 Эссенция мастера Хо взрывается духовной волной: нанесено ${pDamage} урона барьеру врага (${pPoiseDmg} пробоя стойки), здоровье +30%!${danDuSuffixRu}`;
         pLogEn = `【Barrier-Shattering Pill】 Master Huo’s essence erupts into a profound shockwave: dealt ${pDamage} damage (${pPoiseDmg} poise damage), health +30%!${danDuSuffixEn}`;
+      } else if (requestedRecipe === 'beast_temper_pill') {
+        c.playerPoise = c.playerMaxPoise;
+        c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        c.playerStamina = c.playerMaxStamina;
+        const heal = Math.floor(c.playerMaxHp * 0.20);
+        c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
+        pLogRu = `【Пилюля Звериной Мощи】 Сила духовного зверя наполняет сухожилия: стойка полностью восстановлена (100%), здоровье +${heal}, выносливость полная, импульс +1!${danDuSuffixRu}`;
+        pLogEn = `【Beast Tempering Pill】 Primal beast vigor surges through sinews: poise fully restored (100%), health +${heal}, stamina full, momentum +1!${danDuSuffixEn}`;
       } else {
         const heal = Math.floor(c.playerMaxHp * 0.45);
         c.playerHp = Math.min(c.playerMaxHp, c.playerHp + heal);
@@ -381,10 +431,15 @@
       c.enemyStunned = false; // Recovers from stun next round
     } else if (interrupt) {
       // Interrupted: enemy fails to attack
-    } else if (c.evasion) {
+    } else if (c.evasion || (jasmineLevel >= 2 && Math.random() < 0.40)) {
+      const isStarGod = !c.evasion;
       c.evasion = false;
-      const eLogRu = `${c.foeName} атакует со свирепой силой, но твой шаг уклонения безупречен — клинок рассекает лишь остаточный силуэт в воздухе!`;
-      const eLogEn = `${c.foeName} strikes with fierce fury, but your evasive footwork is flawless — the blade cuts only an afterimage in the air!`;
+      const eLogRu = isStarGod
+        ? `✨ 【Тень Звездного Бога】 Твой шаг искажает пространство звёздным силуэтом! Атака ${c.foeName} рассекает лишь остаточную иллюзию!`
+        : `${c.foeName} атакует со свирепой силой, но твой шаг уклонения безупречен — клинок рассекает лишь остаточный силуэт в воздухе!`;
+      const eLogEn = isStarGod
+        ? `✨ 【Star God's Broken Shadow】 Your footwork warps space with an astral afterimage! ${c.foeName}’s strike cleaves only residual starlight!`
+        : `${c.foeName} strikes with fierce fury, but your evasive footwork is flawless — the blade cuts only an afterimage in the air!`;
       c.log.unshift({ round: c.round, ru: eLogRu, en: eLogEn });
     } else {
       let eDmg = Math.max(6, Math.floor(c.foePower * 0.35 + (c.round * 1.5)));
@@ -405,15 +460,26 @@
 
       // Check Player Defeat / Tactical Retreat
       if (c.playerHp <= 0) {
-        c.finished = true;
-        c.victory = false;
-        s.cooldown = 60;
-        c.log.unshift({
-          round: c.round,
-          ru: `Твои силы иссякли под натиском ${c.foeName}. Жемчужина вспыхивает, укрывая тебя защитным пологом для отхода. Закаляй тело и возвращайся сильнее!`,
-          en: `Your endurance falters beneath ${c.foeName}’s onslaught. The Sky Poison Pearl shields your tactical retreat. Temper your vessel and return stronger!`
-        });
-        return true;
+        if (jasmineLevel >= 5 && !c.starBarrierUsed) {
+          c.starBarrierUsed = true;
+          c.playerHp = Math.max(20, Math.floor(c.playerMaxHp * 0.35));
+          c.playerPoise = Math.floor(c.playerMaxPoise * 0.5);
+          c.log.unshift({
+            round: c.round,
+            ru: `🌟 【Звездный Барьер Жасмин】 Смертельный удар раскалывается о багровый звёздный щит принцессы Звездного Бога! Жасмин спасает твою жизнь (HP восстановлено до 35%)!`,
+            en: `🌟 【Jasmine’s Astral Barrier】 Fatal blow shatters against the Star God Princess’s astral barrier! Jasmine saves your life (HP restored to 35%)!`
+          });
+        } else {
+          c.finished = true;
+          c.victory = false;
+          s.cooldown = 60;
+          c.log.unshift({
+            round: c.round,
+            ru: `Твои силы иссякли под натиском ${c.foeName}. Жемчужина вспыхивает, укрывая тебя защитным пологом для отхода. Закаляй тело и возвращайся сильнее!`,
+            en: `Your endurance falters beneath ${c.foeName}’s onslaught. The Sky Poison Pearl shields your tactical retreat. Temper your vessel and return stronger!`
+          });
+          return true;
+        }
       }
     }
 
@@ -447,6 +513,43 @@
           ru: `【ЯРОСТЬ СОПЕРНИКА】 ${c.foeName} с рычанием высвобождает скрытую ци: «Ты посмел ранить меня перед толпой?! Прими силу моего истинного искусства!» Пространство дрожит от всплеска энергии!`,
           en: `【FOE ENRAGED】 ${c.foeName} roars, unleashing latent qi: “You dare wound me before the crowd?! Taste the might of my true art!” The air trembles from an impending energy blast!`
         });
+      }
+    }
+
+    // 5. Weapon Venom DoT resolution
+    if (c.enemyHp > 0 && c.enemyPoisonStacks > 0 && c.enemyPoisonType) {
+      const Alc = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : globalThis.IsekaiAlchemy;
+      const vDef = Alc?.VENOMS?.[c.enemyPoisonType];
+      const dotDmg = (vDef?.dotDmg || 6) * c.enemyPoisonStacks;
+      const poiseDmg = (vDef?.poiseDmg || 0) * c.enemyPoisonStacks;
+      c.enemyHp = Math.max(0, c.enemyHp - dotDmg);
+      if (poiseDmg > 0) c.enemyPoise = Math.max(0, c.enemyPoise - poiseDmg);
+      const vNameRu = vDef ? vDef.nameRu : c.enemyPoisonType;
+      const vNameEn = vDef ? vDef.nameEn : c.enemyPoisonType;
+      c.log.unshift({
+        round: c.round,
+        ru: `☠ Токсин «${vNameRu}» разъедает тело врага: -${dotDmg} HP${poiseDmg > 0 ? `, -${poiseDmg} стойкости` : ''}!`,
+        en: `☠ Toxin “${vNameEn}” corrodes foe: -${dotDmg} HP${poiseDmg > 0 ? `, -${poiseDmg} poise` : ''}!`
+      });
+      if (c.enemyHp <= 0) {
+        c.finished = true;
+        c.victory = true;
+        const goldReward = Math.floor(30 * 1.8 ** s.wins);
+        const herbReward = (s.wins + 1) * 10;
+        s.resources.gold += goldReward;
+        s.resources.herbs += herbReward;
+        s.resources.relics += 1;
+        s.wins++;
+        s.cooldown = 300;
+        if (s.alchemy?.buffs?.evilGodFights > 0) s.alchemy.buffs.evilGodFights--;
+        E.taskPractice(s, 'combat');
+        E.log(s, `Победа: ${c.foeName}. Твои успехи привлекли внимание более сильных противников.`);
+        c.log.unshift({
+          round: c.round,
+          ru: `⚔ ПОБЕДА! Смертоносный яд окончательно сломил жизненные силы соперника: ${c.foeName} повержен! Получено: ${goldReward} монет, ${herbReward} трав, 1 осколок.`,
+          en: `⚔ VICTORY! Lethal venom fully drains the opponent’s vitality: ${c.foeName} is vanquished! Spoils: ${goldReward} coins, ${herbReward} herbs, 1 shard.`
+        });
+        return true;
       }
     }
 

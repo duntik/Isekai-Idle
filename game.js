@@ -1660,6 +1660,9 @@
         if(btn.dataset.alchemyTab==='garden')btn.textContent=uiText('Сад Жемчужины','Pearl Garden');
         if(btn.dataset.alchemyTab==='auction')btn.textContent=uiText('Аукцион Чёрной Луны','Black Moon Auction');
         if(btn.dataset.alchemyTab==='pavilion')btn.textContent=uiText('Павильон Секты','Sect Pavilion');
+        if(btn.dataset.alchemyTab==='jasmine')btn.textContent=uiText('Покои Жасмин','Jasmine Sanctuary');
+        if(btn.dataset.alchemyTab==='poisons')btn.textContent=uiText('Мастерская Ядов','Poison Workshop');
+        if(btn.dataset.alchemyTab==='expedition')btn.textContent=uiText('Хребет Зверей','Beast Range');
       });
     }
 
@@ -2510,8 +2513,277 @@
             ${logHtml}
           </div>`;
       }
-    } else {
-      // cauldron tab
+    } else if (activeAlchemyTab === 'jasmine') {
+        const jas = alc.jasmine || { soulPurity: 0, level: 0, dewFed: 0, pillsFed: 0 };
+        const tier = Alc.JASMINE_TIERS[jas.level] || Alc.JASMINE_TIERS[0];
+        const nextTier = Alc.JASMINE_TIERS[jas.level + 1] || null;
+        const quote = Alc.getJasmineSanctuaryQuote ? Alc.getJasmineSanctuaryQuote(s, isEn ? 'en' : 'ru') : '';
+        const canFeedDew = Alc.canFeedJasmine ? Alc.canFeedJasmine(s, 'dew') : false;
+        const canFeedPill = Alc.canFeedJasmine ? Alc.canFeedJasmine(s, 'pure_pill') : false;
+        const dewStock = alc.garden?.dew || 0;
+        const purePillCount = Object.values(alc.pureInventory || {}).reduce((sum, v) => sum + (v || 0), 0);
+
+        const headerHtml = `
+          <div class="jasmine-sanctuary-header">
+            <div class="jasmine-title-row">
+              <div class="jasmine-avatar">✨🌸</div>
+              <div class="jasmine-title-meta">
+                <h3>${uiText('ПОКОИ ЖАСМИН ВНУТРИ ЖЕМЧУЖИНЫ', 'JASMINE’S SANCTUARY INSIDE THE PEARL')}</h3>
+                <p class="jasmine-subtitle">${isEn ? tier.titleEn : tier.titleRu} · ${isEn ? tier.descEn : tier.descRu}</p>
+              </div>
+            </div>
+            <div class="jasmine-purity-gauge">
+              <div class="gauge-label">
+                <span>${uiText('Чистота души Жасмин: ', 'Jasmine’s Soul Purity: ')}<strong>${jas.soulPurity}%</strong></span>
+                <small>${nextTier ? (isEn ? `Next: ${nextTier.titleEn} at ${nextTier.reqPurity}%` : `След: ${nextTier.titleRu} при ${nextTier.reqPurity}%`) : (isEn ? 'Max Awakening' : 'Полное пробуждение')}</small>
+              </div>
+              <div class="purity-bar-track">
+                <div class="purity-bar-fill" style="width:${jas.soulPurity}%"></div>
+              </div>
+            </div>
+            <div class="jasmine-quote-card">
+              <span class="quote-icon">💬</span>
+              <p class="quote-text">«${quote}»</p>
+            </div>
+          </div>`;
+
+        const feedingSection = `
+          <div class="jasmine-feeding-section">
+            <div class="section-head">
+              <h3>${uiText('Исцеление Божественной Души', 'Healing Divine Soul')}</h3>
+            </div>
+            <p class="intro">${uiText('Исцеление души: вскармливание 100% чистыми пилюлями Жемчужины и Живительной Росой Сада очищает древний яд, пробуждая истинную мощь Звездного Бога.', 'Soul Healing: feeding 100% pure Pearl pills and Garden Vital Dew purges ancient poison, awakening the Star God’s true power.')}</p>
+            <div class="jasmine-feed-grid">
+              <div class="jasmine-feed-card">
+                <div class="feed-icon">💧</div>
+                <div class="feed-info">
+                  <h5>${uiText('Живительная Роса Сада', 'Garden Vital Dew')}</h5>
+                  <p>${uiText('В запасе: ', 'In stock: ')}<strong>${dewStock}</strong> ${uiText('ед. (требуется 10 ед. за порцию: +5% чистоты)', 'units (requires 10 units: +5% purity)')}</p>
+                </div>
+                <button type="button" class="btn-jasmine-feed" data-alchemy-action="jasmine-feed" data-type="dew" ${canFeedDew ? '' : 'disabled'}>
+                  ${uiText('Накормить Живительной Росой (10 ед.)', 'Feed Vital Dew (10 units)')}
+                </button>
+              </div>
+              <div class="jasmine-feed-card">
+                <div class="feed-icon">🔮</div>
+                <div class="feed-info">
+                  <h5>${uiText('100% Чистая Пилюля Жемчужины', '100% Pure Pearl Pill')}</h5>
+                  <p>${uiText('В запасе: ', 'In stock: ')}<strong>${purePillCount}</strong> ${uiText('чистых пилюль (+8% чистоты души)', 'pure pills (+8% soul purity)')}</p>
+                </div>
+                <button type="button" class="btn-jasmine-feed" data-alchemy-action="jasmine-feed" data-type="pure_pill" ${canFeedPill ? '' : 'disabled'}>
+                  ${uiText('Вскормить 100% Чистую Пилюлю', 'Feed 100% Pure Pill')}
+                </button>
+              </div>
+            </div>
+          </div>`;
+
+        const blessingsCards = Alc.JASMINE_TIERS.map(t => {
+          const unlocked = jas.level >= t.level;
+          return `
+            <div class="jasmine-tier-card ${unlocked ? 'unlocked' : 'locked'}">
+              <div class="tier-badge">${unlocked ? '✨' : '🔒'} ${uiText('Ступень ', 'Tier ')}${t.level}</div>
+              <div class="tier-content">
+                <h5>${isEn ? t.titleEn : t.titleRu} (${t.reqPurity}% ${uiText('чистоты', 'purity')})</h5>
+                <p class="tier-perk">${isEn ? t.perkEn : t.perkRu}</p>
+              </div>
+            </div>`;
+        }).join('');
+
+        const blessingsSection = `
+          <div class="jasmine-blessings-section">
+            <div class="section-head">
+              <h3>${uiText('Текущие благословения Жасмин:', 'Current Blessings of Jasmine:')}</h3>
+            </div>
+            <div class="jasmine-tiers-grid">
+              ${blessingsCards}
+            </div>
+          </div>`;
+
+        let logHtml = '';
+        if (alc.log && alc.log.length > 0) {
+          logHtml = `
+            <div class="alchemy-log-box" style="margin-top:20px">
+              <h4>${uiText('История варки', 'Brewing Log')}</h4>
+              ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+            </div>`;
+        }
+
+        body.innerHTML = `
+          <div class="jasmine-container">
+            ${headerHtml}
+            ${feedingSection}
+            ${blessingsSection}
+            ${logHtml}
+          </div>`;
+      } else if (activeAlchemyTab === 'poisons') {
+        const vState = alc.venoms || { inventory: {}, coated: { id: null, charges: 0 } };
+        const coated = vState.coated || { id: null, charges: 0 };
+        const coatedDef = coated.id ? Alc.VENOMS?.[coated.id] : null;
+
+        const coatedHeader = `
+          <div class="poison-workshop-header">
+            <div class="poison-title-meta">
+              <h3>${uiText('МАСТЕРСКАЯ БОЕВЫХ ЯДОВ ЖЕМЧУЖИНЫ', 'PEARL POISON WORKSHOP')}</h3>
+              <p class="intro">${uiText('Создание смертоносных токсинов из ядовитых желез и спор. Смазка оружия дарует атакам в бою статус отравления DoT, пробивание стойки и барьеров.', 'Distilling lethal toxins from venom sacs and spores. Coating weapons grants combat attacks poison DoT, poise destruction, and shield piercing.')}</p>
+            </div>
+            <div class="poison-coated-badge ${coatedDef ? 'active' : ''}">
+              <span class="coated-icon">${coatedDef ? coatedDef.icon : '🗡️'}</span>
+              <div class="coated-info">
+                <span class="coated-lbl">${uiText('Текущая смазка оружия:', 'Current Weapon Coating:')}</span>
+                <strong>${coatedDef ? (isEn ? coatedDef.nameEn : coatedDef.nameRu) : uiText('Оружие не смазано ядом', 'Weapon is not coated with venom')}</strong>
+                ${coatedDef ? `<small>${coated.charges}${uiText(' зарядов', ' charges')}</small>` : ''}
+              </div>
+            </div>
+          </div>`;
+
+        const venomCards = Object.values(Alc.VENOMS || {}).map(v => {
+          const inStock = vState.inventory?.[v.id] || 0;
+          const canCraft = Alc.canCraftVenom ? Alc.canCraftVenom(s, v.id) : false;
+          const canCoat = Alc.canCoatWeapon ? Alc.canCoatWeapon(s, v.id) : false;
+
+          const costStr = Object.entries(v.costIngredients || {}).map(([ingId, count]) => {
+            const ing = Alc.INGREDIENTS?.[ingId];
+            const name = ing ? (isEn ? ing.nameEn : ing.nameRu) : ingId;
+            return `${name} ×${count}`;
+          }).join(', ') + (v.pearlQi ? `, Qi: ${v.pearlQi}` : '');
+
+          return `
+            <div class="venom-card">
+              <div class="venom-card-header">
+                <span class="venom-icon">${v.icon}</span>
+                <div class="venom-head-meta">
+                  <h5>${isEn ? v.nameEn : v.nameRu}</h5>
+                  <span class="venom-stat-tag">DoT: -${v.dotDmg} HP / ${v.poiseDmg ? `-${v.poiseDmg} Poise` : 'Piercing'}</span>
+                </div>
+              </div>
+              <p class="venom-desc">${isEn ? v.descEn : v.descRu}</p>
+              <div class="venom-recipe-info">
+                <span>${uiText('Требуется: ', 'Requires: ')}${costStr}</span>
+                <span>${uiText('Зарядов: ', 'Charges: ')}<strong>${v.charges}</strong> | ${uiText('В запасе: ', 'In stock: ')}<strong>${inStock}</strong></span>
+              </div>
+              <div class="venom-actions-row">
+                <button type="button" class="btn-venom-craft" data-alchemy-action="venom-craft" data-venom="${v.id}" ${canCraft ? '' : 'disabled'}>
+                  ${uiText('Дистиллировать', 'Distill')}
+                </button>
+                <button type="button" class="btn-venom-coat" data-alchemy-action="venom-coat" data-venom="${v.id}" ${canCoat ? '' : 'disabled'}>
+                  ${uiText('Смазать оружие', 'Coat Weapon')}
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+
+        let logHtml = '';
+        if (alc.log && alc.log.length > 0) {
+          logHtml = `
+            <div class="alchemy-log-box" style="margin-top:20px">
+              <h4>${uiText('История варки', 'Brewing Log')}</h4>
+              ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+            </div>`;
+        }
+
+        body.innerHTML = `
+          <div class="poisons-container">
+            ${coatedHeader}
+            <div class="venoms-grid">
+              ${venomCards}
+            </div>
+            ${logHtml}
+          </div>`;
+      } else if (activeAlchemyTab === 'expedition') {
+        const exp = alc.expedition || { maxDepth: 1, currentDepth: 1, danger: 0, loot: {}, inProgress: false };
+        const dDef = Alc.EXPEDITION_DEPTHS?.[exp.currentDepth - 1] || Alc.EXPEDITION_DEPTHS?.[0];
+
+        const headerHtml = `
+          <div class="expedition-header">
+            <h3>${uiText('ЭКСПЕДИЦИИ В ХРЕБЕТ ДЕСЯТИ ТЫСЯЧ ЗВЕРЕЙ', 'EXPEDITIONS TO TEN THOUSAND BEAST RANGE')}</h3>
+            <p class="intro">${uiText('Опасные рейды в глубины горного хребта за ядрами духовных зверей и редчайшими реликтовыми травами. Чем глубже шаг, тем выше угроза засады стаи чудовищ.', 'Perilous raids into the depths of the mountain range for spirit beast cores and rare relic herbs. The deeper you venture, the higher the beast ambush danger.')}</p>
+          </div>`;
+
+        let mainSection = '';
+        if (exp.inProgress) {
+          const lootEntries = Object.entries(exp.loot || {}).filter(([, v]) => v > 0);
+          const lootStr = lootEntries.map(([k, v]) => {
+            const ing = Alc.INGREDIENTS?.[k] || Alc.BEAST_CORES?.[k];
+            const name = ing ? (isEn ? ing.nameEn : ing.nameRu) : k;
+            return `${name} ×${v}`;
+          }).join(', ') || uiText('Добычи пока нет', 'No loot yet');
+
+          mainSection = `
+            <div class="expedition-progress-card">
+              <div class="exp-status-row">
+                <div class="exp-meta">
+                  <h4>🌲 ${isEn ? dDef.nameEn : dDef.nameRu} (${uiText('Глубина ', 'Depth ')}${exp.currentDepth})</h4>
+                  <p>${isEn ? dDef.descEn : dDef.descRu}</p>
+                </div>
+                <div class="danger-badge ${exp.danger >= 70 ? 'critical' : (exp.danger >= 40 ? 'warning' : 'safe')}">
+                  <span>${uiText('Угроза обнаружения: ', 'Danger Level: ')}<strong>${exp.danger}%</strong></span>
+                </div>
+              </div>
+              <div class="exp-loot-box">
+                <span class="loot-lbl">🎒 ${uiText('Накопленная добыча в мешке:', 'Loot accumulated in pack:')}</span>
+                <p class="loot-text">${lootStr}</p>
+              </div>
+              <div class="exp-actions-grid">
+                <button type="button" class="btn-exp-action btn-hunt" data-alchemy-action="expedition-step" data-subaction="hunt">
+                  ⚔️ ${uiText('Охота на Зверей (Добыча ядер)', 'Hunt Beasts (Loot Cores)')}
+                </button>
+                <button type="button" class="btn-exp-action btn-forage" data-alchemy-action="expedition-step" data-subaction="forage">
+                  🌿 ${uiText('Поиск Редких Трав', 'Forage Rare Herbs')}
+                </button>
+                <button type="button" class="btn-exp-action btn-extract" data-alchemy-action="expedition-extract">
+                  🏕️ ${uiText('Безопасная Эвакуация (Забрать всё)', 'Safe Extraction (Keep All)')}
+                </button>
+                <button type="button" class="btn-exp-action btn-flee" data-alchemy-action="expedition-flee">
+                  🏃 ${uiText('Экстренное Бегство (Потерять 50%)', 'Emergency Flee (Lose 50%)')}
+                </button>
+              </div>
+            </div>`;
+        } else {
+          const depthCards = (Alc.EXPEDITION_DEPTHS || []).map(d => {
+            const unlocked = d.depth <= exp.maxDepth;
+            const levelReqMet = alc.level >= d.reqAlchemyLevel;
+            const canStart = unlocked && levelReqMet;
+
+            return `
+              <div class="depth-card ${canStart ? 'available' : 'locked'}">
+                <div class="depth-head">
+                  <h5>${isEn ? d.nameEn : d.nameRu}</h5>
+                  <span class="depth-tag">${uiText('Глубина ', 'Depth ')}${d.depth}</span>
+                </div>
+                <p class="depth-desc">${isEn ? d.descEn : d.descRu}</p>
+                <div class="depth-details">
+                  <span>${uiText('Требуется: ', 'Requires: ')}${uiText('Ранг алхимии ', 'Alchemy Rank ')}${d.reqAlchemyLevel}</span>
+                  <span>${uiText('Угроза обнаружения: ', 'Danger Level: ')}${d.dangerBase}%</span>
+                </div>
+                <button type="button" class="btn-start-exp" data-alchemy-action="expedition-start" data-depth="${d.depth}" ${canStart ? '' : 'disabled'}>
+                  ${uiText('Начать экспедицию', 'Start Expedition')}
+                </button>
+              </div>`;
+          }).join('');
+
+          mainSection = `
+            <div class="depths-selection-grid">
+              ${depthCards}
+            </div>`;
+        }
+
+        let logHtml = '';
+        if (alc.log && alc.log.length > 0) {
+          logHtml = `
+            <div class="alchemy-log-box" style="margin-top:20px">
+              <h4>${uiText('История варки', 'Brewing Log')}</h4>
+              ${alc.log.slice(0, 5).map(e => `<div class="alchemy-log-item">${isEn ? e.en : e.ru}</div>`).join('')}
+            </div>`;
+        }
+
+        body.innerHTML = `
+          <div class="expedition-container">
+            ${headerHtml}
+            ${mainSection}
+            ${logHtml}
+          </div>`;
+      } else {
+        // cauldron tab
       const rankTitle=isEn?currentRank.en:currentRank.ru;
       const rankPerk=isEn?currentRank.perkEn:currentRank.perkRu;
 
@@ -3178,6 +3450,61 @@
           toast(uiText('Сокровище Павильона получено!', 'Pavilion treasure acquired!'));
         } else {
           toast(uiText('Недостаточно заслуг секты!', 'Not enough sect merits!'));
+        }
+      } else if (act === 'jasmine-feed') {
+        const feedType = b.dataset.type;
+        if (E.action(s, 'alchemy-jasmine-feed', feedType)) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Душа Жасмин напитана целебной силой!', 'Jasmine’s soul is nourished by healing power!'));
+        } else {
+          toast(feedType === 'dew' ? uiText('Не хватает Росы для исцеления!', 'Not enough Dew for healing!') : uiText('Нет 100% чистых пилюль для Жасмин!', 'No 100% pure pills for Jasmine!'));
+        }
+      } else if (act === 'venom-craft') {
+        const vId = b.dataset.venom;
+        if (E.action(s, 'alchemy-venom-craft', vId)) {
+          Sound.playBowl?.();
+          save();
+          toast(uiText('Флакон яда создан!', 'Poison vial crafted!'));
+        } else {
+          toast(uiText('Недостаточно ингредиентов или Ци!', 'Not enough ingredients or Qi!'));
+        }
+      } else if (act === 'venom-coat') {
+        const vId = b.dataset.venom;
+        if (E.action(s, 'alchemy-venom-coat', vId)) {
+          Sound.playClash?.();
+          save();
+          toast(uiText('Оружие успешно смазано ядом!', 'Weapon successfully coated with venom!'));
+        } else {
+          toast(uiText('Не хватает яда в запасе!', 'Not enough venom in stock!'));
+        }
+      } else if (act === 'expedition-start') {
+        const depth = b.dataset.depth;
+        if (E.action(s, 'alchemy-expedition-start', depth)) {
+          Sound.playParchment?.();
+          save();
+          toast(uiText('Экспедиция завершена шагом вперёд!', 'Expedition advanced by a step!'));
+        } else {
+          toast(uiText('Экспедиция уже идёт или условия не выполнены!', 'Expedition in progress or requirements not met!'));
+        }
+      } else if (act === 'expedition-step') {
+        const subaction = b.dataset.subaction;
+        if (E.action(s, 'alchemy-expedition-step', subaction)) {
+          if (subaction === 'hunt') Sound.playClash?.();
+          else Sound.playBowl?.();
+          save();
+        }
+      } else if (act === 'expedition-extract') {
+        if (E.action(s, 'alchemy-expedition-extract')) {
+          Sound.playBreakthrough?.();
+          save();
+          toast(uiText('Успешная эвакуация с добычей!', 'Successful extraction with loot!'));
+        }
+      } else if (act === 'expedition-flee') {
+        if (E.action(s, 'alchemy-expedition-flee')) {
+          Sound.playClick?.();
+          save();
+          toast(uiText('Экстренное бегство: половина добычи спасена!', 'Emergency flee: half loot salvaged!'));
         }
       }
       renderAlchemy();

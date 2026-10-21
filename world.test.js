@@ -58,3 +58,17 @@ assert(W.action(gated,'map-inspect','dark-forest',E));assert.equal(gated.world.e
 gated.body=8;gated.calm=5;assert(W.action(gated,'map-inspect','dark-forest',E));assert.equal(W.current(gated).id,'forest:1');
 assert(gated.world.map.explored.includes('dark-forest'));assert.deepEqual(E.validate(gated),gated);
 const migration=E.fresh();delete migration.world.map;assert.deepEqual(E.validate(migration).world.map,{explored:[],sites:[]});
+
+// Wandering Doctor Road Events
+const dr=E.fresh();
+dr.world.journey={destination:'forest',remaining:30,total:60,claimedEvent:false};
+assert(W.roadEvents.some(ev=>ev.id==='road_wounded_caravan'));
+assert(W.roadEvents.some(ev=>ev.id==='road_poisoned_disciple'));
+assert(W.roadEvents.some(ev=>ev.id==='road_rogue_herbalist'));
+const rev=W.roadEvent(dr,'en');
+assert(rev&&rev.title.length>0);
+assert(!/[А-Яа-яЁё]/.test(rev.title));
+assert(!/[А-Яа-яЁё]/.test(rev.desc));
+assert(E.action(dr,'claim-road-event'));
+assert.equal(dr.world.journey.claimedEvent,true);
+

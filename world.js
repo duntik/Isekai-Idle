@@ -185,7 +185,10 @@
     {id:'teahouse',title:['Придорожная чайная у ручья','Wayside Teahouse by Stream'],desc:['Обозы остановились на привал. Горячий настой чая восстанавливает силы (+25 выносливости, +2 спокойствия).','Caravans halted for a rest. Steaming herbal tea restores vitality (+25 stamina, +2 calm).'],icon:'🍵',reward:{stamina:25,calm:2},rewardText:['Выносливость +25, спокойствие +2','Stamina +25, calm +2']},
     {id:'rockslide',title:['Камнепад на перевале','Mountain Pass Rockslide'],desc:['Обвал завалил колею. Помощь возчикам в расчистке приносит благодарность и 8 монет.','A rockfall blocked the wagon ruts. Assisting carters in clearing stones earns 8 coins.'],icon:'🪨',reward:{gold:8},rewardText:['Монеты +8','Coins +8']},
     {id:'wolf',title:['Степной зверь у тракта','Steppe Beast by the Verge'],desc:['Хищный зверь выскочил к дороге, но отступил перед аурой Жемчужины Яда, обронив 5 целебных трав.','A predator sprang toward the road but recoiled before the Poison Pearl, dropping 5 herbs.'],icon:'🐺',reward:{herbs:5},rewardText:['Травы +5','Herbs +5']},
-    {id:'bundle',title:['Забытый тюк торговца','Lost Traveler’s Bundle'],desc:['На обочине найден брошенный дорожный тюк с припасами (+6 монет, +3 травы).','An abandoned traveler’s pack was found by the road (+6 coins, +3 herbs).'],icon:'📦',reward:{gold:6,herbs:3},rewardText:['Монеты +6, травы +3','Coins +6, herbs +3']}
+    {id:'bundle',title:['Забытый тюк торговца','Lost Traveler’s Bundle'],desc:['На обочине найден брошенный дорожный тюк с припасами (+6 монет, +3 травы).','An abandoned traveler’s pack was found by the road (+6 coins, +3 herbs).'],icon:'📦',reward:{gold:6,herbs:3},rewardText:['Монеты +6, травы +3','Coins +6, herbs +3']},
+    {id:'road_wounded_caravan',title:['Раненый караван купцов','Wounded Merchant Caravan'],desc:['Охрана каравана изранена дорожными разбойниками. Оказав медицинскую помощь целебной мазью, ты спасаешь купцов (+35 монет, +10 трав).','Caravan guards were wounded by road brigands. Administering medical balm saves the merchants (+35 coins, +10 herbs).'],icon:'🚑',reward:{gold:35,herbs:10,calm:2},rewardText:['Монеты +35, травы +10, спокойствие +2','Coins +35, herbs +10, calm +2']},
+    {id:'road_poisoned_disciple',title:['Отравленный странствующий ученик','Poisoned Wandering Disciple'],desc:['Ученик секты стонет от укуса ядовитого полоза. Сила Небесной Жемчужины поглощает яд (+20 Ци, +1 ядовитая железа, +1 осколок).','A sect disciple groans from a viper bite. The Sky Poison Pearl purges the venom (+20 Qi, +1 venom sac, +1 shard).'],icon:'🧪',reward:{qi:20,relics:1,herbs:6},rewardText:['Ци +20, осколок +1, травы +6, ядовитая железа +1','Qi +20, shard +1, herbs +6, venom sac +1']},
+    {id:'road_rogue_herbalist',title:['Беглый травник из Хребта Зверей','Rogue Beast Range Herbalist'],desc:['Старый сборщик спасается от свирепых зверей. За защиту на тракте он делится редким Ядром Духовного Зверя (+15 монет, +1 Малое ядро зверя).','An old forager flees fierce beasts. For road escort, he shares a Spirit Beast Core (+15 coins, +1 Lesser Beast Core).'],icon:'🧙‍♂️',reward:{gold:15,herbs:8},rewardText:['Монеты +15, травы +8, Малое ядро зверя +1','Coins +15, herbs +8, Lesser Beast Core +1']}
   ];
   function roadEvent(s,language='ru'){
     if(!s.world?.journey)return null;const en=language==='en',j=s.world.journey;
@@ -196,10 +199,21 @@
   function claimRoadEvent(s,E){
     if(!s.world?.journey||s.world.journey.claimedEvent)return false;const ev=roadEvent(s,'ru');if(!ev)return false;
     s.world.journey.claimedEvent=true;
+    const maskBonus=s.alchemy?.mask?.active?1.5:1.0;
     if(ev.reward.stamina)s.stamina=Math.min(E?.staminaMax?E.staminaMax(s):100,(s.stamina||0)+ev.reward.stamina);
     if(ev.reward.calm)s.calm=Math.min(100,(s.calm||0)+ev.reward.calm);
-    if(ev.reward.gold)s.resources.gold=(s.resources.gold||0)+ev.reward.gold;
+    if(ev.reward.gold)s.resources.gold=(s.resources.gold||0)+Math.floor(ev.reward.gold*maskBonus);
     if(ev.reward.herbs)s.resources.herbs=(s.resources.herbs||0)+ev.reward.herbs;
+    if(ev.reward.qi)s.resources.qi=(s.resources.qi||0)+ev.reward.qi;
+    if(ev.reward.relics)s.resources.relics=(s.resources.relics||0)+ev.reward.relics;
+    if(ev.id==='road_poisoned_disciple'&&s.alchemy){
+      if(!s.alchemy.ingredients)s.alchemy.ingredients={};
+      s.alchemy.ingredients.poison_sac=(s.alchemy.ingredients.poison_sac||0)+1;
+    }
+    if(ev.id==='road_rogue_herbalist'&&s.alchemy){
+      if(!s.alchemy.ingredients)s.alchemy.ingredients={};
+      s.alchemy.ingredients.beast_core_low=(s.alchemy.ingredients.beast_core_low||0)+1;
+    }
     if(E?.log)E.log(s,`Дорожное событие: ${ev.title}. ${ev.rewardText}.`);
     return true;
   }

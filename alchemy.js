@@ -136,6 +136,33 @@
       descEn: 'Divine petals from millennial mutation of primordial chaos.',
       icon: '🌸',
       cost: 120
+    },
+    beast_core_low: {
+      id: 'beast_core_low',
+      nameRu: 'Малое Ядро Духовного Зверя',
+      nameEn: 'Lesser Spirit Beast Core',
+      descRu: 'Ядро зверя начальной ступени из предгорий Хребта Зверей. Насыщено чистой плотской силой.',
+      descEn: 'Core of an early-tier beast from Beast Range foothills. Dense with primal vigor.',
+      icon: '💎',
+      cost: 35
+    },
+    beast_core_mid: {
+      id: 'beast_core_mid',
+      nameRu: 'Среднее Ядро Духовного Зверя',
+      nameEn: 'Medium Spirit Beast Core',
+      descRu: 'Ядро свирепого зверя глубоких ущелий. Используется в пилюлях стойкости и драконьей силы.',
+      descEn: 'Core of a fierce beast from deep gorges. Used in resilience and dragon might elixirs.',
+      icon: '🔮',
+      cost: 80
+    },
+    beast_core_high: {
+      id: 'beast_core_high',
+      nameRu: 'Великое Ядро Короля Зверей',
+      nameEn: 'Great Beast King Core',
+      descRu: 'Кристаллизованная сущность древнего Короля Зверей. Катализатор высших пилюль бессмертия.',
+      descEn: 'Crystallized essence of an ancient Beast King. Catalyst for supreme immortality elixirs.',
+      icon: '👑',
+      cost: 200
     }
   };
 
@@ -633,6 +660,33 @@
         return {
           ru: `Пилюля Драконьей Жизненной Силы усвоена: Тело +${bodyGain.toFixed(2)}, макс. выносливость +${stamGain.toFixed(1)}!`,
           en: `Dragon Vitality Dan absorbed: Body +${bodyGain.toFixed(2)}, max stamina +${stamGain.toFixed(1)}!`
+        };
+      }
+    },
+    beast_temper_pill: {
+      id: 'beast_temper_pill',
+      nameRu: 'Пилюля Звериной Мощи',
+      nameEn: 'Beast Tempering Pill',
+      descRu: 'Снадобье на ядре духовного зверя: напитывает мышцы первобытной яростью, увеличивая Тело и стойку.',
+      descEn: 'Elixir forged with a spiritual beast core: infuses muscles with primal fury, increasing Body and poise.',
+      icon: '🐺',
+      reqLevel: 2,
+      ingredients: { beast_core_low: 1, iron_root: 2, mountain_herb: 1 },
+      pearlQi: 15,
+      effectRu: 'Тело +0.15, макс. выносл. +3.0 (Жемчужина: Тело +0.25, макс. выносл. +5.0, стойка +5)',
+      effectEn: 'Body +0.15, max stamina +3.0 (Pearl: Body +0.25, max stamina +5.0, poise +5)',
+      combatEffectRu: 'В бою: +30 стойкости и +20% к пробиванию защиты врага',
+      combatEffectEn: 'In combat: +30 poise and +20% guard penetration',
+      apply(s, isPearl, isCrit) {
+        const bodyGain = isPearl ? 0.25 : (isCrit ? 0.20 : 0.15);
+        const stamGain = isPearl ? 5.0 : 3.0;
+        s.body = Math.min(10 * (s.realm + 1), s.body + bodyGain);
+        s.staminaMax = Math.min(300, (s.staminaMax || 100) + stamGain);
+        s.stamina = s.staminaMax;
+        s.resources.pills = (s.resources.pills || 0) + 1;
+        return {
+          ru: `Пилюля Звериной Мощи усвоена: Тело +${bodyGain.toFixed(2)}, выносливость +${stamGain.toFixed(1)}!`,
+          en: `Beast Tempering Pill absorbed: Body +${bodyGain.toFixed(2)}, stamina +${stamGain.toFixed(1)}!`
         };
       }
     }
@@ -1174,6 +1228,190 @@
     }
   };
 
+  const JASMINE_TIERS = [
+    {
+      level: 0,
+      reqPurity: 0,
+      titleRu: 'Спящая Богиня',
+      titleEn: 'Slumbering Goddess',
+      descRu: 'Душа тяжело отравлена ядом, убивающим богов. Жасмин пребывает в глубоком сне во тьме Жемчужины.',
+      descEn: 'Soul heavily poisoned by God-Killing Absolute Venom. Jasmine slumbers in the Pearl’s darkness.',
+      perkRu: 'Жасмин спит во тьме Жемчужины',
+      perkEn: 'Jasmine slumbers in Pearl darkness'
+    },
+    {
+      level: 1,
+      reqPurity: 20,
+      titleRu: 'Пробуждение Души',
+      titleEn: 'Soul Awakening',
+      descRu: 'Жасмин открыла глаза. Её дух ускоряет конденсацию Росы на +15% и бережёт травы в котле (+10%).',
+      descEn: 'Jasmine awakens. Her presence accelerates Garden Dew by +15% and saves herbs in cauldrons (+10%).',
+      perkRu: '+15% к скорости росы, +10% к сбережению трав',
+      perkEn: '+15% garden dew rate, +10% herb preservation'
+    },
+    {
+      level: 2,
+      reqPurity: 40,
+      titleRu: 'Тень Звездного Бога',
+      titleEn: 'Star God’s Broken Shadow',
+      descRu: 'Жасмин передаёт движение «Тень Звездного Бога»: 40% шанс полностью уклониться от удара врага в бою!',
+      descEn: 'Jasmine imparts “Star God’s Broken Shadow”: 40% chance to completely evade an enemy strike in combat!',
+      perkRu: '40% шанс уклонения в бою (Тень Звездного Бога)',
+      perkEn: '40% evasion chance in combat (Star God Shadow)'
+    },
+    {
+      level: 3,
+      reqPurity: 60,
+      titleRu: 'Свет Астральной Памяти',
+      titleEn: 'Astral Memory Light',
+      descRu: 'Память Звездного Бога очищает Жемчужину: скидка 20% на Ци при очищении, +10% к шансу крита при варке.',
+      descEn: 'Star God memories cleanse the Pearl: -20% Qi cost for Pearl purge, +10% alchemy crit chance.',
+      perkRu: '-20% расхода Ци Жемчужины, +10% крита алхимии',
+      perkEn: '-20% Pearl Qi cost, +10% alchemy crit chance'
+    },
+    {
+      level: 4,
+      reqPurity: 80,
+      titleRu: 'Врата Горящего Сердца',
+      titleEn: 'Burning Heart Gate',
+      descRu: 'Секрет Врат Злого Бога: когда HP падает ниже 50%, урон возрастает на +30%, а боевой кураж растёт в 2 раза быстрее!',
+      descEn: 'Evil God Gate secret: when HP drops below 50%, damage surges by +30% and momentum builds twice as fast!',
+      perkRu: '+30% урона и удвоенный импульс при HP < 50%',
+      perkEn: '+30% damage and 2x momentum when HP < 50%'
+    },
+    {
+      level: 5,
+      reqPurity: 100,
+      titleRu: 'Звездный Барьер Бессмертия',
+      titleEn: 'Astral Barrier of Immortality',
+      descRu: 'Божественная душа полностью исцелена! Раз в бою защищает от гибели, восстанавливая 35% HP!',
+      descEn: 'Divine soul fully restored! Once per battle negates a fatal blow, restoring 35% HP!',
+      perkRu: 'Отрицание смертельного удара (1 раз за бой, 35% HP)',
+      perkEn: 'Fatal blow negation (once per fight, 35% HP)'
+    }
+  ];
+
+  const VENOMS = {
+    viper_fang: {
+      id: 'viper_fang',
+      nameRu: 'Яд Гадюки',
+      nameEn: 'Viper Fang Venom',
+      descRu: 'Быстрый яд для оружия: наносит 8 DoT урона каждый раунд (до 5 стаков).',
+      descEn: 'Fast weapon venom: inflicts 8 DoT damage each round (up to 5 stacks).',
+      icon: '🐍',
+      charges: 6,
+      dotDmg: 8,
+      poiseDmg: 0,
+      costIngredients: { poison_sac: 1, mountain_herb: 2 },
+      pearlQi: 5
+    },
+    bone_corrosion: {
+      id: 'bone_corrosion',
+      nameRu: 'Костоломный Трупный Яд',
+      nameEn: 'Bone-Corrosion Venom',
+      descRu: 'Едкая кислота, разъедающая доспехи и кости: наносит 14 DoT урона и -8 стойкости каждый раунд.',
+      descEn: 'Caustic acid corroding armor and bone: inflicts 14 DoT damage and -8 poise per round.',
+      icon: '☠️',
+      charges: 5,
+      dotDmg: 14,
+      poiseDmg: 8,
+      costIngredients: { poison_spore: 2, iron_root: 2 },
+      pearlQi: 10
+    },
+    nine_sun_blaze: {
+      id: 'nine_sun_blaze',
+      nameRu: 'Пламя Девяти Солнц',
+      nameEn: 'Nine Sun Blaze Venom',
+      descRu: 'Яд палящего огня: прожигает щиты врага на 22 DoT урона и -12 стойкости за стак.',
+      descEn: 'Scorching fire venom: melts enemy shields for 22 DoT damage and -12 poise per stack.',
+      icon: '🔥',
+      charges: 4,
+      dotDmg: 22,
+      poiseDmg: 12,
+      costIngredients: { flame_bloom: 2, poison_sac: 2 },
+      pearlQi: 15
+    },
+    primordial_miasma: {
+      id: 'primordial_miasma',
+      nameRu: 'Первородная Миазма Хаоса',
+      nameEn: 'Primordial Chaos Miasma',
+      descRu: 'Высший божественный яд Жемчужины: 35 DoT чистого урона и -20 стойкости, игнорируя любую защиту.',
+      descEn: 'Supreme divine Pearl venom: 35 pure DoT damage and -20 poise, ignoring all defenses.',
+      icon: '🌌',
+      charges: 3,
+      dotDmg: 35,
+      poiseDmg: 20,
+      costIngredients: { aged_poison_sac: 1, divine_petals: 1 },
+      pearlQi: 25
+    }
+  };
+
+  const BEAST_CORES = {
+    beast_core_low: {
+      id: 'beast_core_low',
+      nameRu: 'Малое Ядро Духовного Зверя',
+      nameEn: 'Lesser Spirit Beast Core',
+      tier: 1,
+      power: 20
+    },
+    beast_core_mid: {
+      id: 'beast_core_mid',
+      nameRu: 'Среднее Ядро Духовного Зверя',
+      nameEn: 'Medium Spirit Beast Core',
+      tier: 2,
+      power: 50
+    },
+    beast_core_high: {
+      id: 'beast_core_high',
+      nameRu: 'Великое Ядро Короля Зверей',
+      nameEn: 'Great Beast King Core',
+      tier: 3,
+      power: 120
+    }
+  };
+
+  const EXPEDITION_DEPTHS = [
+    {
+      depth: 1,
+      nameRu: 'Предгорья Хребта Зверей',
+      nameEn: 'Beast Range Foothills',
+      descRu: 'Скалистые террасы, населённые свирепыми волками и костяными змеями.',
+      descEn: 'Rocky terraces inhabited by fierce wolves and bone vipers.',
+      reqAlchemyLevel: 1,
+      dangerBase: 15,
+      cores: ['beast_core_low'],
+      herbs: ['mountain_herb', 'iron_root'],
+      beastNameRu: 'Горный Волк',
+      beastNameEn: 'Mountain Wolf'
+    },
+    {
+      depth: 2,
+      nameRu: 'Ущелья Грозовых Ветров',
+      nameEn: 'Stormwind Gorges',
+      descRu: 'Глубокие расщелины с ядовитыми испарениями и огненными василисками.',
+      descEn: 'Deep chasms shrouded in toxic vapors and fiery basilisks.',
+      reqAlchemyLevel: 2,
+      dangerBase: 35,
+      cores: ['beast_core_mid'],
+      herbs: ['flame_bloom', 'frost_lotus'],
+      beastNameRu: 'Огненный Василиск',
+      beastNameEn: 'Flame Basilisk'
+    },
+    {
+      depth: 3,
+      nameRu: 'Логово Королей Зверей',
+      nameEn: 'Beast King Lair',
+      descRu: 'Древнее первозданное святилище древних Королей Зверей.',
+      descEn: 'Primal primordial domain of ancient Beast Kings.',
+      reqAlchemyLevel: 3,
+      dangerBase: 60,
+      cores: ['beast_core_high'],
+      herbs: ['aged_iron_root', 'aged_frost_lotus', 'aged_poison_sac'],
+      beastNameRu: 'Древний Король Зверей',
+      beastNameEn: 'Ancient Beast King'
+    }
+  ];
+
   const FORAGE_TABLES = {
     village: {
       id: 'village',
@@ -1327,7 +1565,8 @@
         iron_dragon_pill: 0,
         nine_revolutions: 0,
         sky_nirvana: 0,
-        dragon_vitality: 0
+        dragon_vitality: 0,
+        beast_temper_pill: 0
       },
       pureInventory: {
         vigor_broth: 0,
@@ -1339,7 +1578,8 @@
         iron_dragon_pill: 0,
         nine_revolutions: 0,
         sky_nirvana: 0,
-        dragon_vitality: 0
+        dragon_vitality: 0,
+        beast_temper_pill: 0
       },
       pouch: ['vigor_broth', null, null],
       patients: ['ba_strained', 'hunter_poison'],
@@ -1370,6 +1610,39 @@
         completedCommissions: [],
         activeCommissions: ['contract_scout_salve', 'contract_bone_temper', 'contract_clear_mind']
       },
+      jasmine: {
+        soulPurity: 0,
+        level: 0,
+        dewFed: 0,
+        pillsFed: 0,
+        unlockedPerks: []
+      },
+      venoms: {
+        inventory: {
+          viper_fang: 0,
+          bone_corrosion: 0,
+          nine_sun_blaze: 0,
+          primordial_miasma: 0
+        },
+        coated: {
+          id: null,
+          charges: 0
+        }
+      },
+      expedition: {
+        maxDepth: 1,
+        currentDepth: 1,
+        danger: 0,
+        loot: {
+          beast_core_low: 0,
+          beast_core_mid: 0,
+          beast_core_high: 0,
+          flame_bloom: 0,
+          frost_lotus: 0,
+          poison_sac: 0
+        },
+        inProgress: false
+      },
       ingredients: {
         mountain_herb: 5,
         spring_water: 3,
@@ -1385,7 +1658,10 @@
         aged_frost_lotus: 0,
         aged_flame_bloom: 0,
         aged_poison_sac: 0,
-        divine_petals: 0
+        divine_petals: 0,
+        beast_core_low: 0,
+        beast_core_mid: 0,
+        beast_core_high: 0
       },
       garden: {
         unlockedPlots: 2,
@@ -1636,6 +1912,54 @@
       };
     }
 
+    if (input.jasmine && typeof input.jasmine === 'object') {
+      const purity = Math.max(0, Math.min(100, Math.floor(input.jasmine.soulPurity || 0)));
+      let lvl = 0;
+      for (let i = JASMINE_TIERS.length - 1; i >= 0; i--) {
+        if (purity >= JASMINE_TIERS[i].reqPurity) {
+          lvl = JASMINE_TIERS[i].level;
+          break;
+        }
+      }
+      base.jasmine = {
+        soulPurity: purity,
+        level: lvl,
+        dewFed: Math.max(0, Math.floor(input.jasmine.dewFed || 0)),
+        pillsFed: Math.max(0, Math.floor(input.jasmine.pillsFed || 0)),
+        unlockedPerks: Array.isArray(input.jasmine.unlockedPerks) ? [...input.jasmine.unlockedPerks] : []
+      };
+    }
+
+    if (input.venoms && typeof input.venoms === 'object') {
+      const inv = {};
+      for (const k of Object.keys(VENOMS)) {
+        inv[k] = Math.max(0, Math.floor(input.venoms.inventory?.[k] || 0));
+      }
+      const coatedInp = input.venoms.coated;
+      const validId = coatedInp?.id && Object.hasOwn(VENOMS, coatedInp.id) ? coatedInp.id : null;
+      base.venoms = {
+        inventory: inv,
+        coated: {
+          id: validId,
+          charges: validId ? Math.max(0, Math.floor(coatedInp.charges || 0)) : 0
+        }
+      };
+    }
+
+    if (input.expedition && typeof input.expedition === 'object') {
+      const loot = {};
+      for (const k of ['beast_core_low', 'beast_core_mid', 'beast_core_high', 'flame_bloom', 'frost_lotus', 'poison_sac']) {
+        loot[k] = Math.max(0, Math.floor(input.expedition.loot?.[k] || 0));
+      }
+      base.expedition = {
+        maxDepth: Math.max(1, Math.min(3, Math.floor(input.expedition.maxDepth || 1))),
+        currentDepth: Math.max(1, Math.min(3, Math.floor(input.expedition.currentDepth || 1))),
+        danger: Math.max(0, Math.min(100, Math.floor(input.expedition.danger || 0))),
+        loot,
+        inProgress: !!input.expedition.inProgress
+      };
+    }
+
     if (Array.isArray(input.log)) {
       base.log = input.log.slice(0, 10).map(e => ({
         ru: String(e.ru || '').slice(0, 250),
@@ -1661,7 +1985,8 @@
     if (mode === 'pearl') {
       const curFlameId = s.alchemy.flame?.current || 'mortal_hearth';
       const flameDef = FLAMES[curFlameId] || FLAMES.mortal_hearth;
-      const discount = flameDef.pearlDiscount || 0;
+      const jasDiscount = (s.alchemy.jasmine?.level >= 3) ? 0.20 : 0;
+      const discount = Math.min(0.8, (flameDef.pearlDiscount || 0) + jasDiscount);
       const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
       if ((s.resources.qi || 0) < qiCost) return false;
     } else {
@@ -1683,7 +2008,8 @@
     if (mode === 'pearl') {
       const curFlameId = s.alchemy.flame?.current || 'mortal_hearth';
       const flameDef = FLAMES[curFlameId] || FLAMES.mortal_hearth;
-      const discount = flameDef.pearlDiscount || 0;
+      const jasDiscount = (s.alchemy.jasmine?.level >= 3) ? 0.20 : 0;
+      const discount = Math.min(0.8, (flameDef.pearlDiscount || 0) + jasDiscount);
       const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
       const qi = s.resources.qi || 0;
       maxCount = Math.min(maxCount, Math.floor(qi / qiCost));
@@ -1720,10 +2046,11 @@
       if (!canBrew(s, recipeId, mode)) break;
       alc.stats.brews++;
 
-      // Spend ingredients (with cauldron preservation or rank 4 perk)
+      // Spend ingredients (with cauldron preservation, Jasmine perk, or rank 4 perk)
       const basePreserve = cauldronDef.herbPreserve || 0;
       const rankPreserve = (alc.level >= 4) ? 0.25 : 0;
-      const preserveChance = Math.min(0.75, basePreserve + rankPreserve);
+      const jasPreserve = (alc.jasmine?.level >= 1) ? 0.10 : 0;
+      const preserveChance = Math.min(0.85, basePreserve + rankPreserve + jasPreserve);
       const saveIngredients = Math.random() < preserveChance;
       if (!saveIngredients) {
         for (const [ingId, count] of Object.entries(r.ingredients)) {
@@ -1739,7 +2066,8 @@
 
       if (isPearl) {
         // 100% Sky Poison Pearl divine purification
-        const discount = flameDef.pearlDiscount || 0;
+        const jasDiscount = (alc.jasmine?.level >= 3) ? 0.20 : 0;
+        const discount = Math.min(0.8, (flameDef.pearlDiscount || 0) + jasDiscount);
         const qiCost = Math.max(1, Math.round(r.pearlQi * (1 - discount)));
         s.resources.qi = Math.max(0, (s.resources.qi || 0) - qiCost);
         isSuccess = true;
@@ -1765,7 +2093,8 @@
 
         const cauldronCrit = cauldronDef.critBonus || 0;
         const flameCrit = (flameDef.critBonus || 0) + stokeCritBonus;
-        const critBonus = (alc.blackMoon?.cauldronUpgrade ? 0.20 : 0) + cauldronCrit + flameCrit;
+        const jasCrit = (alc.jasmine?.level >= 3) ? 0.10 : 0;
+        const critBonus = (alc.blackMoon?.cauldronUpgrade ? 0.20 : 0) + cauldronCrit + flameCrit + jasCrit;
         const critThreshold = alc.level >= 5 ? 1.0 : Math.min(0.95, 0.15 + critBonus);
 
         const roll = Math.random();
@@ -2686,6 +3015,289 @@
     return true;
   }
 
+  function getJasmineSanctuaryQuote(s, lang = 'ru') {
+    const lvl = s?.alchemy?.jasmine?.level || 0;
+    const isEn = lang === 'en';
+    const quotes = [
+      {
+        ru: '«Тьма... яд абсолютного убийства богов разъедает мою душу... Не трогай меня, смертный... или обратишься в прах...»',
+        en: '“Darkness... God-Killing Absolute Venom eats away at my soul... Do not touch me, mortal... or turn to dust...”'
+      },
+      {
+        ru: '«Ты... ученик Злого Бога? Твоя Жемчужина действительно может облегчить эту боль... Принеси мне ещё чистых пилюль, и я сохраню твои травы.»',
+        en: '“You... the Evil God’s disciple? Your Pearl truly eases this agony... Bring me more pure pills, and I shall preserve your herbs.”'
+      },
+      {
+        ru: '«Смотри внимательно, тупица! «Тень Звездного Бога» — это не просто скорость, это искажение пространства. Учись, пока я не передумала.»',
+        en: '“Watch closely, fool! “Star God’s Broken Shadow” is not mere speed, but warping space itself. Learn before I change my mind.”'
+      },
+      {
+        ru: '«Моя память Звездного Бога возвращается... Течение Ци в Жемчужине становится послушным. Теперь очищение требует меньше твоих скудных сил.»',
+        en: '“My Star God memories return... The Qi currents within the Pearl heed my command. Purification will now strain your meager reserves less.”'
+      },
+      {
+        ru: '«Когда ты стоишь на грани смерти — не смей отступать! Врата Горящего Сердца питаются яростью предсмертной битвы. Сожги их дотла!»',
+        en: '“When you teeter on death’s brink — do not dare retreat! The Burning Heart Gate feeds upon mortal fury. Burn them to cinders!”'
+      },
+      {
+        ru: '«Моя божественная душа сияет полным светом. Пока я рядом с тобой, даже Небеса не посмеют забрать твою жизнь. Ступай без страха.»',
+        en: '“My divine soul radiates in full splendor. So long as I stand beside you, not even the Heavens shall claim your life. Tread without fear.”'
+      }
+    ];
+    const q = quotes[Math.min(quotes.length - 1, lvl)];
+    return isEn ? q.en : q.ru;
+  }
+
+  function canFeedJasmine(s, giftType = 'dew') {
+    if (!s || !s.alchemy || !s.alchemy.jasmine) return false;
+    const purity = s.alchemy.jasmine.soulPurity || 0;
+    if (purity >= 100) return false;
+    if (giftType === 'dew') {
+      return (s.alchemy.garden?.dew || 0) >= 10;
+    }
+    if (giftType === 'pure_pill') {
+      const purePills = Object.values(s.alchemy.pureInventory || {}).reduce((sum, n) => sum + (n || 0), 0);
+      return purePills >= 1;
+    }
+    return false;
+  }
+
+  function feedJasmine(s, giftType = 'dew', E = null) {
+    if (!canFeedJasmine(s, giftType)) return false;
+    const jas = s.alchemy.jasmine;
+    let gain = 0;
+    let fedNameRu = '';
+    let fedNameEn = '';
+
+    if (giftType === 'dew') {
+      s.alchemy.garden.dew = Math.max(0, s.alchemy.garden.dew - 10);
+      jas.dewFed = (jas.dewFed || 0) + 10;
+      gain = 5;
+      fedNameRu = '10 капель Живительной Росы';
+      fedNameEn = '10 drops of Vital Dew';
+    } else if (giftType === 'pure_pill') {
+      let foundRecipe = null;
+      for (const [recId, count] of Object.entries(s.alchemy.pureInventory || {})) {
+        if (count > 0) {
+          foundRecipe = recId;
+          break;
+        }
+      }
+      if (!foundRecipe) return false;
+      s.alchemy.pureInventory[foundRecipe]--;
+      s.alchemy.inventory[foundRecipe] = Math.max(0, (s.alchemy.inventory[foundRecipe] || 0) - 1);
+      jas.pillsFed = (jas.pillsFed || 0) + 1;
+      gain = 8;
+      const rec = RECIPES[foundRecipe];
+      fedNameRu = rec ? rec.nameRu : foundRecipe;
+      fedNameEn = rec ? rec.nameEn : foundRecipe;
+    }
+
+    jas.soulPurity = Math.min(100, (jas.soulPurity || 0) + gain);
+
+    const perkIds = ['slumbering', 'soul_awakening', 'star_god_shadow', 'astral_memory', 'burning_heart', 'astral_barrier'];
+    for (let i = JASMINE_TIERS.length - 1; i >= 0; i--) {
+      if (jas.soulPurity >= JASMINE_TIERS[i].reqPurity) {
+        jas.level = JASMINE_TIERS[i].level;
+        if (!jas.unlockedPerks) jas.unlockedPerks = [];
+        for (let p = 0; p <= jas.level; p++) {
+          if (!jas.unlockedPerks.includes(perkIds[p])) {
+            jas.unlockedPerks.push(perkIds[p]);
+          }
+        }
+        break;
+      }
+    }
+
+    const tierDef = JASMINE_TIERS[jas.level] || JASMINE_TIERS[0];
+    const logRu = `✨ Душа Жасмин напитана («${fedNameRu}»): чистота души ${jas.soulPurity}% [Ступень ${jas.level}: ${tierDef.titleRu}]!`;
+    const logEn = `✨ Jasmine’s soul nourished (“${fedNameEn}”): soul purity ${jas.soulPurity}% [Tier ${jas.level}: ${tierDef.titleEn}]!`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canCraftVenom(s, venomId) {
+    if (!s || !s.alchemy) return false;
+    const v = VENOMS[venomId];
+    if (!v) return false;
+    for (const [ingId, count] of Object.entries(v.costIngredients)) {
+      if ((s.alchemy.ingredients[ingId] || 0) < count) return false;
+    }
+    if (v.pearlQi && (s.resources.qi || 0) < v.pearlQi) return false;
+    return true;
+  }
+
+  function craftVenom(s, venomId, E = null) {
+    if (!canCraftVenom(s, venomId)) return false;
+    const v = VENOMS[venomId];
+    for (const [ingId, count] of Object.entries(v.costIngredients)) {
+      s.alchemy.ingredients[ingId] = Math.max(0, (s.alchemy.ingredients[ingId] || 0) - count);
+    }
+    if (v.pearlQi) {
+      s.resources.qi = Math.max(0, (s.resources.qi || 0) - v.pearlQi);
+    }
+    if (!s.alchemy.venoms) s.alchemy.venoms = fresh().venoms;
+    s.alchemy.venoms.inventory[venomId] = (s.alchemy.venoms.inventory[venomId] || 0) + 1;
+    const logRu = `【Мастерская Ядов】 Создан флакон: «${v.nameRu}» (${v.charges} зарядов смазки)!`;
+    const logEn = `【Poison Workshop】 Distilled vial: “${v.nameEn}” (${v.charges} coating charges)!`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canCoatWeapon(s, venomId) {
+    if (!s || !s.alchemy || !s.alchemy.venoms) return false;
+    if (!VENOMS[venomId]) return false;
+    return (s.alchemy.venoms.inventory?.[venomId] || 0) >= 1;
+  }
+
+  function coatWeapon(s, venomId, E = null) {
+    if (!canCoatWeapon(s, venomId)) return false;
+    const v = VENOMS[venomId];
+    s.alchemy.venoms.inventory[venomId]--;
+    s.alchemy.venoms.coated = {
+      id: venomId,
+      charges: v.charges
+    };
+    const logRu = `🗡 Клинок смазан «${v.nameRu}»! Следующие ${v.charges} атак заразят противника смертоносным токсином!`;
+    const logEn = `🗡 Blade coated with “${v.nameEn}”! Next ${v.charges} attacks will poison enemies with lethal toxin!`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canStartExpedition(s) {
+    if (!s || !s.alchemy) return false;
+    if (s.stage < 1 && s.alchemy.level < 2) return false;
+    return !s.alchemy.expedition?.inProgress;
+  }
+
+  function startExpedition(s, depth = 1, E = null) {
+    if (!canStartExpedition(s)) return false;
+    depth = Math.max(1, Math.min(3, Math.floor(depth || 1)));
+    const dDef = EXPEDITION_DEPTHS[depth - 1] || EXPEDITION_DEPTHS[0];
+    if (s.alchemy.level < dDef.reqAlchemyLevel) return false;
+
+    if (!s.alchemy.expedition) s.alchemy.expedition = fresh().expedition;
+    s.alchemy.expedition.inProgress = true;
+    s.alchemy.expedition.currentDepth = depth;
+    s.alchemy.expedition.danger = dDef.dangerBase;
+    s.alchemy.expedition.loot = {
+      beast_core_low: 0,
+      beast_core_mid: 0,
+      beast_core_high: 0,
+      flame_bloom: 0,
+      frost_lotus: 0,
+      poison_sac: 0
+    };
+
+    const logRu = `🌲 Экспедиция начата: вход в «${dDef.nameRu}» (Глубина ${depth}). Угроза: ${dDef.dangerBase}%.`;
+    const logEn = `🌲 Expedition begun: entering “${dDef.nameEn}” (Depth ${depth}). Danger: ${dDef.dangerBase}%.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canExpeditionStep(s) {
+    return !!(s && s.alchemy && s.alchemy.expedition?.inProgress);
+  }
+
+  function expeditionStep(s, action = 'forage', E = null) {
+    if (!canExpeditionStep(s)) return false;
+    const exp = s.alchemy.expedition;
+    const dDef = EXPEDITION_DEPTHS[exp.currentDepth - 1] || EXPEDITION_DEPTHS[0];
+
+    exp.danger = Math.min(100, exp.danger + 12);
+    let logRu = '';
+    let logEn = '';
+
+    if (action === 'hunt') {
+      const coreId = dDef.cores[0];
+      exp.loot[coreId] = (exp.loot[coreId] || 0) + 1;
+      const coreDef = BEAST_CORES[coreId];
+      const sacChance = Math.random() < 0.50;
+      if (sacChance) {
+        exp.loot.poison_sac = (exp.loot.poison_sac || 0) + 1;
+      }
+      logRu = `⚔ В схватке повержен ${dDef.beastNameRu}! Добыто: «${coreDef ? coreDef.nameRu : coreId}»${sacChance ? ', Ядовитая железа' : ''}. Угроза: ${exp.danger}%.`;
+      logEn = `⚔ Slain ${dDef.beastNameEn} in combat! Looted: “${coreDef ? coreDef.nameEn : coreId}”${sacChance ? ', Venom Sac' : ''}. Danger: ${exp.danger}%.`;
+    } else {
+      const herbId = dDef.herbs[Math.floor(Math.random() * dDef.herbs.length)];
+      exp.loot[herbId] = (exp.loot[herbId] || 0) + 1;
+      const ingDef = INGREDIENTS[herbId];
+      logRu = `🌿 На скалистом уступе найдено: «${ingDef ? ingDef.nameRu : herbId}». Угроза: ${exp.danger}%.`;
+      logEn = `🌿 Foraged on rocky ledge: “${ingDef ? ingDef.nameEn : herbId}”. Danger: ${exp.danger}%.`;
+    }
+
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function canExpeditionExtract(s) {
+    return !!(s && s.alchemy && s.alchemy.expedition?.inProgress);
+  }
+
+  function expeditionExtract(s, E = null) {
+    if (!canExpeditionExtract(s)) return false;
+    const exp = s.alchemy.expedition;
+    const dDef = EXPEDITION_DEPTHS[exp.currentDepth - 1] || EXPEDITION_DEPTHS[0];
+
+    const extractedItems = [];
+    for (const [k, v] of Object.entries(exp.loot)) {
+      if (v > 0) {
+        s.alchemy.ingredients[k] = (s.alchemy.ingredients[k] || 0) + v;
+        const name = (INGREDIENTS[k]?.nameRu || BEAST_CORES[k]?.nameRu || k);
+        extractedItems.push(`${name} ×${v}`);
+      }
+    }
+
+    if (!s.alchemy.unlockedRecipes.includes('beast_temper_pill')) {
+      s.alchemy.unlockedRecipes.push('beast_temper_pill');
+    }
+
+    if (exp.currentDepth >= exp.maxDepth && exp.maxDepth < 3) {
+      exp.maxDepth++;
+    }
+    exp.inProgress = false;
+
+    const logRu = `🏕 Успешная эвакуация из «${dDef.nameRu}»! В лагерь доставлено: ${extractedItems.join(', ') || 'нет добычи'}.`;
+    const logEn = `🏕 Successful extraction from “${dDef.nameEn}”! Delivered to camp: ${extractedItems.join(', ') || 'no loot'}.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
+  function expeditionFlee(s, E = null) {
+    if (!canExpeditionExtract(s)) return false;
+    const exp = s.alchemy.expedition;
+
+    const salvagedItems = [];
+    for (const [k, v] of Object.entries(exp.loot)) {
+      const kept = Math.floor(v / 2);
+      if (kept > 0) {
+        s.alchemy.ingredients[k] = (s.alchemy.ingredients[k] || 0) + kept;
+        const name = (INGREDIENTS[k]?.nameRu || BEAST_CORES[k]?.nameRu || k);
+        salvagedItems.push(`${name} ×${kept}`);
+      }
+    }
+    exp.inProgress = false;
+
+    const logRu = `🏃 Экстренное бегство от стаи чудовищ! Половина добычи утеряна. Спасено: ${salvagedItems.join(', ') || 'ничего'}.`;
+    const logEn = `🏃 Emergency escape from beast pack! Half loot lost. Salvaged: ${salvagedItems.join(', ') || 'nothing'}.`;
+    s.alchemy.log.unshift({ ru: logRu, en: logEn });
+    s.alchemy.log = s.alchemy.log.slice(0, 10);
+    if (E && E.log) E.log(s, logRu);
+    return true;
+  }
+
   function grindRelic(s) {
     if (!s || (s.resources.relics || 0) < 1) return false;
     s.resources.relics--;
@@ -3030,9 +3642,10 @@
       // Garden advancement
       if (s.alchemy.garden) {
         const g = s.alchemy.garden;
-        // Dew condensation: 1 drop per 1800s (30 min) up to dewMax (5)
+        // Dew condensation: 1 drop per 1800s (30 min) up to dewMax (5), accelerated by Jasmine Level 1 (+15%)
         if (g.dew < (g.dewMax || 5)) {
-          g.dewProgress = (g.dewProgress || 0) + dt;
+          const dewRate = (s.alchemy.jasmine?.level >= 1) ? 1.15 : 1.0;
+          g.dewProgress = (g.dewProgress || 0) + dt * dewRate;
           while (g.dewProgress >= 1800 && g.dew < (g.dewMax || 5)) {
             g.dew++;
             g.dewProgress -= 1800;
@@ -3140,7 +3753,25 @@
     canCompleteCommission,
     completeCommission,
     canBuyPavilionTreasure,
-    buyPavilionTreasure
+    buyPavilionTreasure,
+    JASMINE_TIERS,
+    VENOMS,
+    BEAST_CORES,
+    EXPEDITION_DEPTHS,
+    getJasmineSanctuaryQuote,
+    canFeedJasmine,
+    feedJasmine,
+    canCraftVenom,
+    craftVenom,
+    canCoatWeapon,
+    coatWeapon,
+    canStartExpedition,
+    startExpedition,
+    canExpeditionStep,
+    expeditionStep,
+    canExpeditionExtract,
+    expeditionExtract,
+    expeditionFlee
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

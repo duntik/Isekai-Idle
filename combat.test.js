@@ -210,3 +210,64 @@ test('Combat engine: boss enrage trigger at 50% HP', () => {
   assert.equal(hasEnrageLog, true);
 });
 
+test('Combat engine: weapon venom coating and poison DoT', () => {
+  const s = E.fresh();
+  s.combat = Combat.freshCombat(s, E);
+  s.alchemy.venoms.coated = { id: 'viper_fang', charges: 2 };
+
+  // First strike with weapon coats enemy and applies stack
+  Combat.act(s, 'thrust', E);
+  assert.equal(s.alchemy.venoms.coated.charges, 1);
+  assert.equal(s.combat.enemyPoisonStacks, 1);
+  assert.equal(s.combat.enemyPoisonType, 'viper_fang');
+  const hasPoisonLog = s.combat.log.some(l => l.ru.includes('ЯД: Клинок заражает противника'));
+  assert.equal(hasPoisonLog, true);
+
+  // Second strike expends last charge
+  Combat.act(s, 'thrust', E);
+  assert.equal(s.alchemy.venoms.coated.charges, 0);
+  assert.equal(s.alchemy.venoms.coated.id, null);
+  assert.equal(s.combat.enemyPoisonStacks, 2);
+
+  // Poison DoT finish enemy test
+  s.combat.enemyHp = 5;
+  Combat.act(s, 'parry', E);
+  assert.equal(s.combat.finished, true);
+  assert.equal(s.combat.victory, true);
+});
+
+test('Combat engine: Jasmine sanctuary perks in combat (Burning Heart and Astral Barrier)', () => {
+  const s = E.fresh();
+  s.alchemy.jasmine.level = 5;
+  s.combat = Combat.freshCombat(s, E);
+
+  const origRandom = Math.random;
+  try {
+    // 1. Test Star God's Broken Shadow (force random < 0.40)
+    Math.random = () => 0.1;
+    s.combat.enemyIntent = 'thrust';
+    Combat.act(s, 'parry', E);
+    const hasShadowLog = s.combat.log.some(l => l.ru.includes('Тень Звездного Бога'));
+    assert.equal(hasShadowLog, true);
+
+    // 2. Astral Barrier fatal blow negation (force random >= 0.40 so enemy strike connects)
+    Math.random = () => 0.9;
+    s.combat.playerHp = 1;
+    assert.equal(s.combat.starBarrierUsed, false);
+
+    // Opponent deals fatal damage
+    s.combat.enemyIntent = 'heavy';
+    Combat.act(s, 'parry', E);
+
+    // Life preserved via Astral Barrier!
+    assert.equal(s.combat.starBarrierUsed, true);
+    assert.equal(s.combat.finished, false);
+    assert(s.combat.playerHp >= Math.floor(s.combat.playerMaxHp * 0.35));
+    const hasBarrierLog = s.combat.log.some(l => l.ru.includes('Звездный Барьер Жасмин'));
+    assert.equal(hasBarrierLog, true);
+  } finally {
+    Math.random = origRandom;
+  }
+});
+
+

@@ -733,6 +733,20 @@
       return Alchemy ? Alchemy.completeCommission(s, value, api) : false;
     } else if (type === 'alchemy-pavilion-buy') {
       return Alchemy ? Alchemy.buyPavilionTreasure(s, value, api) : false;
+    } else if (type === 'alchemy-jasmine-feed') {
+      return Alchemy ? Alchemy.feedJasmine(s, value, api) : false;
+    } else if (type === 'alchemy-venom-craft') {
+      return Alchemy ? Alchemy.craftVenom(s, value, api) : false;
+    } else if (type === 'alchemy-venom-coat') {
+      return Alchemy ? Alchemy.coatWeapon(s, value, api) : false;
+    } else if (type === 'alchemy-expedition-start') {
+      return Alchemy ? Alchemy.startExpedition(s, value, api) : false;
+    } else if (type === 'alchemy-expedition-step') {
+      return Alchemy ? Alchemy.expeditionStep(s, value, api) : false;
+    } else if (type === 'alchemy-expedition-extract') {
+      return Alchemy ? Alchemy.expeditionExtract(s, api) : false;
+    } else if (type === 'alchemy-expedition-flee') {
+      return Alchemy ? Alchemy.expeditionFlee(s, api) : false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;
