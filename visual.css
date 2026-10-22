@@ -896,6 +896,258 @@ html:not([data-interface="data"]) .portal-hint {
   margin: 0;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   HEADER ACTION HUB BUTTONS (Map, Fate Tree, Alchemy, Cloud)
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) #open-map,
+html:not([data-interface="data"]) #open-fate-tree,
+html:not([data-interface="data"]) #open-alchemy,
+html:not([data-interface="data"]) #save,
+html:not([data-interface="data"]) #open-saves {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 8px;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+html:not([data-interface="data"]) #open-map {
+  background: linear-gradient(135deg, rgba(46, 219, 162, 0.14), rgba(20, 36, 42, 0.8));
+  border-color: rgba(46, 219, 162, 0.35);
+  color: #7ee7c5;
+}
+html:not([data-interface="data"]) #open-map:hover {
+  background: linear-gradient(135deg, rgba(46, 219, 162, 0.25), rgba(20, 36, 42, 0.95));
+  border-color: var(--spirit-jade);
+  color: #a7f3d0;
+  box-shadow: 0 0 14px rgba(46, 219, 162, 0.35);
+  transform: translateY(-1px);
+}
+
+html:not([data-interface="data"]) #open-fate-tree {
+  background: linear-gradient(135deg, rgba(229, 195, 130, 0.14), rgba(20, 36, 42, 0.8));
+  border-color: rgba(229, 195, 130, 0.35);
+  color: #f0d59e;
+}
+html:not([data-interface="data"]) #open-fate-tree:hover {
+  background: linear-gradient(135deg, rgba(229, 195, 130, 0.25), rgba(20, 36, 42, 0.95));
+  border-color: var(--gold);
+  color: #fff0c7;
+  box-shadow: 0 0 14px rgba(229, 195, 130, 0.35);
+  transform: translateY(-1px);
+}
+
+html:not([data-interface="data"]) #open-alchemy {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.14), rgba(20, 36, 42, 0.8));
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
+}
+html:not([data-interface="data"]) #open-alchemy:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(20, 36, 42, 0.95));
+  border-color: #c084fc;
+  color: #f3e8ff;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
+  transform: translateY(-1px);
+}
+
+html:not([data-interface="data"]) #save {
+  background: rgba(20, 36, 42, 0.6);
+  border-color: rgba(70, 95, 100, 0.4);
+  color: #b0c4c2;
+}
+html:not([data-interface="data"]) #save:hover {
+  background: rgba(30, 52, 60, 0.85);
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+}
+
+html:not([data-interface="data"]) #open-saves {
+  background: rgba(20, 36, 42, 0.6);
+  border-color: rgba(70, 95, 100, 0.4);
+  color: #b0c4c2;
+}
+html:not([data-interface="data"]) #open-saves:hover {
+  background: rgba(30, 52, 60, 0.85);
+  border-color: #60a5fa;
+  color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLLABLE PILL TAB NAVIGATION (Alchemy & Fate Tree Dialogs)
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .alchemy-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 4px 2px 12px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(46, 219, 162, 0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+html:not([data-interface="data"]) .alchemy-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+html:not([data-interface="data"]) .alchemy-tabs::-webkit-scrollbar-thumb {
+  background: rgba(46, 219, 162, 0.35);
+  border-radius: 4px;
+}
+html:not([data-interface="data"]) .alchemy-tab {
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 33, 42, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 7px 15px;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+html:not([data-interface="data"]) .alchemy-tab:hover {
+  color: var(--text);
+  border-color: var(--spirit-jade);
+  background: rgba(46, 219, 162, 0.1);
+  transform: translateY(-1px);
+}
+html:not([data-interface="data"]) .alchemy-tab.active {
+  background: rgba(46, 219, 162, 0.16);
+  color: var(--spirit-jade);
+  border-color: var(--spirit-jade);
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(46, 219, 162, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+html:not([data-interface="data"]) .fate-tree-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 4px 2px 12px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(228, 195, 138, 0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+html:not([data-interface="data"]) .fate-tab {
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 33, 42, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 7px 15px;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+html:not([data-interface="data"]) .fate-tab:hover {
+  color: var(--text);
+  border-color: var(--gold);
+  background: rgba(228, 195, 138, 0.1);
+  transform: translateY(-1px);
+}
+html:not([data-interface="data"]) .fate-tab.active {
+  background: rgba(228, 195, 138, 0.18);
+  color: var(--gold);
+  border-color: var(--gold);
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(228, 195, 138, 0.25);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMBAT BUFFS, POISON & JASMINE BADGES
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) .buff-poison {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+html:not([data-interface="data"]) .buff-jasmine {
+  background: rgba(244, 114, 182, 0.18);
+  color: #f9a8d4;
+  border: 1px solid rgba(244, 114, 182, 0.4);
+}
+html:not([data-interface="data"]) .card-foe-stunned {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4) !important;
+  animation: stunJitter 0.5s ease-in-out infinite alternate;
+}
+@keyframes stunJitter {
+  from { transform: translateX(0); }
+  to { transform: translateX(1.5px); }
+}
+html:not([data-interface="data"]) .momentum-val-max {
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(228, 195, 138, 0.8);
+  animation: pulseText 1.5s ease-in-out infinite alternate;
+}
+@keyframes pulseText {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODERNIZED TOAST NOTIFICATIONS (Visual View)
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) #toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 520px;
+  width: auto;
+  background: linear-gradient(135deg, rgba(20, 36, 42, 0.96), rgba(12, 23, 27, 0.98));
+  border: 1px solid var(--gold);
+  border-left: 4px solid var(--spirit-jade);
+  color: #edf0e8;
+  padding: 12px 22px;
+  border-radius: 10px;
+  z-index: 9999;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 16px rgba(46, 219, 162, 0.25);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  animation: toastSpringIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes toastSpringIn {
+  from { opacity: 0; transform: translate(-50%, 14px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@media (max-width: 650px) {
+  html:not([data-interface="data"]) #toast {
+    bottom: 74px;
+    left: 14px;
+    right: 14px;
+    transform: none;
+    max-width: none;
+    text-align: center;
+  }
+  @keyframes toastSpringIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+
 
 
 

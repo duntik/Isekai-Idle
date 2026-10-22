@@ -908,6 +908,7 @@
   function combatArenaView(s, foe) {
     const c = s.combat;
     const Combat = typeof IsekaiCombat !== 'undefined' ? IsekaiCombat : E.combat;
+    const Alc = typeof IsekaiAlchemy !== 'undefined' ? IsekaiAlchemy : (E.alchemy || (typeof Alchemy !== 'undefined' ? Alchemy : null));
     const lang = L?.language || 'ru';
     const en = lang === 'en';
     const counter = { swift: uiText('Быстрый шаг', 'Swift Step'), armored: uiText('Пробивающий удар', 'Piercing Strike'), mystic: uiText('Духовный заслон', 'Spirit Ward') };
@@ -952,6 +953,15 @@
     if (c.evilGodAwakened) heroBuffs.push(`<span class="status-buff-badge buff-crimson">🔥 ${uiText('Врата Злого Бога (+35%)', 'Evil God Gate (+35%)')}</span>`);
     if (c.guardBuff) heroBuffs.push(`<span class="status-buff-badge buff-gold">🛡 ${uiText('Каменный покров (-50%)', 'Stone Mantle (-50%)')}</span>`);
     if (c.evasion) heroBuffs.push(`<span class="status-buff-badge buff-azure">💨 ${uiText('Шаг уклонения', 'Evasive Step')}</span>`);
+    if (s.alchemy?.venoms?.coated?.id && s.alchemy.venoms.coated.charges > 0) {
+      const vId = s.alchemy.venoms.coated.id;
+      const vDef = Alc?.VENOMS?.[vId];
+      const vName = vDef ? (en ? vDef.nameEn : vDef.nameRu) : vId;
+      heroBuffs.push(`<span class="status-buff-badge buff-poison">☠️ ${vName} (${s.alchemy.venoms.coated.charges})</span>`);
+    }
+    if (s.alchemy?.jasmine?.level >= 5 && !c.starBarrierUsed) {
+      heroBuffs.push(`<span class="status-buff-badge buff-jasmine">🌟 ${uiText('Звёздный Барьер', 'Astral Barrier')}</span>`);
+    }
     const heroBuffsHtml = heroBuffs.length ? `<div class="duel-status-row">${heroBuffs.join(' ')}</div>` : '';
 
     const heroCard = `
@@ -981,6 +991,11 @@
     const foeBuffs = [];
     if (c.bossPhaseTriggered) foeBuffs.push(`<span class="status-buff-badge buff-crimson">⚡ ${uiText('Ярость соперника', 'Rival Enrage')}</span>`);
     if (c.enemyStunned) foeBuffs.push(`<span class="status-buff-badge buff-gold">💥 ${uiText('Стойка пробита', 'Guard Broken')}</span>`);
+    if (c.enemyPoisonStacks > 0) {
+      const vDef = Alc?.VENOMS?.[c.enemyPoisonType];
+      const vName = vDef ? (en ? vDef.nameEn : vDef.nameRu) : uiText('Яд', 'Poison');
+      foeBuffs.push(`<span class="status-buff-badge buff-poison">☠️ ${vName} ×${c.enemyPoisonStacks}</span>`);
+    }
     const foeBuffsHtml = foeBuffs.length ? `<div class="duel-status-row">${foeBuffs.join(' ')}</div>` : '';
 
     const foeCard = `
@@ -1520,8 +1535,14 @@
     $('content').innerHTML = h(returnSummaryView()+(view === 'data' ? IsekaiDataView.render(s, tab, E) : html));
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
+    if($('open-map'))$('open-map').textContent=uiText('🗺️ Карта','🗺️ Map');
     if($('open-fate-tree'))$('open-fate-tree').textContent=uiText('✦ Древо Судьбы','✦ Fate Tree');
-    if($('open-alchemy'))$('open-alchemy').textContent=uiText('🧪 Алхимия','🧪 Alchemy');
+    if($('open-alchemy')){
+      const hasGardenReady = s.alchemy?.garden?.plots?.some(p => p.stage >= 2);
+      const hasDewFull = s.alchemy?.garden?.dew >= (s.alchemy?.garden?.dewMax || 5);
+      const badge = (hasGardenReady || hasDewFull) ? ' ●' : '';
+      $('open-alchemy').textContent = uiText(`🧪 Алхимия${badge}`, `🧪 Alchemy${badge}`);
+    }
     if($('mini-hud')&&view!=='data'){
       const place=E.world.locations[s.world.location]?.name||s.world.location;
       const journey=s.world.journey?(uiText('В пути: ','Travelling: ')+t(E.world.locations[s.world.journey.destination]?.name||'')+` · ${Math.ceil(s.world.journey.remaining)} `+uiText('сек.','s')):t(place);
@@ -1647,32 +1668,39 @@
     if($('alchemy-title'))$('alchemy-title').textContent=uiText('Алхимический Котёл и Лавка','Alchemy Crucible & Shop');
     if($('alchemy-intro'))$('alchemy-intro').textContent=uiText('Варка снадобий в котле, очищение Жемчужиной Злого Неба и торговля с мастером Хо.','Brewing remedies in crucible, Sky Poison Pearl purification and trading with Master Huo.');
     if($('close-alchemy'))$('close-alchemy').textContent=uiText('Закрыть','Close');
+    const alc=s.alchemy||(E.alchemy?E.alchemy.fresh():null);
+    if(!alc){
+      body.innerHTML=`<p class="intro">${uiText('Алхимия недоступна.','Alchemy is unavailable.')}</p>`;
+      return;
+    }
+    const Alc=typeof IsekaiAlchemy!=='undefined'?IsekaiAlchemy:(E.alchemy||Alchemy);
+
     const tabs=$('alchemy-dialog')?.querySelectorAll?.('.alchemy-tab');
     if(tabs){
       tabs.forEach(btn=>{
         const isAct=btn.dataset.alchemyTab===activeAlchemyTab;
         btn.classList.toggle('active',isAct);
         btn.setAttribute('aria-selected',isAct?'true':'false');
-        if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('Котёл и Жемчужина','Crucible & Pearl');
-        if(btn.dataset.alchemyTab==='clinic')btn.textContent=uiText('Клиника Лекаря','Miracle Doctor Clinic');
-        if(btn.dataset.alchemyTab==='market'||btn.dataset.alchemyTab==='shop')btn.textContent=uiText('Рынки и Сбор','Markets & Gathering');
-        if(btn.dataset.alchemyTab==='pouch')btn.textContent=uiText('Боевая Сумка','Combat Pouch');
-        if(btn.dataset.alchemyTab==='garden')btn.textContent=uiText('Сад Жемчужины','Pearl Garden');
-        if(btn.dataset.alchemyTab==='auction')btn.textContent=uiText('Аукцион Чёрной Луны','Black Moon Auction');
-        if(btn.dataset.alchemyTab==='pavilion')btn.textContent=uiText('Павильон Секты','Sect Pavilion');
-        if(btn.dataset.alchemyTab==='jasmine')btn.textContent=uiText('Покои Жасмин','Jasmine Sanctuary');
-        if(btn.dataset.alchemyTab==='poisons')btn.textContent=uiText('Мастерская Ядов','Poison Workshop');
-        if(btn.dataset.alchemyTab==='expedition')btn.textContent=uiText('Хребет Зверей','Beast Range');
+        if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('⚗️ Котёл и Жемчужина','⚗️ Crucible & Pearl');
+        if(btn.dataset.alchemyTab==='clinic')btn.textContent=uiText('🩺 Клиника Лекаря','🩺 Miracle Doctor Clinic');
+        if(btn.dataset.alchemyTab==='market'||btn.dataset.alchemyTab==='shop')btn.textContent=uiText('🛒 Рынки и Сбор','🛒 Markets & Gathering');
+        if(btn.dataset.alchemyTab==='pouch')btn.textContent=uiText('🎒 Боевая Сумка','🎒 Combat Pouch');
+        if(btn.dataset.alchemyTab==='garden'){
+          const gReady = alc.garden?.plots?.some(p => p.stage >= 2) || (alc.garden?.dew >= (alc.garden?.dewMax || 5));
+          btn.textContent=uiText(`🌿 Сад Жемчужины${gReady ? ' ●' : ''}`,`🌿 Pearl Garden${gReady ? ' ●' : ''}`);
+        }
+        if(btn.dataset.alchemyTab==='auction')btn.textContent=uiText('🌙 Аукцион Чёрной Луны','🌙 Black Moon Auction');
+        if(btn.dataset.alchemyTab==='pavilion')btn.textContent=uiText('⛩️ Павильон Секты','⛩️ Sect Pavilion');
+        if(btn.dataset.alchemyTab==='jasmine'){
+          const jTier = Alc.JASMINE_TIERS?.[alc.jasmine?.level];
+          const jCanFeed = alc.jasmine?.level < 5 && ((alc.garden?.dew >= (jTier?.costDew || 999)) || (s.alchemy?.pureInventory && Object.values(s.alchemy.pureInventory).some(v => v > 0)));
+          btn.textContent=uiText(`🌸 Покои Жасмин${jCanFeed ? ' ●' : ''}`,`🌸 Jasmine Sanctuary${jCanFeed ? ' ●' : ''}`);
+        }
+        if(btn.dataset.alchemyTab==='poisons')btn.textContent=uiText('☠️ Мастерская Ядов','☠️ Poison Workshop');
+        if(btn.dataset.alchemyTab==='expedition')btn.textContent=uiText('🐺 Хребет Зверей','🐺 Beast Range');
       });
     }
 
-    const alc=s.alchemy||(E.alchemy?E.alchemy.fresh():null);
-    if(!alc){
-      body.innerHTML=`<p class="intro">${uiText('Алхимия недоступна.','Alchemy is unavailable.')}</p>`;
-      return;
-    }
-
-    const Alc=typeof IsekaiAlchemy!=='undefined'?IsekaiAlchemy:(E.alchemy||Alchemy);
     const currentRank=Alc.RANKS[alc.level-1]||Alc.RANKS[0];
     const nextRank=Alc.RANKS[alc.level]||null;
     const xpMax=nextRank?nextRank.xpReq:currentRank.xpReq;
