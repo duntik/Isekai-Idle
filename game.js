@@ -3524,7 +3524,7 @@
       } else if (act === 'garden-water') {
         const plot = b.dataset.plot;
         if (E.action(s, 'alchemy-garden-water', plot)) {
-          Sound.playBowl?.();
+          Sound.playDewDrip?.() || Sound.playBowl?.();
           save();
           toast(uiText('Делянка орошена Живительной Росой!', 'Plot watered with Life-Giving Dew!'));
         } else {
@@ -3628,7 +3628,7 @@
         }
       } else if (act === 'flame-stoke') {
         if (E.action(s, 'alchemy-flame-stoke')) {
-          Sound.playBreakthrough?.();
+          Sound.playFlameStoke?.() || Sound.playBreakthrough?.();
           save();
           toast(uiText('Пламя успешно распалено!', 'Flame successfully stoked!'));
         } else {
@@ -3834,7 +3834,7 @@
       if (E.action(s, act, val)) {
         if (['story', 'advance'].includes(act)) { novelViewStep = null; Sound.playParchment(); }
         if (act === 'activity' && val && val !== 'rest') lastMaintainedActivity = val;
-        if (act === 'activity' && val === 'meditate') Sound.playBowl();
+        if (act === 'activity' && val === 'meditate') Sound.playMeditationChime?.() || Sound.playBowl();
         if (act === 'rest') Sound.playBowl(260, 2.2);
         if (act === 'breakthrough') Sound.playBreakthrough();
         if (act === 'meridian-purge') {
@@ -3918,7 +3918,7 @@
           } else if (['thrust', 'heavy'].includes(actVal) && (s.combat?.log?.[0]?.ru?.includes('БОЕВОЙ КУРАЖ') || s.combat?.log?.[1]?.ru?.includes('БОЕВОЙ КУРАЖ'))) {
             Sound.playCrit?.();
           } else if (actVal === 'parry' || actVal === 'technique') {
-            Sound.playClash();
+            Sound.playParryResonance?.() || Sound.playClash();
           } else if (actVal === 'pearl') {
             Sound.playEvilGodFlame?.();
           } else if (actVal === 'pill') {
