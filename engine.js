@@ -142,7 +142,45 @@
       button: 'Вступить в секту'
     }
   ];
-  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, fed: false, combat: null, clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const defaultUnlocked = (stage = 0, storyStep = 0, chapterTwoStep = 0, state = {}) => {
+    const isCh2 = stage >= 1;
+    const isCh3 = stage >= 2;
+    return {
+      map: isCh2 || storyStep >= 4 || !!state.found,
+      combat: isCh2 || storyStep >= 6 || (state.wins || 0) > 0,
+      alchemy: isCh2 || storyStep >= 5 || (state.resources?.herbs || 0) >= 10 || (state.alchemy?.level || 0) > 1,
+      fate: isCh2 || storyStep >= 1 || !!state.prologueAction,
+      sect: isCh2,
+      clinic: isCh3 || (isCh2 && chapterTwoStep >= 3) || (state.alchemy?.reputation || 0) >= 5,
+      auction: isCh3 || (isCh2 && chapterTwoStep >= 4) || (state.alchemy?.reputation || 0) >= 10,
+      flames: isCh3 || (isCh2 && chapterTwoStep >= 4) || (state.alchemy?.level || 0) >= 2,
+      cauldrons: isCh3 || (isCh2 && chapterTwoStep >= 4) || (state.alchemy?.level || 0) >= 2,
+      pavilion: isCh3 || (isCh2 && chapterTwoStep >= 2),
+      beastRange: isCh3 || (isCh2 && chapterTwoStep >= 5),
+      jasmine: isCh3 || (isCh2 && chapterTwoStep >= 7) || (state.jasmine?.trust || 0) > 0,
+    };
+  };
+  const isUnlocked = (s, system) => {
+    if (!s) return false;
+    if (s.unlocked && typeof s.unlocked[system] === 'boolean') {
+      if (s.unlocked[system]) return true;
+    }
+    if (s.stage >= 2) return true;
+    if (s.stage >= 1) {
+      if (['map', 'combat', 'alchemy', 'fate', 'sect'].includes(system)) return true;
+      if (system === 'pavilion') return (s.chapterTwoStep || 0) >= 2;
+      if (system === 'clinic') return (s.chapterTwoStep || 0) >= 3 || (s.alchemy?.reputation || 0) >= 5;
+      if (system === 'auction' || system === 'flames' || system === 'cauldrons') return (s.chapterTwoStep || 0) >= 4 || (s.alchemy?.reputation || 0) >= 10;
+      if (system === 'beastRange') return (s.chapterTwoStep || 0) >= 5;
+      if (system === 'jasmine') return (s.chapterTwoStep || 0) >= 7 || (s.jasmine?.trust || 0) > 0;
+    }
+    if (system === 'fate') return (s.storyStep || 0) >= 1 || !!s.prologueAction;
+    if (system === 'map') return (s.storyStep || 0) >= 4 || !!s.found;
+    if (system === 'alchemy') return (s.storyStep || 0) >= 5 || (s.resources?.herbs || 0) >= 10 || (s.alchemy?.level || 0) > 1;
+    if (system === 'combat') return (s.storyStep || 0) >= 6 || (s.wins || 0) > 0;
+    return false;
+  };
+  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, fed: false, combat: null, unlocked: defaultUnlocked(0, 0, 0, {}), clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
     sky:{name:'Сутра Злого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
     ink:{name:'След туши',source:'Урок библиотекаря Вэя',desc:'Понимание +8% за ранг. Позволяет читать повреждённые надписи в храме.',effect:'xp',available:s=>s.world.mentors.includes('scholar')},
@@ -563,7 +601,7 @@
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
   const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order&&workMastered(s,s.employment.order.kind):canActivity(s,k)||s.activity===k);
   const canClick = (s,k) => !!clicks[k] && !s.world.journey && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
-  function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
+  function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; if(s.unlocked){s.unlocked.map=true;s.unlocked.alchemy=true;} log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function performAction(s, type, value) {
     if(type==='technique-action')return useTechniqueAction(s,value);
     if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
@@ -604,6 +642,7 @@
         const choiceKey=value||'shoulder';
         if(!prologueChoices[choiceKey])return false;
         s.prologueAction=choiceKey;
+        if(s.unlocked)s.unlocked.fate=true;
         const choice=prologueChoices[choiceKey];
         if(choice.body)s.body=Math.min(10*(s.realm+1),s.body+choice.body*W.bonus(s).body*techniqueBonus(s,'body'));
         if(choice.calm)s.calm=Math.min(100,s.calm+choice.calm);
@@ -618,8 +657,12 @@
         log(s,'【Система Прозрения】 Очищение меридианов +1%. Истощение снято, циркуляция выносливости разблокирована (+0.4/сек).');
       }
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
+      if(s.storyStep===3){if(s.unlocked)s.unlocked.map=true;}
+      if(s.storyStep===4){if(s.unlocked){s.unlocked.map=true;s.unlocked.alchemy=true;}}
+      if(s.storyStep===5){if(s.unlocked)s.unlocked.combat=true;}
       if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
       if(s.storyStep===7){
+        if(s.unlocked)s.unlocked.sect=true;
         const sectKey=value||s.world.admission||(s.world.admissionRoutes.find(k=>sectChoices[k]?.ready(s))||'gates');
         if(!sectChoices[sectKey]||!sectChoices[sectKey].ready(s))return false;
         if(!s.world.admissionRoutes.includes(sectKey)&&sectKey!=='gates')s.world.admissionRoutes.push(sectKey);
@@ -648,12 +691,17 @@
         if (!s.world.admissionRoutes.includes(sectKey) && sectKey !== 'gates') s.world.admissionRoutes.push(sectKey);
       }
       spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, chapterIntro(s));
+      if (s.unlocked) {
+        if (s.stage >= 1) { s.unlocked.sect = true; s.unlocked.map = true; s.unlocked.combat = true; s.unlocked.alchemy = true; s.unlocked.fate = true; }
+        if (s.stage >= 2) { s.unlocked.clinic = true; s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; s.unlocked.pavilion = true; s.unlocked.beastRange = true; s.unlocked.jasmine = true; }
+      }
       if(s.stage===2&&!s.world.admissionGiftAwarded){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);s.world.admissionGiftAwarded=true;log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
       const c = breakthroughCost(s);
       const danDu = s.alchemy?.meridians?.danDu || 0;
       if (!s.found || s.xp < needed(s) || !affordable(s, c) || danDu >= 80) return false;
       spend(s, c); s.xp -= needed(s); s.realm++;
+      if (s.unlocked && s.realm >= 1) s.unlocked.alchemy = true;
       if (Alchemy && Alchemy.cleanseDanDu) Alchemy.cleanseDanDu(s, 25);
       log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития. Токсины Дань Ду рассеяны небесным прорывом (-25 токсинов)!`);
     } else if (type === 'combat-start') {
@@ -856,6 +904,17 @@
     }
     A.sync(s);
   }
+  function validateUnlocked(inputUnlocked, stage, storyStep, chapterTwoStep, state) {
+    const def = defaultUnlocked(stage, storyStep, chapterTwoStep, state);
+    if (!inputUnlocked || typeof inputUnlocked !== 'object' || Array.isArray(inputUnlocked)) {
+      return def;
+    }
+    const res = {};
+    for (const k of Object.keys(def)) {
+      res[k] = typeof inputUnlocked[k] === 'boolean' ? inputUnlocked[k] : def[k];
+    }
+    return res;
+  }
   function validate(input) {
     const base = fresh(); if (!input || input.version !== 2) throw Error('Неверная версия сохранения');
     for (const k of ['stage', 'realm', 'xp', 'body', 'mastery', 'weapon', 'study', 'explored', 'wins', 'age', 'cooldown', 'souls', 'life', 'population', 'last']) if (!Number.isFinite(input[k]) || input[k] < 0 || input[k] > 1e100) throw Error('Неверные значения');
@@ -872,10 +931,11 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat','alchemy'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat','alchemy','unlocked'].includes(k)) base[k] = input[k];
     base.chapterTwoStep = (Number.isInteger(input.chapterTwoStep) && input.chapterTwoStep >= 0 && input.chapterTwoStep <= 9) ? input.chapterTwoStep : 0;
     base.fed = input.fed !== undefined ? !!input.fed : (base.storyStep > 1);
     base.activity=activity;
+    base.unlocked = validateUnlocked(input.unlocked, input.stage, input.storyStep, input.chapterTwoStep, input);
     if(input.employment!==undefined){const e=input.employment;if(!e||!Number.isSafeInteger(e.completed)||e.completed<0)throw Error('Неверная работа');base.employment.completed=e.completed;
       if(e.order!==null){const o=e.order;if(!o||!orders[o.kind]||!Number.isFinite(o.progress)||o.progress<0||o.progress>orders[o.kind].target||!Number.isSafeInteger(o.pay)||o.pay<1||o.pay>50)throw Error('Неверный заказ');base.employment.order={kind:o.kind,progress:o.progress,pay:o.pay,place:'village'};if(o.place!==undefined){if(!['village','city'].includes(o.place))throw Error('Неверный заказ');base.employment.order.place=o.place;}}}
     if(base.activity==='work'&&!base.employment.order)base.activity='meditate';
@@ -941,6 +1001,6 @@
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
   const chapterTwoBeat = (s, step, lang) => ChapterTwo ? ChapterTwo.getBeat(s, step, lang) : null;
-  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight };
+  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

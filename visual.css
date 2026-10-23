@@ -1147,6 +1147,33 @@ html:not([data-interface="data"]) #toast {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PROGRESSIVE DISCLOSURE & ANTI-SPOILER FOG OF WAR
+   Hide future systems until earned through canonical ATG story
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) #open-map[data-locked="true"],
+html:not([data-interface="data"]) #open-fate-tree[data-locked="true"],
+html:not([data-interface="data"]) #open-alchemy[data-locked="true"],
+html:not([data-interface="data"]) #navigation .tab[data-locked="true"],
+html:not([data-interface="data"]) #world-tab-open-map[data-locked="true"],
+html:not([data-interface="data"]) .alchemy-tab[data-locked="true"] {
+  display: none !important;
+}
+
+@keyframes unlockPulse {
+  0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(46, 219, 162, 0.7); }
+  50% { transform: scale(1.04); box-shadow: 0 0 16px 4px rgba(46, 219, 162, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 219, 162, 0); }
+}
+
+html:not([data-interface="data"]) .tab[data-locked="false"],
+html:not([data-interface="data"]) #open-map[data-locked="false"],
+html:not([data-interface="data"]) #open-fate-tree[data-locked="false"],
+html:not([data-interface="data"]) #open-alchemy[data-locked="false"] {
+  animation: unlockPulse 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+
 
 
 

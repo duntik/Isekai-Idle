@@ -388,6 +388,38 @@
   const card = (title, desc, controls, cost = '', extraClass = '', emblem = '') => `<article class="card${extraClass ? ' ' + extraClass : ''}">${emblem ? `<div class="sect-card-emblem">${emblem}</div>` : ''}<h3>${title}</h3><p>${desc}</p>${cost ? `<div class="cost">${cost}</div>` : ''}${controls}</article>`;
   let toastTimer;
   function toast(text) { $('toast').textContent = t(text); $('toast').style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').style.display = 'none', 4500); }
+  const seenUnlocks = new Set();
+  let unlocksInitialized = false;
+  function checkNewUnlocks(state) {
+    if (!state || typeof E.isUnlocked !== 'function') return;
+    const list = [
+      ['fate', '✦ ' + uiText('Открыто Древо Судьбы и Хроника Кармы!', 'Fate Tree & Karma Chronicle Unlocked!')],
+      ['map', '🗺️ ' + uiText('Получен свиток карты окрестностей долины!', 'Regional Map Scroll Unlocked!')],
+      ['alchemy', '🧪 ' + uiText('Небесная Жемчужина Яда пробудилась! Открыта Алхимия!', 'Sky Poison Pearl Awakened! Alchemy Unlocked!')],
+      ['combat', '⚔️ ' + uiText('Враги преградили путь! Открыты Боевые Испытания!', 'Peril Ahead! Combat Trials Unlocked!')],
+      ['sect', '⛩️ ' + uiText('Врата Великой Секты распахнуты!', 'Great Sect Gates Unlocked!')],
+      ['pavilion', '🏛️ ' + uiText('Доступ к Павильону Пилюль Секты открыт!', 'Sect Pill Pavilion Unlocked!')],
+      ['clinic', '🎭 ' + uiText('Обретена Маска Божественного Лекаря и Приём Пациентов!', 'Miracle Doctor Mask & Clinic Unlocked!')],
+      ['auction', '🌙 ' + uiText('Открыт Аукционный Дом Чёрной Луны!', 'Black Moon Auction House Unlocked!')],
+      ['flames', '🔥 ' + uiText('Пробуждено Алхимическое Пламя и Котлы Артефактов!', 'Flame Cultivation & Cauldrons Unlocked!')],
+      ['beastRange', '🐾 ' + uiText('Открыты Экспедиции на Хребет Десяти Тысяч Зверей!', 'Ten Thousand Beast Range Expeditions Unlocked!')],
+      ['jasmine', '🌸 ' + uiText('Открыты Покои Жасмин внутри Жемчужины!', 'Jasmine\'s Soul Sanctuary Unlocked!')]
+    ];
+    if (!unlocksInitialized) {
+      for (const [key] of list) {
+        if (E.isUnlocked(state, key)) seenUnlocks.add(key);
+      }
+      unlocksInitialized = true;
+      return;
+    }
+    for (const [key, msg] of list) {
+      if (E.isUnlocked(state, key) && !seenUnlocks.has(key)) {
+        seenUnlocks.add(key);
+        toast(msg);
+        Sound.playGong ? Sound.playGong() : Sound.playBell?.();
+      }
+    }
+  }
   function save(manual = false) { try { localStorage.setItem(KEY, JSON.stringify(s)); if (manual) toast('Прогресс сохранён'); } catch { if (manual) toast('Не удалось сохранить. Используй экспорт.'); } }
   function tick() { const now = Date.now(),elapsed=Math.max(0,(now-s.last)/1000);const pending=!s.playerName&&s.age===0&&s.storyStep===0,before=elapsed>=60&&!pending&&!awaySnapshot?E.returnReport.snapshot(s):null;E.advance(s,pending?0:elapsed);s.last=now;if(s.activity&&s.activity!=='rest')lastMaintainedActivity=s.activity;if(before)returnSummary={before,after:E.returnReport.snapshot(s),elapsed};return pending?0:elapsed; }
   function returnSummaryView(){
@@ -1192,15 +1224,29 @@
     if ($('hero-compact-resources')) $('hero-compact-resources').innerHTML = h(compactResHtml);
     if ($('hud-resources')) $('hud-resources').innerHTML = h(compactResHtml);
     const tabs = [['hero', 'Путь героя', 0], ['combat', 'Испытания', 0], ['world', 'Путешествия', 0], ['sect', 'Секта', 1], ['city', 'Город', 4], ['planet', 'Планета', 5], ['galaxy', 'Галактика', 6], ['legacy', 'Наследие', 7], ['roadmap', 'Горизонты', 0]];
-    $('navigation').innerHTML = h(tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''} tab-${id}" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : `<span class="tab-glyph">${tabGlyphs[id] || '✦'}</span><span class="tab-label">${title}</span>` + tabBadgeHtml(id)}</button>`).join(''));
+    const isTabLocked = (id) => {
+      if (id === 'world') return !E.isUnlocked(s, 'map');
+      if (id === 'combat') return !E.isUnlocked(s, 'combat');
+      if (id === 'sect') return !E.isUnlocked(s, 'sect');
+      return false;
+    };
+    $('navigation').innerHTML = h(tabs.filter(t => t[2] <= s.stage).map(([id, title]) => `<button class="tab ${tab === id ? 'active' : ''} tab-${id}" data-tab="${id}" data-locked="${isTabLocked(id) ? 'true' : 'false'}" ${tab===id?'aria-current="page"':''}>${view === 'data' ? IsekaiDataView.tabs[id] : `<span class="tab-glyph">${tabGlyphs[id] || '✦'}</span><span class="tab-label">${title}</span>` + tabBadgeHtml(id)}</button>`).join(''));
     if ($('aside-tools')) {
-      const showAlchemy = s.stage >= 1 || (s.alchemy?.recipes?.length > 0);
-      $('aside-tools').innerHTML = h(`
-        <div class="aside-tools-header">${uiText('ИНСТРУМЕНТЫ', 'TOOLS')}</div>
-        <button type="button" class="aside-tool-btn" id="aside-map"><span class="tool-icon">🗺️</span><span class="tool-label">${uiText('Карта мира', 'World Map')}</span></button>
-        <button type="button" class="aside-tool-btn" id="aside-fate"><span class="tool-icon">✦</span><span class="tool-label">${uiText('Древо Судьбы', 'Fate Tree')}</span></button>
-        ${showAlchemy ? `<button type="button" class="aside-tool-btn" id="aside-alchemy"><span class="tool-icon">🧪</span><span class="tool-label">${uiText('Алхимия', 'Alchemy')}</span></button>` : ''}
-      `);
+      const showMap = E.isUnlocked(s, 'map');
+      const showFate = E.isUnlocked(s, 'fate');
+      const showAlchemy = E.isUnlocked(s, 'alchemy');
+      if (!showMap && !showFate && !showAlchemy) {
+        $('aside-tools').innerHTML = '';
+        $('aside-tools').style.display = 'none';
+      } else {
+        $('aside-tools').style.display = '';
+        $('aside-tools').innerHTML = h(`
+          <div class="aside-tools-header">${uiText('ИНСТРУМЕНТЫ', 'TOOLS')}</div>
+          ${showMap ? `<button type="button" class="aside-tool-btn" id="aside-map"><span class="tool-icon">🗺️</span><span class="tool-label">${uiText('Карта мира', 'World Map')}</span></button>` : ''}
+          ${showFate ? `<button type="button" class="aside-tool-btn" id="aside-fate"><span class="tool-icon">✦</span><span class="tool-label">${uiText('Древо Судьбы', 'Fate Tree')}</span></button>` : ''}
+          ${showAlchemy ? `<button type="button" class="aside-tool-btn" id="aside-alchemy"><span class="tool-icon">🧪</span><span class="tool-label">${uiText('Алхимия', 'Alchemy')}</span></button>` : ''}
+        `);
+      }
     }
     let html = '';
     if (tab === 'hero') {
@@ -1535,14 +1581,22 @@
     $('content').innerHTML = h(returnSummaryView()+(view === 'data' ? IsekaiDataView.render(s, tab, E) : html));
     $('journal').replaceChildren(...s.events.slice(0, 7).map(e => { const div = document.createElement('div'); div.className = 'event'; const small = document.createElement('small'); small.textContent = t(`ДЕНЬ ${e.day}`); div.append(small, document.createTextNode(t(e.text))); return div; }));
     for(const id of ['chapter','hero-description','life','souls','day'])$(id).textContent=t($(id).textContent);
-    if($('open-map'))$('open-map').textContent=uiText('🗺️ Карта','🗺️ Map');
-    if($('open-fate-tree'))$('open-fate-tree').textContent=uiText('✦ Древо Судьбы','✦ Fate Tree');
+    if($('open-map')){
+      $('open-map').textContent=uiText('🗺️ Карта','🗺️ Map');
+      $('open-map')?.setAttribute?.('data-locked', E.isUnlocked(s, 'map') ? 'false' : 'true');
+    }
+    if($('open-fate-tree')){
+      $('open-fate-tree').textContent=uiText('✦ Древо Судьбы','✦ Fate Tree');
+      $('open-fate-tree')?.setAttribute?.('data-locked', E.isUnlocked(s, 'fate') ? 'false' : 'true');
+    }
     if($('open-alchemy')){
       const hasGardenReady = s.alchemy?.garden?.plots?.some(p => p.stage >= 2);
       const hasDewFull = s.alchemy?.garden?.dew >= (s.alchemy?.garden?.dewMax || 5);
       const badge = (hasGardenReady || hasDewFull) ? ' ●' : '';
       $('open-alchemy').textContent = uiText(`🧪 Алхимия${badge}`, `🧪 Alchemy${badge}`);
+      $('open-alchemy')?.setAttribute?.('data-locked', E.isUnlocked(s, 'alchemy') ? 'false' : 'true');
     }
+    checkNewUnlocks(s);
     if($('mini-hud')&&view!=='data'){
       const place=E.world.locations[s.world.location]?.name||s.world.location;
       const journey=s.world.journey?(uiText('В пути: ','Travelling: ')+t(E.world.locations[s.world.journey.destination]?.name||'')+` · ${Math.ceil(s.world.journey.remaining)} `+uiText('сек.','s')):t(place);
@@ -1677,8 +1731,25 @@
 
     const tabs=$('alchemy-dialog')?.querySelectorAll?.('.alchemy-tab');
     if(tabs){
+      const isAlcTabUnlocked = (k) => {
+        if (k === 'cauldron' || k === 'crucible' || k === 'shop') return true;
+        if (k === 'garden') return true;
+        if (k === 'market') return s.stage >= 1 || (s.storyStep || 0) >= 4;
+        if (k === 'pouch') return E.isUnlocked(s, 'combat');
+        if (k === 'flame') return E.isUnlocked(s, 'flames');
+        if (k === 'clinic') return E.isUnlocked(s, 'clinic');
+        if (k === 'auction') return E.isUnlocked(s, 'auction');
+        if (k === 'pavilion') return E.isUnlocked(s, 'pavilion');
+        if (k === 'jasmine') return E.isUnlocked(s, 'jasmine');
+        if (k === 'poisons') return E.isUnlocked(s, 'venoms');
+        if (k === 'expedition') return E.isUnlocked(s, 'beastRange');
+        return true;
+      };
+      if (!isAlcTabUnlocked(activeAlchemyTab)) activeAlchemyTab = 'cauldron';
       tabs.forEach(btn=>{
-        const isAct=btn.dataset.alchemyTab===activeAlchemyTab;
+        const tabKey = btn.dataset.alchemyTab;
+        btn.setAttribute?.('data-locked', isAlcTabUnlocked(tabKey) ? 'false' : 'true');
+        const isAct=tabKey===activeAlchemyTab;
         btn.classList.toggle('active',isAct);
         btn.setAttribute('aria-selected',isAct?'true':'false');
         if(btn.dataset.alchemyTab==='cauldron')btn.textContent=uiText('⚗️ Котёл и Жемчужина','⚗️ Crucible & Pearl');
@@ -3084,7 +3155,7 @@
             <span class="portal-glyph">🧭</span>
             <span>${uiText('КАРТА ДОЛИНЫ ПЛЫВУЩИХ ОБЛАКОВ', 'MAP OF FLOATING CLOUD VALLEY')}</span>
           </div>
-          <button type="button" class="portal-expand-btn" id="world-tab-open-map">
+          <button type="button" class="portal-expand-btn" id="world-tab-open-map" data-locked="${E.isUnlocked(s, 'map') ? 'false' : 'true'}">
             <span>🗺️ ${uiText('Развернуть свиток карты', 'Open Scroll Map')}</span>
           </button>
         </div>

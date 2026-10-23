@@ -320,6 +320,14 @@
     }
 
     s.chapterTwoStep = (s.chapterTwoStep || 0) + 1;
+    if (s.unlocked) {
+      s.unlocked.sect = true;
+      if (step >= 1) s.unlocked.pavilion = true;
+      if (step >= 2) s.unlocked.clinic = true;
+      if (step >= 3) { s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; }
+      if (step >= 4) { s.unlocked.beastRange = true; s.unlocked.venoms = true; }
+      if (step >= 6) s.unlocked.jasmine = true;
+    }
     if (api?.log) {
       const lang = root.IsekaiLocale?.language || 'ru';
       api.log(s, lang === 'en' ? `Chapter 2: ${b.title[1]}` : `Глава 2: ${b.title[0]}`);
