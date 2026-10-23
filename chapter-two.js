@@ -257,7 +257,7 @@
   }
 
   function getBeat(s, index = (s.chapterTwoStep || 0), lang = 'ru') {
-    if (s.stage !== 1) return null;
+    if (s.stage < 1) return null;
     const base = beats[index];
     if (!base) return null;
 

@@ -1179,3 +1179,41 @@ html:not([data-interface="data"]) #open-alchemy[data-locked="false"] {
 
 
 
+
+/* ══════════════════════════════════════════════════════════════
+   QI CIRCULATION & MEDITATIVE BREATHING ANIMATION
+   Soothing ambient breathing rhythm during deep spiritual meditation
+   ══════════════════════════════════════════════════════════════ */
+@keyframes qiCirculationBreath {
+  0% {
+    box-shadow: 0 0 12px rgba(46, 219, 162, 0.25), inset 0 0 10px rgba(46, 219, 162, 0.15);
+    border-color: rgba(46, 219, 162, 0.4);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(46, 219, 162, 0.65), 0 0 45px rgba(229, 195, 130, 0.35), inset 0 0 20px rgba(46, 219, 162, 0.3);
+    border-color: rgba(229, 195, 130, 0.7);
+    filter: brightness(1.15);
+  }
+  100% {
+    box-shadow: 0 0 12px rgba(46, 219, 162, 0.25), inset 0 0 10px rgba(46, 219, 162, 0.15);
+    border-color: rgba(46, 219, 162, 0.4);
+    filter: brightness(1);
+  }
+}
+
+html:not([data-interface="data"]) .portal.is-meditating {
+  animation: qiCirculationBreath 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+html:not([data-interface="data"]) #mini-hud.is-meditating {
+  border-color: rgba(46, 219, 162, 0.55);
+  box-shadow: 0 4px 20px rgba(46, 219, 162, 0.22);
+  transition: border-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-interface="data"]) .portal.is-meditating {
+    animation: none !important;
+  }
+}

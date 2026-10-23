@@ -776,6 +776,160 @@
       trackVoice(osc, allNodes);
     },
 
+    // 17. PROCEDURAL CELESTIAL TRIBULATION THUNDER (Небесная скорбь)
+    playBreakthroughThunder() {
+      if (!canPlay('breakthrough-thunder', 1200)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+      const t0 = ac.currentTime;
+      const allNodes = [];
+
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+      const rumbleFilter = ac.createBiquadFilter();
+      rumbleFilter.type = 'lowpass';
+      rumbleFilter.frequency.setValueAtTime(420, t0);
+      rumbleFilter.frequency.exponentialRampToValueAtTime(38, t0 + 2.2);
+
+      const rumbleGain = ac.createGain();
+      rumbleGain.gain.setValueAtTime(0, t0);
+      rumbleGain.gain.linearRampToValueAtTime(0.48, t0 + 0.08);
+      rumbleGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.4);
+
+      noise.connect(rumbleFilter);
+      rumbleFilter.connect(rumbleGain);
+      rumbleGain.connect(masterGain);
+      allNodes.push(noise, rumbleFilter, rumbleGain);
+
+      [130.81, 261.63, 523.25, 830.61].forEach((freq, idx) => {
+        const bellOsc = ac.createOscillator();
+        const bellGain = ac.createGain();
+        allNodes.push(bellOsc, bellGain);
+        bellOsc.type = idx === 0 ? 'triangle' : 'sine';
+        bellOsc.frequency.setValueAtTime(freq, t0 + 0.15);
+
+        const amp = 0.32 / (idx + 1);
+        bellGain.gain.setValueAtTime(0, t0 + 0.15);
+        bellGain.gain.linearRampToValueAtTime(amp, t0 + 0.18);
+        bellGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.2);
+
+        bellOsc.connect(bellGain);
+        bellGain.connect(masterGain);
+        bellOsc.start(t0 + 0.15);
+        bellOsc.stop(t0 + 3.3);
+      });
+
+      trackVoice(noise, allNodes);
+      noise.start(t0);
+      noise.stop(t0 + 2.5);
+    },
+
+    // 18. VITAL DEW DROPLET (Живительная роса)
+    playDewDrip() {
+      if (!canPlay('dew-drip', 90)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+      const t0 = ac.currentTime;
+
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1420, t0);
+      osc.frequency.exponentialRampToValueAtTime(2180, t0 + 0.045);
+      osc.frequency.exponentialRampToValueAtTime(1740, t0 + 0.14);
+
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.26, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      trackVoice(osc, [osc, gain]);
+      osc.start(t0);
+      osc.stop(t0 + 0.24);
+    },
+
+    // 19. SWORD PARRY RESONANCE (Парирование клинка)
+    playParryResonance() {
+      if (!canPlay('parry-ring', 120)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+      const t0 = ac.currentTime;
+      const allNodes = [];
+
+      [2780, 2794, 5560].forEach((freq, idx) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        allNodes.push(osc, gain);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t0);
+
+        const amp = 0.22 / (idx + 1);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(amp, t0 + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(t0);
+        osc.stop(t0 + 0.9);
+      });
+
+      trackVoice(allNodes[0], allNodes);
+    },
+
+    // 20. CAULDRON FLAME STOKING (Шипение алхимического пламени)
+    playFlameStoke() {
+      if (!canPlay('flame-stoke', 180)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+      const t0 = ac.currentTime;
+
+      const noise = ac.createBufferSource();
+      noise.buffer = getNoiseBuffer(ac);
+      const filter = ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(450, t0);
+      filter.frequency.linearRampToValueAtTime(980, t0 + 0.2);
+      filter.frequency.exponentialRampToValueAtTime(320, t0 + 0.55);
+      filter.Q.value = 2.4;
+
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.24, t0 + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.58);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      trackVoice(noise, [noise, filter, gain]);
+      noise.start(t0);
+      noise.stop(t0 + 0.6);
+    },
+
+    // 21. MEDITATION BREATH CHIME (Гармонический звон дыхания ци)
+    playMeditationChime() {
+      if (!canPlay('meditation-chime', 2000)) return;
+      const ac = getAudioContext();
+      if (!ac || !masterGain) return;
+      const t0 = ac.currentTime;
+
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(432, t0);
+
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.16, t0 + 1.2);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.8);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      trackVoice(osc, [osc, gain]);
+      osc.start(t0);
+      osc.stop(t0 + 3.9);
+    },
+
     // Method aliases for extended naming compatibility
     playSingingBowl(f, d) { return this.playBowl(f, d); },
     playSwordClash() { return this.playClash(); },

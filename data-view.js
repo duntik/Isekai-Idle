@@ -22,7 +22,7 @@
       for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
       for(const a of milestones.filter(a=>a.special&&!a.earned))row(a.name,'◇',a.description);
       for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
-      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep));
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep));
       const hint = E.guidance(s, isStoryActive ? 'story' : 'advance', '', root.IsekaiLocale?.language || 'ru');
       if(hint) row(root.IsekaiLocale?.language === 'en' ? 'Next step' : 'Следующий шаг', '→', hint);
       if(s.stage === 0) {
@@ -35,6 +35,11 @@
         const beat = E.chapterTwoBeat ? E.chapterTwoBeat(s, s.chapterTwoStep, root.IsekaiLocale?.language || 'ru') : null;
         if(beat) row(beat.title, `${(s.chapterTwoStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
         else row(uiText('Глава 2: Врата секты', 'Chapter 2: Sect Gates'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
+      }
+      if(s.stage === 2) {
+        const beat = E.chapterThreeBeat ? E.chapterThreeBeat(s, s.chapterThreeStep, root.IsekaiLocale?.language || 'ru') : null;
+        if(beat) row(beat.title, `${(s.chapterThreeStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        else row(uiText('Глава 3: Истинный ученик', 'Chapter 3: The True Disciple'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
       }
       const journey=s.world.journey;
       row('Текущее место',E.world.locations[s.world.location].name,journey?`${uiText('В пути:','Travelling to:')} ${E.world.locations[journey.destination].name} · ${Math.ceil(journey.remaining)} ${uiText('сек','sec')}`:activityLabels[s.activity]);
