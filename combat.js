@@ -185,20 +185,24 @@
       let baseDmg = Math.max(12, Math.floor((14 + (s.body || 0) * 3 + (s.weapon || 0) * 4) * (1.45 ** (s.realm || 0)) * styleMult * evilGodMult * momentumMult * burningHeartMult));
       if (exhausted) baseDmg = Math.max(5, Math.floor(baseDmg * 0.4));
 
+      const hw = s.heavyWeapon;
+      const hwWeightMult = hw ? (1.0 + (hw.weight >= 10000 ? 0.8 : hw.weight >= 1950 ? 0.5 : hw.weight >= 500 ? 0.25 : 0.1)) : 1.0;
+
       if (critBurst) {
         pDamage = Math.floor(baseDmg * 1.9);
-        pPoiseDmg = Math.floor(baseDmg * 2.8);
+        pPoiseDmg = Math.floor(baseDmg * 2.8 * hwWeightMult);
         pLogRu = `【БОЕВОЙ КУРАЖ: СОКРУШЕНИЕ НЕБЕС!】 Накопленный импульс взрывается чудовищным ударом! Оружие проламывает стойку на ${pDamage} урона (${pPoiseDmg} пробоя стойки)!`;
         pLogEn = `【FULL MOMENTUM: HEAVEN SHATTER!】 Surging momentum erupts into a monstrous crushing blow! Your weapon pulverizes foe’s stance for ${pDamage} damage (${pPoiseDmg} poise damage)!`;
       } else if (c.enemyIntent === 'defend') {
         pDamage = baseDmg;
-        pPoiseDmg = Math.floor(baseDmg * 2.5);
+        pPoiseDmg = Math.floor(baseDmg * 2.5 * hwWeightMult);
         c.momentum = Math.min(3, (c.momentum || 0) + 1);
+        if (hw && hw.weight >= 1950) c.enemyStunned = true;
         pLogRu = `Сокрушающий силовой удар всем весом тела! Каменный треск — щит врага расколот (${pDamage} урона, ${pPoiseDmg} пробоя стойки, импульс +1)!`;
         pLogEn = `Crushing heavy strike with full body momentum! Stone shatter — foe’s guard is cracked (${pDamage} damage, ${pPoiseDmg} poise damage, momentum +1)!`;
       } else {
         pDamage = baseDmg;
-        pPoiseDmg = Math.floor(baseDmg * 1.8);
+        pPoiseDmg = Math.floor(baseDmg * 1.8 * hwWeightMult);
         pLogRu = `Тяжёлый сокрушающий раскол сотрясает кости врага: нанесён тяжелейший удар на ${pDamage} урона!`;
         pLogEn = `Heavy crushing blow rattles the opponent’s bones: a devastating strike dealt ${pDamage} damage!`;
       }

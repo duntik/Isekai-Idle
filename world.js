@@ -236,7 +236,11 @@
     return '';
   }
   const canTravel=(s,k)=>!!locations[k]&&!travelReason(s,k);
-  const travelTime=(s,k)=>Math.ceil(locations[k].time*((s.atlas?.surveys[k]||0)>=2?.8:1));
+  const travelTime=(s,k)=>{
+    const surveyMult=(s.atlas?.surveys[k]||0)>=2?.8:1;
+    const mountMult=(s.mount&&s.mount.unlocked)?Math.max(0.45, 1.0-(0.15+(s.mount.level||1)*0.05)):1;
+    return Math.ceil(locations[k].time * surveyMult * mountMult);
+  };
   function locationDesc(s,id,language='ru'){
     const visited=(s.world.visits[id]||0)>0||s.world.location===id;
     const en=language==='en';

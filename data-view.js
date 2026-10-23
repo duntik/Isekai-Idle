@@ -22,7 +22,7 @@
       for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
       for(const a of milestones.filter(a=>a.special&&!a.earned))row(a.name,'◇',a.description);
       for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
-      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep));
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep)) || (s.stage === 3 && E.chapterFourBeat && E.chapterFourBeat(s, s.chapterFourStep));
       const hint = E.guidance(s, isStoryActive ? 'story' : 'advance', '', root.IsekaiLocale?.language || 'ru');
       if(hint) row(root.IsekaiLocale?.language === 'en' ? 'Next step' : 'Следующий шаг', '→', hint);
       if(s.stage === 0) {
@@ -42,6 +42,11 @@
         else row(uiText('Глава 3: Истинный ученик', 'Chapter 3: The True Disciple'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
       }
       const journey=s.world.journey;
+      if(s.stage === 3) {
+        const beat = E.chapterFourBeat ? E.chapterFourBeat(s, s.chapterFourStep, root.IsekaiLocale?.language || 'ru') : null;
+        if(beat) row(beat.title, `${(s.chapterFourStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        else row(uiText('Глава 4: Имперская Столица', 'Chapter 4: Imperial Capital'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
+      }
       row('Текущее место',E.world.locations[s.world.location].name,journey?`${uiText('В пути:','Travelling to:')} ${E.world.locations[journey.destination].name} · ${Math.ceil(journey.remaining)} ${uiText('сек','sec')}`:activityLabels[s.activity]);
       const pendingScene=E.world.current(s);
       if(pendingScene)row(uiText('Ожидает решения','Awaiting your decision'),E.world.sceneText(pendingScene,'title',root.IsekaiLocale?.language),uiText('Встреча ждёт твоего выбора; открой путешествия, чтобы продолжить.','An encounter awaits your choice; open Travel to continue.'),`<button data-tab="world">${uiText('Продолжить встречу','Continue encounter')}</button>`);

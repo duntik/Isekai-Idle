@@ -409,6 +409,11 @@
     return ch3 ? ch3.getStoryBranches(s, lang) : [];
   }
 
+  function getChapterFourBranches(s, lang){
+    const ch4 = typeof module !== 'undefined' && module.exports ? require('./chapter-four.js') : (root.IsekaiChapterFour || (typeof window !== 'undefined' ? window.IsekaiChapterFour : null));
+    return ch4 ? ch4.getStoryBranches(s, lang) : [];
+  }
+
   function renderTreeHtml(s, activeTab, lang){
     const en = lang === 'en';
     const tab = activeTab || 'story';
@@ -417,7 +422,8 @@
       const branches = getStoryBranches(s, lang);
       const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
       const ch3Branches = s.stage >= 2 ? getChapterThreeBranches(s, lang) : [];
-      const allBranches = [...branches, ...ch2Branches, ...ch3Branches];
+      const ch4Branches = s.stage >= 3 ? getChapterFourBranches(s, lang) : [];
+      const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches];
       return `
         <div class="fate-branches-list">
           ${allBranches.map(b => {
@@ -567,7 +573,8 @@
     const branches = getStoryBranches(s, lang);
     const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
     const ch3Branches = s.stage >= 2 ? getChapterThreeBranches(s, lang) : [];
-    const allBranches = [...branches, ...ch2Branches, ...ch3Branches];
+    const ch4Branches = s.stage >= 3 ? getChapterFourBranches(s, lang) : [];
+    const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches];
     const completedCount = allBranches.filter(b => b.status === 'completed').length;
     const bonds = getNpcBonds(s, lang);
     const friendlyCount = bonds.filter(b => b.trust >= 3).length;
@@ -605,6 +612,7 @@
     getStoryBranches,
     getChapterTwoBranches,
     getChapterThreeBranches,
+    getChapterFourBranches,
     getNpcBonds,
     getFactions,
     renderTreeHtml,

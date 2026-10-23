@@ -9,6 +9,8 @@
   const Combat = typeof module !== 'undefined' && module.exports ? require('./combat.js') : root.IsekaiCombat;
   const ChapterTwo = typeof module !== 'undefined' && module.exports ? require('./chapter-two.js') : root.IsekaiChapterTwo;
   const ChapterThree = typeof module !== 'undefined' && module.exports ? require('./chapter-three.js') : root.IsekaiChapterThree;
+  const ChapterFour = typeof module !== 'undefined' && module.exports ? require('./chapter-four.js') : root.IsekaiChapterFour;
+  const Celestial = typeof module !== 'undefined' && module.exports ? require('./celestial.js') : root.IsekaiCelestial;
   const Alchemy = typeof module !== 'undefined' && module.exports ? require('./alchemy.js') : root.IsekaiAlchemy;
   const stages = [
     { name: 'Безвестный чужак', subtitle: 'Выжить и найти свой путь', realm: 1, wins: 1, cost: { herbs: 10 }, intro: 'Ты очнулся у дороги. Ни денег, ни техники, ни покровителя. В руинах неподалёку что-то зовёт тебя.' },
@@ -181,7 +183,7 @@
     if (system === 'combat') return (s.storyStep || 0) >= 6 || (s.wins || 0) > 0;
     return false;
   };
-  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, chapterThreeStep: 0, fed: false, combat: null, unlocked: defaultUnlocked(0, 0, 0, 0, {}), clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
+  const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, time: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, chapterThreeStep: 0, chapterFourStep: 0, mount: null, heavyWeapon: null, tribulation: null, fed: false, combat: null, unlocked: defaultUnlocked(0, 0, 0, 0, {}), clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
     sky:{name:'Сутра Злого Неба',source:'Наследие из храма',desc:'Понимание от медитации +8% за ранг.',effect:'xp',available:s=>s.found},
     ink:{name:'След туши',source:'Урок библиотекаря Вэя',desc:'Понимание +8% за ранг. Позволяет читать повреждённые надписи в храме.',effect:'xp',available:s=>s.world.mentors.includes('scholar')},
@@ -194,7 +196,7 @@
     seal:{name:'Письмена беззвёздного неба',source:'Архив секты Пустого Неба',desc:'Понимание +8% и энергия медитации +4% за ранг.',effect:'xp',secondary:'qi',available:s=>S.library(s,'invitation')},
     iron:{name:'Железные сухожилия',source:'Закрытая библиотека Каменного Оплота',desc:'Рост тела +8% и боевая сила +4% за ранг. Двигательная практика.',effect:'body',secondary:'power',practiceBody:.005,available:s=>S.library(s,'gates')}
   };
-  const fresh = () => ({...baseFresh(), combat: null, alchemy: Alchemy ? Alchemy.fresh() : { level: 1, xp: 0, unlockedRecipes: ['vigor_broth'], ingredients: {}, buffs: {}, stats: {}, log: [] }, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, chapterTwoStep: 0, chapterThreeStep: 0, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
+  const fresh = () => ({...baseFresh(), combat: null, alchemy: Alchemy ? Alchemy.fresh() : { level: 1, xp: 0, unlockedRecipes: ['vigor_broth'], ingredients: {}, buffs: {}, stats: {}, log: [] }, atlas:Atlas.fresh(), achievements:A.fresh(), playerName:null, prologueAction:null, chapterOneRoute:null, chapterOneTraining:null, chapterTwoStep: 0, chapterThreeStep: 0, chapterFourStep: 0, mount: null, heavyWeapon: null, tribulation: null, activity:'meditate', world:W.fresh(), cultivation:{active:null,learned:{}}, employment:{completed:0,order:null}});
   const firstRoutes={combat:'Защитить обоз силой',service:'Провести обоз при поддержке жителей',diplomacy:'Показать рекомендацию Вэя'};
   const firstRouteReady=(s,k)=>s.realm>=1&&(k==='combat'?s.wins>=1:k==='service'?W.recognition(s,0)>=3:k==='diplomacy'?s.world.completed.includes('city:wei-letter'):false);
   const firstResolution=s=>s.chapterOneRoute||Object.keys(firstRoutes).find(k=>firstRouteReady(s,k));
@@ -528,6 +530,23 @@
         if(step===7)return say(`Ступень ${s.realm}/5 и побед ${s.wins}/6. Отрази Звериный Шквал и защити форпост!`,`Realm ${s.realm}/5 and wins ${s.wins}/6. Repel the Beast Tide and defend the outpost!`);
         if(step===8)return say(`Ступень ${s.realm}/6, побед ${s.wins}/7 и монет ${n(s.resources.gold)}/300. Получи золотой указ преемника!`,`Realm ${s.realm}/6, wins ${s.wins}/7 and coins ${n(s.resources.gold)}/300. Receive the Golden Successor Decree!`);
       }
+      if (s.stage === 3) {
+        const b = ChapterFour ? ChapterFour.getBeat(s, s.chapterFourStep, language) : null;
+        if (!b) return guidance(s, 'advance', '', language);
+        if (s.world.journey) return say('Дождись прибытия. Затем вернись к сюжетной цели.', 'Wait until you arrive, then return to the story objective.');
+        if (s.world.location !== 'city') return say(`Открой «Путешествия» и отправься: ${W.locations.city.name}. Прогресс цели сохранится.`, `Open Travel and go to the Capital City. Your objective progress is kept.`);
+        if (ChapterFour && ChapterFour.isReady(s, s.chapterFourStep)) return say('Условия выполнены. Нажми сюжетную кнопку, чтобы получить награду и продолжить.', 'Requirements met. Press the story button to collect your reward and continue.');
+        const step = s.chapterFourStep || 0;
+        if (step === 0) return say('Войди в Главные Врата Имперской Столицы.', 'Pass through the Main Gates of the Imperial Capital.');
+        if (step === 1) return say(`Укрепи тело (тело ${n(s.body)}/5.0) для аудиенции у принцессы Лань Сюэжо.`, `Strengthen your body (body ${n(s.body)}/5.0) for audience with Princess Lan Xueruo.`);
+        if (step === 2) return say(`Ступень ${s.realm}/7 и побед ${s.wins}/8. Пройди испытание Монолита Зала Воинской Славы!`, `Realm ${s.realm}/7 and wins ${s.wins}/8. Pass the Trial Monolith of the Martial Hall!`);
+        if (step === 3) return say(`Монеты ${n(s.resources.gold)}/120 и травы ${n(s.resources.herbs)}/40. Заключи пакт с Гильдией Чёрной Луны.`, `Coins ${n(s.resources.gold)}/120 and herbs ${n(s.resources.herbs)}/40. Seal pact with Black Moon Guild.`);
+        if (step === 4) return say(`Энергия ${n(s.resources.qi)}/80 и исследование ${n(s.explored)}/800 сек. Выдержи Испытание Божественного Дракона.`, `Qi ${n(s.resources.qi)}/80 and research ${n(s.explored)}/800s. Endure the Dragon God Trial.`);
+        if (step === 5) return say(`Побед ${s.wins}/9. Сокруши высокомерных наследников столичных кланов!`, `Wins ${s.wins}/9. Crush the haughty scions of capital clans!`);
+        if (step === 6) return say(`Ступень ${s.realm}/8 и побед ${s.wins}/10. Выйди в финал Рейтингового Турнира Дворца!`, `Realm ${s.realm}/8 and wins ${s.wins}/10. Reach the finals of the Palace Ranking Tournament!`);
+        if (step === 7) return say(`Спокойствие ${n(s.calm)}/95 и энергия ${n(s.resources.qi)}/100. Защити принцессу от ночного заговора.`, `Calm ${n(s.calm)}/95 and qi ${n(s.resources.qi)}/100. Defend the Princess from the midnight ambush.`);
+        if (step === 8) return say(`Ступень ${s.realm}/9, побед ${s.wins}/11 и монет ${n(s.resources.gold)}/450. Прими Золотую Мантию Защитника Империи!`, `Realm ${s.realm}/9, wins ${s.wins}/11 and coins ${n(s.resources.gold)}/450. Accept the Golden Mantle of Empire Defender!`);
+      }
       const beat=storyBeat(s);if(!beat)return guidance(s,'advance','',language);
       if(s.world.journey)return say('Дождись прибытия. Затем вернись к сюжетной цели.','Wait until you arrive, then return to the story objective.');
       if(s.world.location!==beat.location)return say(`Открой «Путешествия» и отправься: ${W.locations[beat.location].name}. Прогресс цели сохранится.`,`Open Travel and go to ${beat.location==='ruins'?'the ruins':'the village'}. Your objective progress is kept.`);
@@ -658,6 +677,9 @@
       if (s.stage === 2) {
         return ChapterThree ? ChapterThree.action(s, value, api) : false;
       }
+      if (s.stage === 3) {
+        return ChapterFour ? ChapterFour.action(s, value, api) : false;
+      }
       const beat=storyBeat(s);if(!beat||!beat.ready(s))return false;
       if(s.storyStep===0){
         const choiceKey=value||'shoulder';
@@ -724,7 +746,19 @@
       spend(s, c); s.xp -= needed(s); s.realm++;
       if (s.unlocked && s.realm >= 1) s.unlocked.alchemy = true;
       if (Alchemy && Alchemy.cleanseDanDu) Alchemy.cleanseDanDu(s, 25);
-      log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития. Токсины Дань Ду рассеяны небесным прорывом (-25 токсинов)!`);
+      if (value === 'bones') {
+        s.body = Math.min(10 * (s.realm + 1), s.body + 0.3);
+        log(s, `【НЕБЕСНАЯ СКОРБЬ: ЗАКАЛКА КОСТЕЙ】 Прорыв: ${realmName(s.realm)}! Громовая кара закаляет сухожилия (Тело +0.3)!`);
+      } else if (value === 'purify') {
+        if (Alchemy && Alchemy.cleanseDanDu) Alchemy.cleanseDanDu(s, 100);
+        log(s, `【НЕБЕСНАЯ СКОРБЬ: ПЛАМЕННОЕ ОЧИЩЕНИЕ】 Прорыв: ${realmName(s.realm)}! Небесный огонь выжигает шлаки Дань Ду (100% очищено)!`);
+      } else if (value === 'dao') {
+        s.calm = Math.min(100, s.calm + 15);
+        s.resources.qi += 50;
+        log(s, `【НЕБЕСНАЯ СКОРБЬ: ПОСТИЖЕНИЕ ДАО】 Прорыв: ${realmName(s.realm)}! Безмолвие разума среди молний (Спокойствие +15, Духовная Ци +50)!`);
+      } else {
+        log(s, `Прорыв: ${realmName(s.realm)}. Тело и техники получили новый предел развития. Токсины Дань Ду рассеяны небесным прорывом (-25 токсинов)!`);
+      }
     } else if (type === 'combat-start') {
       if (!canFight(s)) return false;
       s.combat = Combat.freshCombat(s, api);
@@ -816,6 +850,55 @@
       return Alchemy ? Alchemy.expeditionExtract(s, api) : false;
     } else if (type === 'alchemy-expedition-flee') {
       return Alchemy ? Alchemy.expeditionFlee(s, api) : false;
+    } else if (type === 'mount-unlock') {
+      if (!s.mount) s.mount = { unlocked: true, id: 'snow_eagle', level: 1, exp: 0, forageCooldown: 0, fedPills: 0 };
+      else s.mount.unlocked = true;
+      log(s, '【Духовный Скакун】 Белоснежный Гигантский Орёл готов к полёту! Скорость перемещения по миру увеличена!');
+      return true;
+    } else if (type === 'mount-feed') {
+      if (!s.mount || !s.mount.unlocked) return false;
+      if ((s.resources.pills || 0) < 1) return false;
+      s.resources.pills--;
+      s.mount.fedPills = (s.mount.fedPills || 0) + 1;
+      s.mount.exp = (s.mount.exp || 0) + 25;
+      while (s.mount.exp >= 100 && s.mount.level < 5) {
+        s.mount.level++;
+        s.mount.exp -= 100;
+        log(s, `【Духовный Скакун】 Твой питомец возвысился до ранга ${s.mount.level}! Скорость полёта возросла!`);
+      }
+      return true;
+    } else if (type === 'mount-forage') {
+      if (!s.mount || !s.mount.unlocked || (s.mount.forageCooldown || 0) > 0) return false;
+      s.mount.forageCooldown = 600;
+      const herbGain = 10 + Math.floor(Math.random() * 8);
+      s.resources.herbs += herbGain;
+      log(s, `【Полёт Скакуна】 Орёл вернулся с горных вершин, доставив ${herbGain} редких трав!`);
+      return true;
+    } else if (type === 'heavy-weapon-upgrade') {
+      if (!s.heavyWeapon) {
+        s.heavyWeapon = { tier: 'mortal_iron', level: 0, weight: 120, beastCoresInfused: 0 };
+      }
+      const hw = s.heavyWeapon;
+      if (hw.tier === 'mortal_iron' && s.body >= 4.0 && (s.resources.gold || 0) >= 150) {
+        s.resources.gold -= 150;
+        hw.tier = 'crimson_dragon';
+        hw.weight = 500;
+        log(s, '【Эволюция Меча】 Оружие перековано в Багровый Драконий Клинок (вес: 500 цзиней)!');
+        return true;
+      } else if (hw.tier === 'crimson_dragon' && s.body >= 8.0 && (s.resources.gold || 0) >= 400 && s.stage >= 2) {
+        s.resources.gold -= 400;
+        hw.tier = 'overlord_heavy';
+        hw.weight = 1950;
+        log(s, '【Эволюция Меча】 Достигнут ранг: Тяжёлый Меч Повелителя (вес: 1,950 цзиней)! Сокрушение стойки увеличено на 50%!');
+        return true;
+      } else if (hw.tier === 'overlord_heavy' && s.body >= 14.0 && (s.resources.gold || 0) >= 1000 && s.stage >= 3) {
+        s.resources.gold -= 1000;
+        hw.tier = 'divine_phoenix';
+        hw.weight = 10000;
+        log(s, '【Эволюция Меча】 Пробуждён Клинок Божественного Феникса (вес: 10,000 цзиней)! Сила тяжелых ударов сотрясает небеса!');
+        return true;
+      }
+      return false;
     } else if (type === 'weapon') {
       const c = { gold: Math.ceil(40 * 1.8 ** s.weapon), ...(s.stage >= 3 ? { ore: Math.ceil(10 * 1.4 ** s.weapon) } : {}) };
       if (s.stage < 1 || !affordable(s, c) || s.weapon >= (s.realm + 1) * 2) return false;
@@ -884,6 +967,8 @@
     let left = Math.max(0, Math.min(seconds, 86400));
     while (left > 0) {
       const dt = Math.min(left, 10, s.world.journey?.remaining || Infinity); left -= dt; const a = activityRunning(s)?activities[s.activity]:{}, mult = speed(s), wb = W.bonus(s);
+      s.time = (s.time || 0) + dt;
+      if (s.mount?.forageCooldown > 0) s.mount.forageCooldown = Math.max(0, s.mount.forageCooldown - dt);
       s.stamina=Math.min(staminaMax(s),s.stamina+staminaRecovery(s)*dt);s.clickCooldown=Math.max(0,s.clickCooldown-dt);
       for(const id of Object.keys(s.cultivation.actionCooldowns||{}))s.cultivation.actionCooldowns[id]=Math.max(0,s.cultivation.actionCooldowns[id]-dt);
       for(const id of Object.keys(s.achievements.cooldowns))s.achievements.cooldowns[id]=Math.max(0,s.achievements.cooldowns[id]-dt);
@@ -896,8 +981,8 @@
         const o=s.employment.order,k=o.kind,rate=Math.min(.15,.08+s.employment.completed*.005),work=Math.min(dt*rate,orders[k].target-o.progress,s.stamina/clicks[k].stamina);
         s.stamina-=work*clicks[k].stamina;o.progress+=work;taskPractice(s,k,work);s.activity='work';
       }
-      s.calm=Math.min(100,s.calm+(a.calm||0)*dt);
-      for (const [k, v] of Object.entries(a.rates || {})) if((k!=='qi'||s.found)&&(s.activity!=='explore'||k!=='relics'||s.world.location==='ruins'))s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?techniqueBonus(s,'qi'):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
+      s.calm=Math.min(100,s.calm+(a.calm||0)*dt*(Celestial?Celestial.getWeatherEffect(s,'calmMult'):1));
+      for (const [k, v] of Object.entries(a.rates || {})) if((k!=='qi'||s.found)&&(s.activity!=='explore'||k!=='relics'||s.world.location==='ruins'))s.resources[k] += v * mult * dt * (k==='gold'&&s.activity==='work'?wb.gold:['herbs','relics'].includes(k)&&s.activity==='explore'?wb[k]:1) * (s.activity==='meditate'&&k==='qi'?(techniqueBonus(s,'qi')*(Celestial?Celestial.getWeatherEffect(s,'qiMult'):1)):s.activity==='explore'&&k==='herbs'?techniqueBonus(s,'herbs'):1);
       if(s.activity==='work'&&s.employment.order?.kind==='ledger'&&activityRunning(s)){
         const work=Math.min(dt,orders.ledger.target-s.employment.order.progress);
         s.employment.order.progress+=work;taskPractice(s,'ledger',work);
@@ -952,9 +1037,39 @@
       if(!Number.isFinite(v)||v<0||v>(k==='storyStep'?story.length:k==='clickCooldown'?.6:k==='stamina'?staminaMax(input):100)||(k==='storyStep'&&!Number.isInteger(v)))throw Error('Неверное активное развитие');base[k]=v;
     }
     for(const k of Object.keys(clicks)){const v=input.clicks?.[k]??0;if(!Number.isSafeInteger(v)||v<0)throw Error('Неверные действия');base.clicks[k]=v;}
-    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'chapterThreeStep', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat','alchemy','unlocked'].includes(k)) base[k] = input[k];
+    for (const k of Object.keys(base)) if (!['atlas','achievements','resources', 'buildings', 'workers', 'events', 'routes', 'expedition', 'stamina', 'clickCooldown', 'calm', 'storyStep', 'chapterTwoStep', 'chapterThreeStep', 'chapterFourStep', 'mount', 'heavyWeapon', 'tribulation', 'time', 'fed', 'clicks', 'world','employment','cultivation','activity','playerName','prologueAction','chapterOneRoute','chapterOneTraining','combat','alchemy','unlocked'].includes(k)) base[k] = input[k];
     base.chapterTwoStep = (Number.isInteger(input.chapterTwoStep) && input.chapterTwoStep >= 0 && input.chapterTwoStep <= 9) ? input.chapterTwoStep : 0;
     base.chapterThreeStep = (Number.isInteger(input.chapterThreeStep) && input.chapterThreeStep >= 0 && input.chapterThreeStep <= 9) ? input.chapterThreeStep : 0;
+    base.chapterFourStep = (Number.isInteger(input.chapterFourStep) && input.chapterFourStep >= 0 && input.chapterFourStep <= 9) ? input.chapterFourStep : 0;
+    base.time = Number.isFinite(input.time) && input.time >= 0 ? input.time : (base.age || 0);
+
+    if (input.mount && typeof input.mount === 'object' && input.mount.unlocked) {
+      base.mount = {
+        unlocked: true,
+        id: typeof input.mount.id === 'string' ? input.mount.id : 'snow_eagle',
+        level: Number.isInteger(input.mount.level) && input.mount.level >= 1 && input.mount.level <= 5 ? input.mount.level : 1,
+        exp: Number.isFinite(input.mount.exp) && input.mount.exp >= 0 ? input.mount.exp : 0,
+        forageCooldown: Number.isFinite(input.mount.forageCooldown) && input.mount.forageCooldown >= 0 ? input.mount.forageCooldown : 0,
+        fedPills: Number.isInteger(input.mount.fedPills) && input.mount.fedPills >= 0 ? input.mount.fedPills : 0
+      };
+    } else {
+      base.mount = null;
+    }
+
+    if (input.heavyWeapon && typeof input.heavyWeapon === 'object' && input.heavyWeapon.tier) {
+      const validTiers = ['mortal_iron', 'crimson_dragon', 'overlord_heavy', 'divine_phoenix'];
+      const tier = validTiers.includes(input.heavyWeapon.tier) ? input.heavyWeapon.tier : 'mortal_iron';
+      base.heavyWeapon = {
+        tier,
+        level: Number.isInteger(input.heavyWeapon.level) && input.heavyWeapon.level >= 0 && input.heavyWeapon.level <= 5 ? input.heavyWeapon.level : 0,
+        weight: Number.isFinite(input.heavyWeapon.weight) && input.heavyWeapon.weight >= 120 ? input.heavyWeapon.weight : (tier === 'divine_phoenix' ? 10000 : tier === 'overlord_heavy' ? 1950 : tier === 'crimson_dragon' ? 500 : 120),
+        beastCoresInfused: Number.isInteger(input.heavyWeapon.beastCoresInfused) && input.heavyWeapon.beastCoresInfused >= 0 ? input.heavyWeapon.beastCoresInfused : 0
+      };
+    } else {
+      base.heavyWeapon = null;
+    }
+
+    base.tribulation = (input.tribulation && typeof input.tribulation === 'object') ? { ...input.tribulation } : null;
     base.fed = input.fed !== undefined ? !!input.fed : (base.storyStep > 1);
     base.activity=activity;
     base.unlocked = validateUnlocked(input.unlocked, input.stage, input.storyStep, input.chapterTwoStep, input.chapterThreeStep, input);
@@ -1018,18 +1133,26 @@
         title = ch3.title;
         accent = 'жизнь во внутреннем дворе секты.';
       } else if(s.wins>=5){title='Имя, которое запомнили';accent='готовиться к следующему испытанию.';}
+    }else if(s.stage===3){
+      const ch4 = ChapterFour ? ChapterFour.getBeat(s, s.chapterFourStep) : null;
+      if(ch4){
+        title = ch4.title;
+        accent = 'жизнь в Имперской Столице Голубого Ветра.';
+      } else if(s.wins>=8){title='Имперский избранник';accent='готовиться к турниру дворца.';}
     }
     if(s.stage>=2&&s.stage<7&&canAdvance(s)){title=stages[s.stage+1].name;accent='пора открыть новую главу.';}
     const place=W.locations[s.world.location].name;
     if(s.world.journey){title='В дороге к новой вехе';accent=W.locations[s.world.journey.destination].name;}
     const ch2Beat = s.stage===1 && ChapterTwo ? ChapterTwo.getBeat(s, s.chapterTwoStep) : null;
     const ch3Beat = s.stage===2 && ChapterThree ? ChapterThree.getBeat(s, s.chapterThreeStep) : null;
-    const objective=s.stage===0&&storyBeat(s)?storyBeat(s).goal:ch2Beat?ch2Beat.goal:ch3Beat?ch3Beat.goal:stages[s.stage].subtitle;
+    const ch4Beat = s.stage===3 && ChapterFour ? ChapterFour.getBeat(s, s.chapterFourStep) : null;
+    const objective=s.stage===0&&storyBeat(s)?storyBeat(s).goal:ch2Beat?ch2Beat.goal:ch3Beat?ch3Beat.goal:ch4Beat?ch4Beat.goal:stages[s.stage].subtitle;
     const affiliation=s.stage>=1&&s.world.admission?` · ${W.admissions[s.world.admission].name}`:'';
     return {title,accent,description:`${s.world.journey?'В пути: '+W.locations[s.world.journey.destination].name:'Место: '+place}${affiliation} · ${objective}`};
   }
   const chapterTwoBeat = (s, step, lang) => ChapterTwo ? ChapterTwo.getBeat(s, step, lang) : null;
   const chapterThreeBeat = (s, step, lang) => ChapterThree ? ChapterThree.getBeat(s, step, lang) : null;
-  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked };
+  const chapterFourBeat = (s, step, lang) => ChapterFour ? ChapterFour.getBeat(s, step, lang) : null;
+  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, chapterFour: ChapterFour, chapterFourBeat, celestial: Celestial, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);
