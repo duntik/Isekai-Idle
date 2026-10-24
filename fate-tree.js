@@ -414,6 +414,16 @@
     return ch4 ? ch4.getStoryBranches(s, lang) : [];
   }
 
+  function getChapterFiveBranches(s, lang){
+    const ch5 = typeof module !== 'undefined' && module.exports ? require('./chapter-five.js') : (root.IsekaiChapterFive || (typeof window !== 'undefined' ? window.IsekaiChapterFive : null));
+    return ch5 ? ch5.getStoryBranches(s, lang) : [];
+  }
+
+  function getChapterSixBranches(s, lang){
+    const ch6 = typeof module !== 'undefined' && module.exports ? require('./chapter-six.js') : (root.IsekaiChapterSix || (typeof window !== 'undefined' ? window.IsekaiChapterSix : null));
+    return ch6 ? ch6.getStoryBranches(s, lang) : [];
+  }
+
   function renderTreeHtml(s, activeTab, lang){
     const en = lang === 'en';
     const tab = activeTab || 'story';
@@ -423,7 +433,9 @@
       const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
       const ch3Branches = s.stage >= 2 ? getChapterThreeBranches(s, lang) : [];
       const ch4Branches = s.stage >= 3 ? getChapterFourBranches(s, lang) : [];
-      const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches];
+      const ch5Branches = s.stage >= 4 ? getChapterFiveBranches(s, lang) : [];
+      const ch6Branches = s.stage >= 5 ? getChapterSixBranches(s, lang) : [];
+      const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches, ...ch5Branches, ...ch6Branches];
       return `
         <div class="fate-branches-list">
           ${allBranches.map(b => {
@@ -574,7 +586,9 @@
     const ch2Branches = s.stage >= 1 ? getChapterTwoBranches(s, lang) : [];
     const ch3Branches = s.stage >= 2 ? getChapterThreeBranches(s, lang) : [];
     const ch4Branches = s.stage >= 3 ? getChapterFourBranches(s, lang) : [];
-    const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches];
+    const ch5Branches = s.stage >= 4 ? getChapterFiveBranches(s, lang) : [];
+    const ch6Branches = s.stage >= 5 ? getChapterSixBranches(s, lang) : [];
+    const allBranches = [...branches, ...ch2Branches, ...ch3Branches, ...ch4Branches, ...ch5Branches, ...ch6Branches];
     const completedCount = allBranches.filter(b => b.status === 'completed').length;
     const bonds = getNpcBonds(s, lang);
     const friendlyCount = bonds.filter(b => b.trust >= 3).length;
@@ -613,6 +627,8 @@
     getChapterTwoBranches,
     getChapterThreeBranches,
     getChapterFourBranches,
+    getChapterFiveBranches,
+    getChapterSixBranches,
     getNpcBonds,
     getFactions,
     renderTreeHtml,

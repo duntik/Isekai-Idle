@@ -22,7 +22,7 @@
       for(const a of [...milestones.filter(a=>a.earned),...E.achievements.upcoming(s,root.IsekaiLocale?.language||'ru')])row(a.name,a.earned?'✓':'◇',a.description);
       for(const a of milestones.filter(a=>a.special&&!a.earned))row(a.name,'◇',a.description);
       for(const a of E.achievementActions(s))row(a.name[root.IsekaiLocale?.language==='en'?1:0],s.achievements.cooldowns[a.id]>0?`${Math.ceil(s.achievements.cooldowns[a.id])} s`:'—',a.description[root.IsekaiLocale?.language==='en'?1:0],btn('achievement-action',a.id,uiText('Выполнить','Perform'),a.enabled));
-      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep)) || (s.stage === 3 && E.chapterFourBeat && E.chapterFourBeat(s, s.chapterFourStep));
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep)) || (s.stage === 3 && E.chapterFourBeat && E.chapterFourBeat(s, s.chapterFourStep)) || (s.stage === 4 && E.chapterFiveBeat && E.chapterFiveBeat(s, s.chapterFiveStep)) || (s.stage === 5 && E.chapterSixBeat && E.chapterSixBeat(s, s.chapterSixStep));
       const hint = E.guidance(s, isStoryActive ? 'story' : 'advance', '', root.IsekaiLocale?.language || 'ru');
       if(hint) row(root.IsekaiLocale?.language === 'en' ? 'Next step' : 'Следующий шаг', '→', hint);
       if(s.stage === 0) {
@@ -46,6 +46,16 @@
         const beat = E.chapterFourBeat ? E.chapterFourBeat(s, s.chapterFourStep, root.IsekaiLocale?.language || 'ru') : null;
         if(beat) row(beat.title, `${(s.chapterFourStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
         else row(uiText('Глава 4: Имперская Столица', 'Chapter 4: Imperial Capital'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
+      }
+      if(s.stage === 4) {
+        const beat = E.chapterFiveBeat ? E.chapterFiveBeat(s, s.chapterFiveStep, root.IsekaiLocale?.language || 'ru') : null;
+        if(beat) row(beat.title, `${(s.chapterFiveStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        else row(uiText('Глава 5: Великий Турнир Сект', 'Chapter 5: Grand Tournament of Sects'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
+      }
+      if(s.stage === 5) {
+        const beat = E.chapterSixBeat ? E.chapterSixBeat(s, s.chapterSixStep, root.IsekaiLocale?.language || 'ru') : null;
+        if(beat) row(beat.title, `${(s.chapterSixStep || 0) + 1}/9`, `${beat.goal}${Object.keys(beat.reward || {}).length ? `; ${cost(beat.reward)}` : ''}`, btn('story', '', beat.button, beat.ready(s)));
+        else row(uiText('Глава 6: Прямой ученик и Наследник Дао', 'Chapter 6: Direct Disciple & Dao Successor'), uiText('Завершена', 'Completed'), uiText('Доступна следующая глава', 'Next chapter available'));
       }
       row('Текущее место',E.world.locations[s.world.location].name,journey?`${uiText('В пути:','Travelling to:')} ${E.world.locations[journey.destination].name} · ${Math.ceil(journey.remaining)} ${uiText('сек','sec')}`:activityLabels[s.activity]);
       const pendingScene=E.world.current(s);

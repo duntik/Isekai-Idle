@@ -262,7 +262,75 @@
     return null;
   }
   function novelStepperHtml(st, activeStep) {
-    if (st.stage > 3) return '';
+    if (st.stage > 5) return '';
+    if (st.stage === 5) {
+      const curStep = st.chapterSixStep || 0;
+      const viewing = (activeStep !== undefined && activeStep !== null && activeStep <= curStep) ? activeStep : (novelViewStep !== null && novelViewStep <= curStep ? novelViewStep : curStep);
+      const stepLabels = [
+        uiText('Указ', 'Decree'),
+        uiText('Пик', 'Spirit Peak'),
+        uiText('Наследие', 'Relic'),
+        uiText('Ученики', 'Disciples'),
+        uiText('Дракон', 'Dragon Body'),
+        uiText('Осада', 'Siege'),
+        uiText('Разгром', 'Annihilation'),
+        uiText('Эдикт', 'Edict'),
+        uiText('Владыка', 'Sovereign')
+      ];
+      const steps = stepLabels.map((lbl, idx) => {
+        const isPast = idx < curStep;
+        const isCurrent = idx === curStep;
+        const isViewing = idx === viewing;
+        const cls = [
+          isPast ? 'step-done' : isCurrent ? 'step-active' : 'step-locked',
+          isViewing ? 'step-selected' : ''
+        ].filter(Boolean).join(' ');
+        const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
+        const isClickable = idx <= curStep;
+        if (isClickable) {
+          const titleHint = isCurrent
+            ? uiText('Текущий эпизод (активный)', 'Current episode (active)')
+            : uiText(`Прочитать архив: Эпизод ${idx + 1} (${lbl})`, `Read archive: Episode ${idx + 1} (${lbl})`);
+          return `<button type="button" class="novel-step ${cls}" data-novel-step="${idx}" title="${titleHint}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></button>`;
+        }
+        return `<div class="novel-step ${cls}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></div>`;
+      }).join('<div class="novel-step-line" aria-hidden="true"></div>');
+      return `<nav class="novel-stepper" aria-label="${uiText('Шаги шестой главы', 'Sixth chapter steps')}">${steps}</nav>`;
+    }
+    if (st.stage === 4) {
+      const curStep = st.chapterFiveStep || 0;
+      const viewing = (activeStep !== undefined && activeStep !== null && activeStep <= curStep) ? activeStep : (novelViewStep !== null && novelViewStep <= curStep ? novelViewStep : curStep);
+      const stepLabels = [
+        uiText('Сбор', 'Assembly'),
+        uiText('Вызов', 'Challenge'),
+        uiText('Оплот', 'Bastion'),
+        uiText('Буря', 'Storm'),
+        uiText('Облако', 'Asgard'),
+        uiText('Пламя', 'Flame'),
+        uiText('Тяжесть', 'Heavy Wrath'),
+        uiText('Заговор', 'Conspiracy'),
+        uiText('Венец', 'Champion')
+      ];
+      const steps = stepLabels.map((lbl, idx) => {
+        const isPast = idx < curStep;
+        const isCurrent = idx === curStep;
+        const isViewing = idx === viewing;
+        const cls = [
+          isPast ? 'step-done' : isCurrent ? 'step-active' : 'step-locked',
+          isViewing ? 'step-selected' : ''
+        ].filter(Boolean).join(' ');
+        const mark = isPast ? '✓' : isCurrent ? '●' : String(idx + 1);
+        const isClickable = idx <= curStep;
+        if (isClickable) {
+          const titleHint = isCurrent
+            ? uiText('Текущий эпизод (активный)', 'Current episode (active)')
+            : uiText(`Прочитать архив: Эпизод ${idx + 1} (${lbl})`, `Read archive: Episode ${idx + 1} (${lbl})`);
+          return `<button type="button" class="novel-step ${cls}" data-novel-step="${idx}" title="${titleHint}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></button>`;
+        }
+        return `<div class="novel-step ${cls}"><span class="novel-step-icon">${mark}</span><span class="novel-step-label">${lbl}</span></div>`;
+      }).join('<div class="novel-step-line" aria-hidden="true"></div>');
+      return `<nav class="novel-stepper" aria-label="${uiText('Шаги пятой главы', 'Fifth chapter steps')}">${steps}</nav>`;
+    }
     if (st.stage === 3) {
       const curStep = st.chapterFourStep || 0;
       const viewing = (activeStep !== undefined && activeStep !== null && activeStep <= curStep) ? activeStep : (novelViewStep !== null && novelViewStep <= curStep ? novelViewStep : curStep);
@@ -398,7 +466,7 @@
     if (view === 'data') return '';
     if (id === 'hero') {
       const btReady = s.found && s.xp >= E.needed(s) && E.affordable(s, E.breakthroughCost(s));
-      const stReady = s.stage === 0 ? E.storyBeat(s)?.ready(s) : (s.stage === 1 && E.chapterTwo ? E.chapterTwo.isReady(s, s.chapterTwoStep) : (s.stage === 2 && E.chapterThree ? E.chapterThree.isReady(s, s.chapterThreeStep) : (s.stage === 3 && E.chapterFour ? E.chapterFour.isReady(s, s.chapterFourStep) : false)));
+      const stReady = s.stage === 0 ? E.storyBeat(s)?.ready(s) : (s.stage === 1 && E.chapterTwo ? E.chapterTwo.isReady(s, s.chapterTwoStep) : (s.stage === 2 && E.chapterThree ? E.chapterThree.isReady(s, s.chapterThreeStep) : (s.stage === 3 && E.chapterFour ? E.chapterFour.isReady(s, s.chapterFourStep) : (s.stage === 4 && E.chapterFive ? E.chapterFive.isReady(s, s.chapterFiveStep) : (s.stage === 5 && E.chapterSix ? E.chapterSix.isReady(s, s.chapterSixStep) : false)))));
       if (btReady || stReady) return ` <span class="tab-badge badge-gold" title="${uiText('Готово действие', 'Action ready')}">●</span>`;
     }
     if (id === 'combat') {
@@ -690,7 +758,57 @@
     viewport.scrollLeft=scroll[0];viewport.scrollTop=scroll[1];
   }
   function storyGoalTrackerHtml(s) {
-    if (s.stage > 3) return '';
+    if (s.stage > 5) return '';
+    if (s.stage === 5) {
+      const step = s.chapterSixStep || 0;
+      let tracker = '';
+      if (step === 0) {
+        const atCity = s.world.location === 'city' && !s.world.journey;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span class="story-goal-status ${atCity ? 'active' : 'paused'}">${atCity ? '● ' + uiText('Город Столицы достигнут', 'Capital City reached') : '⚠ ' + uiText('В пути или вне города', 'In transit or outside city')}</span></div></div>`;
+      } else if (step === 1) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Тело: ', 'Body: ')}${fmt(s.body || 0)}/7.5</span></div></div>`;
+      } else if (step === 2) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/11 · ${uiText('Побед: ', 'Wins: ')}${s.wins}/15</span></div></div>`;
+      } else if (step === 3) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Монеты: ', 'Coins: ')}${fmt(s.resources?.gold || 0)}/350 · ${uiText('Осколки: ', 'Shards: ')}${s.resources?.relics || 0}/12</span></div></div>`;
+      } else if (step === 4) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/12 · ${uiText('Ци: ', 'Qi: ')}${fmt(s.resources?.qi || 0)}/150</span></div></div>`;
+      } else if (step === 5) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Побед: ', 'Wins: ')}${s.wins}/16 · ${uiText('Тело: ', 'Body: ')}${fmt(s.body || 0)}/8.0</span></div></div>`;
+      } else if (step === 6) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Оружие: ', 'Weapon: ')}${s.weapon || 0}/3 · ${uiText('Мастерство: ', 'Mastery: ')}${fmt(s.mastery || 0)}/40</span></div></div>`;
+      } else if (step === 7) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Спокойствие: ', 'Calm: ')}${fmt(s.calm || 0)}/98 · ${uiText('Ци: ', 'Qi: ')}${fmt(s.resources?.qi || 0)}/180</span></div></div>`;
+      } else if (step === 8) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/14 · ${uiText('Побед: ', 'Wins: ')}${s.wins}/18 · ${uiText('Монеты: ', 'Coins: ')}${fmt(s.resources?.gold || 0)}/800</span></div></div>`;
+      }
+      return tracker;
+    }
+    if (s.stage === 4) {
+      const step = s.chapterFiveStep || 0;
+      let tracker = '';
+      if (step === 0) {
+        const atCity = s.world.location === 'city' && !s.world.journey;
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span class="story-goal-status ${atCity ? 'active' : 'paused'}">${atCity ? '● ' + uiText('Арена Столицы достигнута', 'Capital Arena reached') : '⚠ ' + uiText('В пути или вне города', 'In transit or outside city')}</span></div></div>`;
+      } else if (step === 1) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Тело: ', 'Body: ')}${fmt(s.body || 0)}/6.0</span></div></div>`;
+      } else if (step === 2) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/8 · ${uiText('Побед: ', 'Wins: ')}${s.wins}/11</span></div></div>`;
+      } else if (step === 3) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Монеты: ', 'Coins: ')}${fmt(s.resources?.gold || 0)}/250 · ${uiText('Осколки: ', 'Shards: ')}${s.resources?.relics || 0}/10</span></div></div>`;
+      } else if (step === 4) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/9 · ${uiText('Ци: ', 'Qi: ')}${fmt(s.resources?.qi || 0)}/100</span></div></div>`;
+      } else if (step === 5) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Побед: ', 'Wins: ')}${s.wins}/12 · ${uiText('Тело: ', 'Body: ')}${fmt(s.body || 0)}/7.0</span></div></div>`;
+      } else if (step === 6) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Оружие: ', 'Weapon: ')}${s.weapon || 0}/2 · ${uiText('Мастерство: ', 'Mastery: ')}${fmt(s.mastery || 0)}/30</span></div></div>`;
+      } else if (step === 7) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Спокойствие: ', 'Calm: ')}${fmt(s.calm || 0)}/95 · ${uiText('Ци: ', 'Qi: ')}${fmt(s.resources?.qi || 0)}/120</span></div></div>`;
+      } else if (step === 8) {
+        tracker = `<div class="story-goal-tracker"><div class="story-goal-progress-row"><span>${uiText('Ступень: ', 'Realm: ')}${s.realm}/10 · ${uiText('Побед: ', 'Wins: ')}${s.wins}/13 · ${uiText('Монеты: ', 'Coins: ')}${fmt(s.resources?.gold || 0)}/500</span></div></div>`;
+      }
+      return tracker;
+    }
     if (s.stage === 3) {
       const step = s.chapterFourStep || 0;
       let tracker = '';
@@ -907,9 +1025,37 @@
     if (!tracker && !actions) return '';
     return tracker + (actions ? `<div class="story-quick-actions">${actions}</div>` : '');
   }
-  function systemBoxHtml(s, beat, stepOverride = (s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : (s.stage === 2 ? (s.chapterThreeStep || 0) : (s.chapterFourStep || 0)))), isArchive = false) {
+  function systemBoxHtml(s, beat, stepOverride = (s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : (s.stage === 2 ? (s.chapterThreeStep || 0) : (s.stage === 3 ? (s.chapterFourStep || 0) : (s.stage === 4 ? (s.chapterFiveStep || 0) : (s.stage === 5 ? (s.chapterSixStep || 0) : 0)))))), isArchive = false) {
     if (!beat) {
       return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${uiText('СИСТЕМА ПРОЗРЕНИЯ · ДИРЕКТИВА', 'INSIGHT SYSTEM · DIRECTIVE')}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${uiText('«[Начать следующую главу и отправиться в секту]».', '“[Start the next chapter and set out for your sect]”.')}</p></div>${storyGoalTrackerHtml(s)}</div>`;
+    }
+
+    if (s.stage === 5) {
+      const step = stepOverride !== undefined ? stepOverride : (s.chapterSixStep || 0);
+      const ch6Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-six.js') : (globalThis.IsekaiChapterSix || (typeof window !== 'undefined' ? window.IsekaiChapterSix : null));
+      const dir = ch6Mod ? ch6Mod.systemDirective(s, step, L?.language || 'ru') : {
+        header: uiText('СИСТЕМА ПРОЗРЕНИЯ · ПРЯМОЙ ПРЕЕМНИК', 'INSIGHT SYSTEM · DIRECT SUCCESSOR'),
+        prompt: `«[${beat.goal}]».`,
+        world: uiText('Владычество секты', 'Sect dominion'),
+        system: uiText('Дао Изначального Дракона', 'Primordial Dragon Dao')
+      };
+      const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
+      const rewardsBlock = `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">🐉 ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${dir.world}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${dir.system}</span></div></div>`;
+      return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${dir.header}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${dir.prompt}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
+    }
+
+    if (s.stage === 4) {
+      const step = stepOverride !== undefined ? stepOverride : (s.chapterFiveStep || 0);
+      const ch5Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-five.js') : (globalThis.IsekaiChapterFive || (typeof window !== 'undefined' ? window.IsekaiChapterFive : null));
+      const dir = ch5Mod ? ch5Mod.systemDirective(s, step, L?.language || 'ru') : {
+        header: uiText('СИСТЕМА ПРОЗРЕНИЯ · ИМПЕРСКИЙ ТУРНИР', 'INSIGHT SYSTEM · IMPERIAL TOURNAMENT'),
+        prompt: `«[${beat.goal}]».`,
+        world: uiText('Турнирная слава', 'Tournament glory'),
+        system: uiText('Венец чемпиона', 'Champion’s crown')
+      };
+      const trackerContent = isArchive ? `<div class="system-archive-status">✓ ${uiText('Директива успешно выполнена', 'Directive successfully completed')}</div>` : storyGoalTrackerHtml(s);
+      const rewardsBlock = `<div class="system-rewards-container"><div class="system-world-reward"><span class="reward-tag-world">⚔️ ${uiText('Награда в мире: ','In-world reward: ')}</span><span>${dir.world}</span></div><div class="system-divine-reward"><span class="reward-tag-system">✧ ${uiText('Система Прозрения: ','Insight System: ')}</span><span>${dir.system}</span></div></div>`;
+      return `<div class="story-goal system-box system-synced"><div class="system-prompt-header"><span class="system-bracket">【</span><span class="system-prompt-title">${dir.header}</span><span class="system-bracket">】</span></div><div class="system-prompt-text"><p>${dir.prompt}</p></div>${trackerContent}${rewardsBlock}${(!isArchive && Object.keys(beat.reward || {}).length) ? `<small class="system-reward">${uiText('Награда: ', 'Reward: ')}${costs(beat.reward)}</small>` : ''}</div>`;
     }
 
     if (s.stage === 3) {
@@ -1106,7 +1252,33 @@
       }
     }
 
-    const total = ch1Html + ch2Html + ch3Html + ch4Html;
+    let ch5Html = '';
+    if (s.stage >= 4) {
+      const ch5Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-five.js') : (globalThis.IsekaiChapterFive || (typeof window !== 'undefined' ? window.IsekaiChapterFive : null));
+      const ch5Step = s.stage > 4 ? (ch5Mod?.beats?.length || 9) : (s.chapterFiveStep || 0);
+      if (ch5Mod && ch5Mod.beats) {
+        ch5Html = ch5Mod.beats.slice(0, ch5Step).map((b, i) => {
+          const beatLocalized = ch5Mod.getBeat(s, i, L?.language || 'ru');
+          if (!beatLocalized) return '';
+          return `<h3>${uiText('Глава 5 · Эпизод', 'Chapter 5 · Episode')} ${i + 1} · ${beatLocalized.title}</h3><p>${beatLocalized.text}</p>${beatLocalized.chronicle ? `<p class="story-chronicle-past"><em>${beatLocalized.chronicle}</em></p>` : ''}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть этот эпизод', '📖 Open this episode')}</button></p>`;
+        }).filter(Boolean).join('');
+      }
+    }
+
+    let ch6Html = '';
+    if (s.stage >= 5) {
+      const ch6Mod = typeof module !== 'undefined' && module.exports ? require('./chapter-six.js') : (globalThis.IsekaiChapterSix || (typeof window !== 'undefined' ? window.IsekaiChapterSix : null));
+      const ch6Step = s.stage > 5 ? (ch6Mod?.beats?.length || 9) : (s.chapterSixStep || 0);
+      if (ch6Mod && ch6Mod.beats) {
+        ch6Html = ch6Mod.beats.slice(0, ch6Step).map((b, i) => {
+          const beatLocalized = ch6Mod.getBeat(s, i, L?.language || 'ru');
+          if (!beatLocalized) return '';
+          return `<h3>${uiText('Глава 6 · Эпизод', 'Chapter 6 · Episode')} ${i + 1} · ${beatLocalized.title}</h3><p>${beatLocalized.text}</p>${beatLocalized.chronicle ? `<p class="story-chronicle-past"><em>${beatLocalized.chronicle}</em></p>` : ''}<p><button type="button" class="story-archive-return-btn" data-novel-step="${i}">${uiText('📖 Открыть этот эпизод', '📖 Open this episode')}</button></p>`;
+        }).filter(Boolean).join('');
+      }
+    }
+
+    const total = ch1Html + ch2Html + ch3Html + ch4Html + ch5Html + ch6Html;
     return total || `<p>${uiText('Твоя история только начинается.', 'Your story is just beginning.')}</p>`;
   }
 
@@ -1555,14 +1727,20 @@
       heroEquipment = '';
       heroActivities = `<h3>${uiText('Одно занятие — один путь', 'Choose your idle activity')}</h3><p class="intro">${uiText('Занятие продолжается офлайн до 24 часов. Его можно сменить в любой момент.', 'Your activity continues offline for up to 24 hours. You can change it at any time.')}</p><div class="cards">${Object.entries(E.activities).filter(([k]) => E.activityVisible(s,k)).map(([k, a]) => card(a.name, a.desc + ' '+E.taskPracticeText(k,L?.language||'ru') + (['meditate', 'train', 'technique', 'laws'].includes(k) ? ` ${uiText('Скорость развития', 'Development speed')} ×${fmt(E.speed(s))}.` : ''), button('activity', k, s.activity === k ? uiText('● Текущее занятие', '● Current activity') : uiText('Выбрать занятие', 'Choose activity'), s.activity !== k))).join('')}</div>`;
       if (s.stage < 7) nextChapterHtml = `<div class="rebirth"><div class="eyebrow">${uiText('БЛИЖАЙШАЯ ЦЕЛЬ', 'NEXT CHAPTER')} · ${E.stages[s.stage + 1].name}</div><p>${uiText('Ступень', 'Realm')} ${s.realm} / ${next.realm} · ${s.stage===0?uiText('Личный прорыв и помощь обозу: победа, 3 признания или рекомендация Вэя.', 'Personal breakthrough and helping cart: victory, 3 recognitions or Wei’s recommendation.'):uiText(`Победы ${s.wins} / ${next.wins} или признание ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`, `Victories ${s.wins} / ${next.wins} or recognition ${E.world.recognition(s)} / ${E.world.recognitionNeeded(s)}`)}</p><p>${uiText('Требуется: ', 'Required: ')}${costs(next.cost)}${!s.found ? uiText(' · найти древнюю технику', ' · find ancient technique') : ''}</p>${button('advance', '', uiText('Начать следующую главу', 'Start next chapter'), E.canAdvance(s))}</div>`;
-      if(s.stage===0 || s.stage===1 || s.stage===2 || s.stage===3) {
+      if(s.stage===0 || s.stage===1 || s.stage===2 || s.stage===3 || s.stage===4 || s.stage===5) {
         const isCh2 = s.stage === 1;
         const isCh3 = s.stage === 2;
         const isCh4 = s.stage === 3;
-        const curStep = isCh4 ? (s.chapterFourStep || 0) : isCh3 ? (s.chapterThreeStep || 0) : isCh2 ? (s.chapterTwoStep || 0) : s.storyStep;
+        const isCh5 = s.stage === 4;
+        const isCh6 = s.stage === 5;
+        const curStep = isCh6 ? (s.chapterSixStep || 0) : isCh5 ? (s.chapterFiveStep || 0) : isCh4 ? (s.chapterFourStep || 0) : isCh3 ? (s.chapterThreeStep || 0) : isCh2 ? (s.chapterTwoStep || 0) : s.storyStep;
         const isViewingArchive = novelViewStep !== null && novelViewStep < curStep;
         const activeStep = isViewingArchive ? novelViewStep : curStep;
-        const beat = isCh4
+        const beat = isCh6
+          ? (E.chapterSixBeat ? E.chapterSixBeat(s, activeStep, L?.language || 'ru') : null)
+          : isCh5
+          ? (E.chapterFiveBeat ? E.chapterFiveBeat(s, activeStep, L?.language || 'ru') : null)
+          : isCh4
           ? (E.chapterFourBeat ? E.chapterFourBeat(s, activeStep, L?.language || 'ru') : null)
           : isCh3
           ? (E.chapterThreeBeat ? E.chapterThreeBeat(s, activeStep, L?.language || 'ru') : null)
@@ -1572,7 +1750,7 @@
         const novelControls=`<div class="novel-controls"><button type="button" id="novel-font-btn" class="novel-control-btn ${novelSerif?'active':''}" title="${uiText('Шрифт с засечками / без засечек','Serif / Sans font')}" aria-label="${uiText('Шрифт','Font')}"><span class="novel-font-glyph ${novelSerif?'glyph-serif':'glyph-sans'}" aria-hidden="true">Aa</span></button><button type="button" id="novel-size-btn" class="novel-control-btn ${novelLarge?'active':''}" title="${uiText('Размер текста','Text size')}" aria-label="${uiText('Размер текста','Text size')}"><span class="novel-size-glyph" aria-hidden="true"><span class="glyph-sm">A</span><span class="glyph-lg">A</span></span></button></div>`;
         let storyHtml;
         if (isViewingArchive && beat) {
-          const dec = !isCh2 && !isCh3 && !isCh4 ? stepDecisionInfo(s, activeStep) : null;
+          const dec = !isCh2 && !isCh3 && !isCh4 && !isCh5 && !isCh6 ? stepDecisionInfo(s, activeStep) : null;
           const decisionHtml = dec ? `
           <div class="story-decision-card">
             <div class="story-decision-header">
@@ -1584,7 +1762,11 @@
             ${dec.detail ? `<p class="story-decision-detail">${dec.detail}</p>` : ''}
           </div>` : '';
 
-          const eyebrow = isCh4
+          const eyebrow = isCh6
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 6 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 6 · EPISODE ${activeStep+1} · ARCHIVE`)
+            : isCh5
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 5 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 5 · EPISODE ${activeStep+1} · ARCHIVE`)
+            : isCh4
             ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 4 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 4 · EPISODE ${activeStep+1} · ARCHIVE`)
             : isCh3
             ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 3 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 3 · EPISODE ${activeStep+1} · ARCHIVE`)
@@ -1592,7 +1774,11 @@
             ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 2 · ЭПИЗОД ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. 2 · EPISODE ${activeStep+1} · ARCHIVE`)
             : uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${activeStep+1} · АРХИВ`, `AGAINST THE GODS · VOL. 1 · CH. ${activeStep+1} · ARCHIVE`);
 
-          const currentBeatTitle = isCh4
+          const currentBeatTitle = isCh6
+            ? (E.chapterSixBeat ? E.chapterSixBeat(s, curStep, L?.language || 'ru')?.title || '' : '')
+            : isCh5
+            ? (E.chapterFiveBeat ? E.chapterFiveBeat(s, curStep, L?.language || 'ru')?.title || '' : '')
+            : isCh4
             ? (E.chapterFourBeat ? E.chapterFourBeat(s, curStep, L?.language || 'ru')?.title || '' : '')
             : isCh3
             ? (E.chapterThreeBeat ? E.chapterThreeBeat(s, curStep, L?.language || 'ru')?.title || '' : '')
@@ -1624,9 +1810,15 @@
             <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${renderArchiveList(s)}</details>
           </article>`;
         } else if (beat) {
+          const isCh6 = s.stage === 5;
+          const isCh5 = s.stage === 4;
           const isCh4 = s.stage === 3;
           const isCh3 = s.stage === 2;
-          const eyebrow = isCh4
+          const eyebrow = isCh6
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 6 · ЭПИЗОД ${curStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. 6 · EPISODE ${curStep+1}`)
+            : isCh5
+            ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 5 · ЭПИЗОД ${curStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. 5 · EPISODE ${curStep+1}`)
+            : isCh4
             ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 4 · ЭПИЗОД ${curStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. 4 · EPISODE ${curStep+1}`)
             : isCh3
             ? uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА 3 · ЭПИЗОД ${curStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. 3 · EPISODE ${curStep+1}`)
@@ -1635,7 +1827,7 @@
             : uiText(`ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ГЛАВА ${s.storyStep+1}`, `AGAINST THE GODS · VOL. 1 · CH. ${s.storyStep+1}`);
 
           let actionButtons = '';
-          if (isCh4 || isCh3 || isCh2) {
+          if (isCh6 || isCh5 || isCh4 || isCh3 || isCh2) {
             actionButtons = button('story', '', beat.button, beat.ready(s));
           } else {
             if (s.storyStep === 0) {
@@ -1663,29 +1855,43 @@
             <details data-panel="story-archive"><summary>${uiText('Пройденные события','Past events')}</summary><div class="fate-tree-archive-entry"><button type="button" class="btn-fate-tree-link" id="story-open-fate-tree-archive"><span class="fate-icon">✦</span> <strong>${uiText('Древо Судьбы и Хроника Кармы', 'Fate Tree & Karma Chronicle')}</strong> · ${uiText('Посмотреть древо выборов, узы с персонажами и открытые фракции', 'Inspect choice tree, NPC bonds and unlocked factions')}</button></div>${renderArchiveList(s)}</details>
           </article>`;
         } else {
+          const isCh6 = s.stage === 5;
+          const isCh5 = s.stage === 4;
           const isCh4 = s.stage === 3;
           const isCh3 = s.stage === 2;
-          const eyebrow = isCh4
-            ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 2 · ВЕЛИКИЙ ТРИУМФ ИМПЕРИИ", "AGAINST THE GODS · VOL. 2 · IMPERIAL SOVEREIGN TRIUMPH")
-            : (isCh3
-              ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 2 · ТРИУМФ ИСТИННОГО УЧЕНИКА", "AGAINST THE GODS · VOL. 2 · SOVEREIGN ASCENSION")
-              : (isCh2
-                ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ФИНАЛ ВРАТ СЕКТЫ", "AGAINST THE GODS · VOL. 1 · FINALE OF SECT GATES")
-                : uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ", "AGAINST THE GODS · VOL. 1 · EPILOGUE")));
-          const epilogueTitle = isCh4
-            ? uiText("Первый Мастер Империи Голубого Ветра", "First Master of the Blue Wind Empire")
-            : (isCh3
-              ? uiText("Истинный Ученик Семи Сект", "True Disciple of the Seven Sects")
-              : (isCh2
-                ? uiText("Первый ученик внешнего круга", "Top Disciple of the Outer Circle")
-                : uiText("Письмо через перевал", "A path beyond the village")));
-          const epilogueNarrative = isCh4
-            ? uiText("Заговор Секты Горящих Небес повержен, кровь Божественного Дракона течёт в твоих жилах, и принцесса Лань Сюэжо с гордостью вручает тебе печать Первого Мастера Империи.", "The conspiracy of the Burning Heaven Clan has been thwarted, the blood of the Divine Dragon flows through your veins, and Princess Cang Yue proudly bestows upon you the seal of the Empire’s First Master.")
-            : (isCh3
-              ? uiText("Хребет Десяти Тысяч Зверей пройден, пламя Злого Бога горит в даньтяне, а Маленькая Фея спасена. Твоё имя гремит по всей Империи Голубого Ветра.", "The Ten Thousand Beast Range has been conquered, the Evil God's fire burns within your dantian, and the Little Fairy is saved. Your name echoes across the Blue Wind Empire.")
-              : (isCh2
-                ? uiText("Турнир завершён, лазурный пояс получен. Врата внутреннего двора распахнуты навстречу истинным тайнам культивации.", "The tournament is won, the azure sash bestowed. The inner gates swing wide toward the true mysteries of cultivation.")
-                : E.storyBeat(s, 6).text));
+          const eyebrow = isCh6
+            ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 3 · ПРЯМОЙ ПРЕЕМНИК И ВЛАДЫКА ДАО", "AGAINST THE GODS · VOL. 3 · DIRECT SUCCESSOR & DAO SOVEREIGN")
+            : (isCh5
+              ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 3 · ТРИУМФ НА АРЕНЕ СЕКТ", "AGAINST THE GODS · VOL. 3 · SEVEN SECTS ARENA TRIUMPH")
+              : (isCh4
+                ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 2 · ВЕЛИКИЙ ТРИУМФ ИМПЕРИИ", "AGAINST THE GODS · VOL. 2 · IMPERIAL SOVEREIGN TRIUMPH")
+                : (isCh3
+                  ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 2 · ТРИУМФ ИСТИННОГО УЧЕНИКА", "AGAINST THE GODS · VOL. 2 · SOVEREIGN ASCENSION")
+                  : (isCh2
+                    ? uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ФИНАЛ ВРАТ СЕКТЫ", "AGAINST THE GODS · VOL. 1 · FINALE OF SECT GATES")
+                    : uiText("ВОССТАВШИЙ ПРОТИВ НЕБА · ТОМ 1 · ЭПИЛОГ", "AGAINST THE GODS · VOL. 1 · EPILOGUE")))));
+          const epilogueTitle = isCh6
+            ? uiText("Верховный Преемник и Владыка Секты", "Supreme Successor & Sect Sovereign")
+            : (isCh5
+              ? uiText("Абсолютный Чемпион Турнира Семи Сект", "Undisputed Champion of the Seven Sects")
+              : (isCh4
+                ? uiText("Первый Мастер Империи Голубого Ветра", "First Master of the Blue Wind Empire")
+                : (isCh3
+                  ? uiText("Истинный Ученик Семи Сект", "True Disciple of the Seven Sects")
+                  : (isCh2
+                    ? uiText("Первый ученик внешнего круга", "Top Disciple of the Outer Circle")
+                    : uiText("Письмо через перевал", "A path beyond the village")))));
+          const epilogueNarrative = isCh6
+            ? uiText("Все кланы и секты признали твоё абсолютное владычество. Имя твоё сияет среди звёзд, а школа твоя стала непререкаемым оплотом мира.", "All clans and sects have acknowledged your supreme dominion. Your name shines among the stars, and your sect stands as the undisputed bastion of the world.")
+            : (isCh5
+              ? uiText("Великий Турнир завершён триумфом! Тяжёлый Меч Повелителя сотряс трибуны, а имя твоё золотыми рунами высечено на Имперском Монолите Славы.", "The Grand Tournament ends in glorious victory! The Overlord Heavy Sword shook the arena, and your name is etched in golden runes upon the Imperial Monolith of Glory.")
+              : (isCh4
+                ? uiText("Заговор Секты Горящих Небес повержен, кровь Божественного Дракона течёт в твоих жилах, и принцесса Лань Сюэжо с гордостью вручает тебе печать Первого Мастера Империи.", "The conspiracy of the Burning Heaven Clan has been thwarted, the blood of the Divine Dragon flows through your veins, and Princess Cang Yue proudly bestows upon you the seal of the Empire’s First Master.")
+                : (isCh3
+                  ? uiText("Хребет Десяти Тысяч Зверей пройден, пламя Злого Бога горит в даньтяне, а Маленькая Фея спасена. Твоё имя гремит по всей Империи Голубого Ветра.", "The Ten Thousand Beast Range has been conquered, the Evil God's fire burns within your dantian, and the Little Fairy is saved. Your name echoes across the Blue Wind Empire.")
+                  : (isCh2
+                    ? uiText("Турнир завершён, лазурный пояс получен. Врата внутреннего двора распахнуты навстречу истинным тайнам культивации.", "The tournament is won, the azure sash bestowed. The inner gates swing wide toward the true mysteries of cultivation.")
+                    : E.storyBeat(s, 6).text))));
 
           storyHtml = `<article class="story-panel story-novel-panel ${novelSerif?'novel-serif':''} ${novelLarge?'novel-large':''}">
             <div class="eyebrow story-novel-eyebrow">${eyebrow}</div>
@@ -1703,7 +1909,7 @@
     if(tab==='hero')heroTechniques=`<section class="workers"><h3>Техники и наставники</h3><p class="intro">Знакомства открывают разные знания. Изученные техники остаются с тобой; можно свободно менять активную. Эффект даёт одна выбранная техника. Для следующего ранга занимайся «Осваивать технику», затем оплати изучение. Физическая работа и помощь также укрепляют тело.</p><div class="cards">${Object.entries(E.techniques).filter(([k,t])=>t.available(s)||!!s.cultivation.learned[k]).map(([k,t])=>{const learned=s.cultivation.learned[k],known=t.available(s)||!!learned;return card(t.name,`${E.techniqueSource(s,k)}. ${t.desc}${t.practiceBody?uiText(" Практика этой двигательной техники также укрепляет тело и расходует выносливость."," Practicing this movement technique also strengthens the body and uses stamina."):""}`,known?button('learn-technique',k,learned?'Повысить ранг':'Изучить',E.canLearn(s,k))+(learned?button('equip-technique',k,s.cultivation.active===k?'● Активна':'Применить',s.cultivation.active!==k):''):'<small>Найди источник знаний</small>',known?`Ранг ${learned?.rank||0}/5 · ${costs(E.techniqueCost(s,k))}${learned&&learned.rank<5?` · освоение ${fmt(learned.progress)}/${E.techniqueNeeded(learned.rank)} сек`:''}`:'Не изучена');}).join('')}</div></section>`;
     if (tab === 'hero') {
       const fold=(id,title,body)=>body?`<details class="hero-fold" data-panel="${id}"><summary>${title}</summary><div class="hero-fold-body">${body}</div></details>`:'';
-      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep)) || (s.stage === 3 && E.chapterFourBeat && E.chapterFourBeat(s, s.chapterFourStep));
+      const isStoryActive = (s.stage === 0 && E.storyBeat(s)) || (s.stage === 1 && E.chapterTwoBeat && E.chapterTwoBeat(s, s.chapterTwoStep)) || (s.stage === 2 && E.chapterThreeBeat && E.chapterThreeBeat(s, s.chapterThreeStep)) || (s.stage === 3 && E.chapterFourBeat && E.chapterFourBeat(s, s.chapterFourStep)) || (s.stage === 4 && E.chapterFiveBeat && E.chapterFiveBeat(s, s.chapterFiveStep)) || (s.stage === 5 && E.chapterSixBeat && E.chapterSixBeat(s, s.chapterSixStep));
       const hint=E.guidance(s,isStoryActive?'story':'advance','',L?.language||'ru');
       const quickGoalBtn = `<button type="button" class="goal-direct-btn" id="goal-quick-nav" title="${uiText('Перейти к текущей директиве', 'Jump to current directive')}">🎯 ${uiText('К цели', 'To goal')}</button>`;
       const overview=`<section class="hero-overview" data-hero-section="overview"><div class="hero-overview-inner"><span class="hero-overview-badge">${uiText('Ближайшая цель','Current goal')}</span><span class="hero-overview-goal">${hint||t(E.stages[s.stage].subtitle)}</span>${quickGoalBtn}</div></section>`;
@@ -3872,7 +4078,7 @@
     if(b.id==='close-breakthrough'){if($('breakthrough-modal'))$('breakthrough-modal').hidden=true;return;}
     if(b.dataset?.novelStep !== undefined){
       Sound.playParchment();
-      const maxStep = s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : (s.stage === 2 ? (s.chapterThreeStep || 0) : (s.stage === 3 ? (s.chapterFourStep || 0) : 0)));
+      const maxStep = s.stage === 0 ? s.storyStep : (s.stage === 1 ? (s.chapterTwoStep || 0) : (s.stage === 2 ? (s.chapterThreeStep || 0) : (s.stage === 3 ? (s.chapterFourStep || 0) : (s.stage === 4 ? (s.chapterFiveStep || 0) : (s.stage === 5 ? (s.chapterSixStep || 0) : 0)))));
       const step = parseInt(b.dataset.novelStep, 10);
       if(!isNaN(step) && step >= 0 && step <= maxStep){
         novelViewStep = (step === maxStep) ? null : step;
