@@ -169,21 +169,24 @@
   };
   const isUnlocked = (s, system) => {
     if (!s) return false;
-    if (s.unlocked && typeof s.unlocked[system] === 'boolean') {
-      if (s.unlocked[system]) return true;
-    }
     const stage = s.stage || 0;
     const isCh2 = stage >= 1;
     const isCh3 = stage >= 2;
+
+    if (system === 'alchemy') {
+      if (!isCh2) return false; // Strictly locked in Chapter 1 / Stage 0!
+      if (s.unlocked && s.unlocked.alchemy) return true;
+      return isCh3 || (isCh2 && ((s.chapterTwoStep || 0) >= 4 || (s.alchemy?.stats?.brews || 0) > 0 || (s.alchemy?.level || 0) > 1));
+    }
+
+    if (s.unlocked && typeof s.unlocked[system] === 'boolean') {
+      if (s.unlocked[system]) return true;
+    }
 
     if (system === 'map') return isCh2 || (s.storyStep || 0) >= 4 || !!s.found;
     if (system === 'combat') return isCh2 || (s.storyStep || 0) >= 6 || (s.wins || 0) > 0;
     if (system === 'fate') return isCh2 || (s.storyStep || 0) >= 1 || !!s.prologueAction;
     if (system === 'sect') return isCh2;
-
-    if (system === 'alchemy') {
-      return isCh3 || (isCh2 && ((s.chapterTwoStep || 0) >= 4 || (s.alchemy?.stats?.brews || 0) > 0 || (s.alchemy?.level || 0) > 1));
-    }
 
     if (isCh3) return true;
 
@@ -221,16 +224,24 @@
     { id: 9, name: 'Иллюзорный Демонический Мир', en: 'Illusory Demon Realm' },
     { id: 10, name: 'Царство Богов и Владыка Звёзд', en: 'God Realm & Star Sovereign' },
   ];
+  const getTome = (s) => {
+    if (!s) return tomes[0];
+    const stage = s.stage || 0;
+    return tomes[Math.min(tomes.length - 1, stage)] || tomes[0];
+  };
   const getCanonicalChapter = (s) => {
     if (!s) return 1;
-    const stage = s.stage || 0;
-    if (stage === 0) return Math.min(6, (s.storyStep || 0) + 1);
-    if (stage === 1) return 6 + Math.min(6, (s.chapterTwoStep || 0) + 1);
-    if (stage === 2) return 12 + Math.min(6, (s.chapterThreeStep || 0) + 1);
-    if (stage === 3) return 18 + Math.min(6, (s.chapterFourStep || 0) + 1);
-    if (stage === 4) return 24 + Math.min(6, (s.chapterFiveStep || 0) + 1);
-    if (stage === 5) return 30 + Math.min(6, (s.chapterSixStep || 0) + 1);
-    return Math.min(56, 36 + (stage - 5) * 5);
+    const stage = Math.max(0, Math.min(7, s.stage || 0));
+    let step = 0;
+    if (stage === 0) step = s.storyStep || 0;
+    else if (stage === 1) step = s.chapterTwoStep || 0;
+    else if (stage === 2) step = s.chapterThreeStep || 0;
+    else if (stage === 3) step = s.chapterFourStep || 0;
+    else if (stage === 4) step = s.chapterFiveStep || 0;
+    else if (stage === 5) step = s.chapterSixStep || 0;
+    else step = Math.min(6, Math.floor(((s.realm || 0) % 8) / 1.2));
+    const sub = Math.min(7, step + 1);
+    return Math.min(56, stage * 7 + sub);
   };
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, time: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, chapterThreeStep: 0, chapterFourStep: 0, chapterFiveStep: 0, chapterSixStep: 0, mount: null, heavyWeapon: null, tribulation: null, fed: false, combat: null, unlocked: defaultUnlocked(0, 0, 0, 0, {}), clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
@@ -1107,6 +1118,19 @@
     for (const k of Object.keys(def)) {
       res[k] = typeof inputUnlocked[k] === 'boolean' ? inputUnlocked[k] : def[k];
     }
+    if (stage === 0) {
+      res.alchemy = false;
+      res.sect = false;
+      res.clinic = false;
+      res.auction = false;
+      res.flames = false;
+      res.cauldrons = false;
+      res.pavilion = false;
+      res.beastRange = false;
+      res.jasmine = false;
+      res.venoms = false;
+      res.garden = false;
+    }
     return res;
   }
   function validate(input) {
@@ -1259,6 +1283,6 @@
   const chapterFourBeat = (s, step, lang) => ChapterFour ? ChapterFour.getBeat(s, step, lang) : null;
   const chapterFiveBeat = (s, step, lang) => ChapterFive ? ChapterFive.getBeat(s, step, lang) : null;
   const chapterSixBeat = (s, step, lang) => ChapterSix ? ChapterSix.getBeat(s, step, lang) : null;
-  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, chapterFour: ChapterFour, chapterFourBeat, chapterFive: ChapterFive, chapterFiveBeat, chapterSix: ChapterSix, chapterSixBeat, celestial: Celestial, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked, mapTier, tomes, getCanonicalChapter };
+  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, chapterFour: ChapterFour, chapterFourBeat, chapterFive: ChapterFive, chapterFiveBeat, chapterSix: ChapterSix, chapterSixBeat, celestial: Celestial, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked, mapTier, tomes, getTome, getCanonicalChapter };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

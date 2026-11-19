@@ -1180,13 +1180,21 @@ html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-side
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-survey,
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-filter,
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-toggle-secrets,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-zoom-controls,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-fit,
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-bagua-compass,
-html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-dragon-vein {
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-dragon-vein,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-celestial-beacon,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-celestial-card {
   display: none !important;
 }
 
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-workspace {
   grid-template-columns: 1fr !important;
+}
+
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-canvas {
+  filter: sepia(0.18) contrast(1.05);
 }
 
 html:not([data-interface="data"]) #world-map-dialog[data-map-tier="1"] #map-survey,

@@ -63,7 +63,8 @@
       row('Занятие',activityLabels[s.activity],(E.activityRunning(s)?'Активно':'Приостановлено: смени место или занятие.')+' '+uiText('Ручные действия, бой и путешествие прерывают занятие. Выбери его снова, когда закончишь.','Manual actions, combat and travel interrupt your activity. Select it again when finished.'));
       row(uiText('Тренировочный распорядок','Training routine'),E.routineReady(s)?uiText('Доступен','Available'):'—',E.automationHint(s,root.IsekaiLocale?.language||'ru'));
       if(s.employment.order&&E.workMastered(s,s.employment.order.kind))row(uiText('Освоенная работа','Familiar work'),'—',E.guidance(s,'claim-order','',root.IsekaiLocale?.language||'ru'),btn('activity','work',uiText('Работать над заказом','Work on contract'),s.activity!=='work'&&E.canActivity(s,'work')));
-      row('Глава',`${s.stage+1} / 8`,E.stages[s.stage].name);
+      const canonicalCh = E.getCanonicalChapter ? E.getCanonicalChapter(s) : (s.stage + 1);
+      row(uiText('Каноническая глава', 'Canonical chapter'), `${canonicalCh} / 56`, `${uiText('Том', 'Tome')} ${s.stage + 1} · ${E.stages[s.stage].name}`);
       const bc = E.breakthroughCost(s);
       const danDu = s.alchemy?.meridians?.danDu || 0;
       const canBreak = s.found && s.xp >= E.needed(s) && E.affordable(s, bc) && danDu < 80;
@@ -243,7 +244,8 @@
         return ['overview','contract','actions'].includes(key)?`<section class="data-hero-section" data-hero-section="${key}">${body}</section>`:`<details class="data-hero-section" data-hero-section="${key}" data-panel="hero-data-${key}"><summary>${headings[key]}</summary>${body}</details>`;
       }).join('');
     }
-    return `<h2>${tabs[tab]}</h2><p class="data-summary">Глава ${s.stage+1} · Уровень ${s.realm} · ${E.activityRunning(s)?'Активно':'Приостановлено'}: ${activityLabels[s.activity]} · Автосохранение · Офлайн до 24 ч</p><div aria-label="Показатели и действия">${content}</div>`;
+    const canonicalCh = E.getCanonicalChapter ? E.getCanonicalChapter(s) : (s.stage + 1);
+    return `<h2>${tabs[tab]}</h2><p class="data-summary">${uiText(`Том ${s.stage+1} · Глава ${canonicalCh} из 56`, `Tome ${s.stage+1} · Chapter ${canonicalCh} of 56`)} · ${uiText('Уровень', 'Realm')} ${s.realm} · ${E.activityRunning(s)?uiText('Активно','Active'):uiText('Приостановлено','Paused')}: ${activityLabels[s.activity]} · ${uiText('Автосохранение · Офлайн до 24 ч', 'Autosave · Offline up to 24 h')}</p><div aria-label="Показатели и действия">${content}</div>`;
   }
   root.IsekaiDataView={labels,tabs,render};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.IsekaiDataView;

@@ -3577,7 +3577,7 @@
         </div>
       </div>` : '';
 
-    const mapPortalCard = `
+    const mapPortalCard = E.isUnlocked(s, 'map') ? `
       <div class="world-map-portal-card">
         <div class="portal-header">
           <div class="portal-eyebrow">
@@ -3596,7 +3596,7 @@
           </div>
           <p class="portal-hint">${uiText('Исследуй тайники, древние руины и короткие тропы на древнем свитке.', 'Discover hidden caches, ancient ruins, and secret shortcuts on the ancient scroll.')}</p>
         </div>
-      </div>`;
+      </div>` : '';
     let html = mapPortalCard + forageCard + `<h2>${uiText('Дороги другого мира', 'Roads of another world')}</h2><p class="intro">${uiText('Сейчас: ', 'Current: ')}${t(W.locations[w.location].name)}. ${w.journey ? (uiText('В пути: ', 'Travelling: ') + t(W.locations[w.journey.destination].name) + uiText(', осталось ', ', remaining ') + Math.ceil(w.journey.remaining) + uiText(' сек.', ' s.')) : uiText('Можно выбрать маршрут или поискать встречу на месте.', 'Choose a destination or look for an encounter here.')}</p>`;
     html+=techniqueActionsView();
     if(s.stage===1)html+=`<section class="story-panel"><h3>${uiText('Школа определяет твой путь','Your school shapes your path')}</h3><p>${E.sects.progress(s,'gates',L?.language||'ru')}</p><div class="cards">${Object.keys(E.sects.schools).map(k=>schoolView(k)).join('')}</div></section>`;
