@@ -324,8 +324,8 @@
       s.unlocked.sect = true;
       if (step >= 1) s.unlocked.pavilion = true;
       if (step >= 2) s.unlocked.clinic = true;
-      if (step >= 3) { s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; }
-      if (step >= 4) { s.unlocked.beastRange = true; s.unlocked.venoms = true; }
+      if (step >= 3) { s.unlocked.alchemy = true; s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; }
+      if (step >= 4) { s.unlocked.beastRange = true; s.unlocked.venoms = true; s.unlocked.garden = true; }
       if (step >= 6) s.unlocked.jasmine = true;
     }
     if (api?.log) {

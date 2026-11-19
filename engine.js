@@ -153,7 +153,7 @@
     return {
       map: isCh2 || storyStep >= 4 || !!state.found,
       combat: isCh2 || storyStep >= 6 || (state.wins || 0) > 0,
-      alchemy: isCh2 || storyStep >= 5 || (state.resources?.herbs || 0) >= 10 || (state.alchemy?.level || 0) > 1,
+      alchemy: isCh3 || (isCh2 && (chapterTwoStep >= 4 || (state.alchemy?.stats?.brews || 0) > 0 || (state.alchemy?.level || 0) > 1)),
       fate: isCh2 || storyStep >= 1 || !!state.prologueAction,
       sect: isCh2,
       clinic: isCh3 || (isCh2 && chapterTwoStep >= 3) || (state.alchemy?.reputation || 0) >= 5,
@@ -163,6 +163,8 @@
       pavilion: isCh3 || (isCh2 && chapterTwoStep >= 2),
       beastRange: isCh3 || (isCh2 && chapterTwoStep >= 5),
       jasmine: isCh3 || (isCh2 && chapterTwoStep >= 7) || (state.jasmine?.trust || 0) > 0,
+      venoms: isCh3 || (isCh2 && chapterTwoStep >= 4),
+      garden: isCh3 || (isCh2 && chapterTwoStep >= 5),
     };
   };
   const isUnlocked = (s, system) => {
@@ -170,20 +172,65 @@
     if (s.unlocked && typeof s.unlocked[system] === 'boolean') {
       if (s.unlocked[system]) return true;
     }
-    if (s.stage >= 2) return true;
-    if (s.stage >= 1) {
-      if (['map', 'combat', 'alchemy', 'fate', 'sect'].includes(system)) return true;
+    const stage = s.stage || 0;
+    const isCh2 = stage >= 1;
+    const isCh3 = stage >= 2;
+
+    if (system === 'map') return isCh2 || (s.storyStep || 0) >= 4 || !!s.found;
+    if (system === 'combat') return isCh2 || (s.storyStep || 0) >= 6 || (s.wins || 0) > 0;
+    if (system === 'fate') return isCh2 || (s.storyStep || 0) >= 1 || !!s.prologueAction;
+    if (system === 'sect') return isCh2;
+
+    if (system === 'alchemy') {
+      return isCh3 || (isCh2 && ((s.chapterTwoStep || 0) >= 4 || (s.alchemy?.stats?.brews || 0) > 0 || (s.alchemy?.level || 0) > 1));
+    }
+
+    if (isCh3) return true;
+
+    if (isCh2) {
       if (system === 'pavilion') return (s.chapterTwoStep || 0) >= 2;
       if (system === 'clinic') return (s.chapterTwoStep || 0) >= 3 || (s.alchemy?.reputation || 0) >= 5;
       if (system === 'auction' || system === 'flames' || system === 'cauldrons') return (s.chapterTwoStep || 0) >= 4 || (s.alchemy?.reputation || 0) >= 10;
+      if (system === 'venoms') return (s.chapterTwoStep || 0) >= 4;
+      if (system === 'garden') return (s.chapterTwoStep || 0) >= 5;
       if (system === 'beastRange') return (s.chapterTwoStep || 0) >= 5;
       if (system === 'jasmine') return (s.chapterTwoStep || 0) >= 7 || (s.jasmine?.trust || 0) > 0;
     }
-    if (system === 'fate') return (s.storyStep || 0) >= 1 || !!s.prologueAction;
-    if (system === 'map') return (s.storyStep || 0) >= 4 || !!s.found;
-    if (system === 'alchemy') return (s.storyStep || 0) >= 5 || (s.resources?.herbs || 0) >= 10 || (s.alchemy?.level || 0) > 1;
-    if (system === 'combat') return (s.storyStep || 0) >= 6 || (s.wins || 0) > 0;
+
     return false;
+  };
+  const mapTier = (s) => {
+    if (!s) return 0;
+    const stage = s.stage || 0;
+    if (stage >= 5) return 5;
+    if (stage >= 4) return 4;
+    if (stage >= 3) return 3;
+    if (stage >= 2) return 2;
+    if (stage >= 1) return 1;
+    return 0;
+  };
+  const tomes = [
+    { id: 1, name: 'Долина Плывущих Облаков', en: 'Floating Cloud Valley' },
+    { id: 2, name: 'Врата Великой Секты', en: 'Great Sect Gates' },
+    { id: 3, name: 'Хребет Десяти Тысяч Зверей', en: 'Ten Thousand Beast Mountain' },
+    { id: 4, name: 'Имперская Столица', en: 'Imperial Capital' },
+    { id: 5, name: 'Великий Турнир Семи Сект', en: 'Grand 7-Sects Tournament' },
+    { id: 6, name: 'Суверенная Обитель', en: 'Sovereign Sanctuary' },
+    { id: 7, name: 'Тайное Царство Небесного Бассейна', en: 'Heavenly Basin Secret Realm' },
+    { id: 8, name: 'Империя Божественного Феникса', en: 'Divine Phoenix Empire' },
+    { id: 9, name: 'Иллюзорный Демонический Мир', en: 'Illusory Demon Realm' },
+    { id: 10, name: 'Царство Богов и Владыка Звёзд', en: 'God Realm & Star Sovereign' },
+  ];
+  const getCanonicalChapter = (s) => {
+    if (!s) return 1;
+    const stage = s.stage || 0;
+    if (stage === 0) return Math.min(6, (s.storyStep || 0) + 1);
+    if (stage === 1) return 6 + Math.min(6, (s.chapterTwoStep || 0) + 1);
+    if (stage === 2) return 12 + Math.min(6, (s.chapterThreeStep || 0) + 1);
+    if (stage === 3) return 18 + Math.min(6, (s.chapterFourStep || 0) + 1);
+    if (stage === 4) return 24 + Math.min(6, (s.chapterFiveStep || 0) + 1);
+    if (stage === 5) return 30 + Math.min(6, (s.chapterSixStep || 0) + 1);
+    return Math.min(56, 36 + (stage - 5) * 5);
   };
   const baseFresh = () => ({ version: 2, stage: 0, realm: 0, xp: 0, body: 0, mastery: 0, style: 'balanced', weapon: 0, study: 0, found: false, explored: 0, wins: 0, activity: 'work', age: 0, time: 0, cooldown: 0, souls: 0, life: 1, population: 0, stamina: 100, clickCooldown: 0, calm: 0, storyStep: 0, chapterTwoStep: 0, chapterThreeStep: 0, chapterFourStep: 0, chapterFiveStep: 0, chapterSixStep: 0, mount: null, heavyWeapon: null, tribulation: null, fed: false, combat: null, unlocked: defaultUnlocked(0, 0, 0, 0, {}), clicks: Object.fromEntries(Object.keys(clicks).map(k => [k, 0])), resources: Object.fromEntries(Object.keys(names).map(k => [k, 0])), buildings: Object.fromEntries(Object.keys(projects).map(k => [k, 0])), workers: Object.fromEntries(Object.keys(jobs).map(k => [k, 0])), routes: [], expedition: null, events: [], last: Date.now() });
   const techniques={
@@ -674,7 +721,7 @@
   const clickVisible=(s,k)=>Object.hasOwn(clicks,k)&&(['sweep','haul'].includes(k)?s.employment.order?.kind===k:k==='scout'?s.stage<2&&!s.found&&s.world.location==='ruins'&&!s.world.journey:true);
   const activityVisible=(s,k)=>Object.hasOwn(activities,k)&&activities[k].stage<=s.stage&&(k==='work'?s.employment.order&&workMastered(s,s.employment.order.kind):canActivity(s,k)||s.activity===k);
   const canClick = (s,k) => !!clicks[k] && !s.world.journey && s.clickCooldown<=0 && s.stamina>=clicks[k].stamina && (!clicks[k].body||s.body<10*(s.realm+1)) && (k!=='scout'||(s.stage<2&&!s.found&&!s.world.journey&&s.world.location==='ruins')) && (!['sweep','haul'].includes(k)||(canWorkOrder(s)&&s.employment.order?.kind===k&&s.employment.order.progress<orders[k].target));
-  function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; if(s.unlocked){s.unlocked.map=true;s.unlocked.alchemy=true;} log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
+  function discover(s) { if (!s.found && s.explored >= 600 && s.world.location==='ruins'&&!s.world.journey) { s.found = true; if(s.unlocked){s.unlocked.map=true;} log(s,'Найдена техника Пустого Неба. Накапливай понимание и травы для первого прорыва.'); } }
   function performAction(s, type, value) {
     if(type==='technique-action')return useTechniqueAction(s,value);
     if(type==='name'){const name=N.normalize(value);if(s.playerName||!name)return false;s.playerName=name;s.last=Date.now();return true;}
@@ -743,7 +790,7 @@
       }
       if(s.storyStep===2)s.chapterOneTraining=s.body>=2?'body':'technique';
       if(s.storyStep===3){if(s.unlocked)s.unlocked.map=true;}
-      if(s.storyStep===4){if(s.unlocked){s.unlocked.map=true;s.unlocked.alchemy=true;}}
+      if(s.storyStep===4){if(s.unlocked){s.unlocked.map=true;}}
       if(s.storyStep===5){if(s.unlocked)s.unlocked.combat=true;}
       if(s.storyStep===6){const route=value||firstResolution(s);if(!firstRouteReady(s,route))return false;s.chapterOneRoute=route;log(s,`Путь первой главы: ${firstRoutes[route]}.`);}
       if(s.storyStep===7){
@@ -777,8 +824,8 @@
       }
       spend(s, next.cost); s.stage++; if (s.stage === 3) s.population = 3; log(s, chapterIntro(s));
       if (s.unlocked) {
-        if (s.stage >= 1) { s.unlocked.sect = true; s.unlocked.map = true; s.unlocked.combat = true; s.unlocked.alchemy = true; s.unlocked.fate = true; }
-        if (s.stage >= 2) { s.unlocked.clinic = true; s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; s.unlocked.pavilion = true; s.unlocked.beastRange = true; s.unlocked.jasmine = true; }
+        if (s.stage >= 1) { s.unlocked.sect = true; s.unlocked.map = true; s.unlocked.combat = true; s.unlocked.fate = true; }
+        if (s.stage >= 2) { s.unlocked.alchemy = true; s.unlocked.clinic = true; s.unlocked.auction = true; s.unlocked.flames = true; s.unlocked.cauldrons = true; s.unlocked.pavilion = true; s.unlocked.beastRange = true; s.unlocked.jasmine = true; s.unlocked.venoms = true; s.unlocked.garden = true; }
       }
       if(s.stage===2&&!s.world.admissionGiftAwarded){const a=W.admissions[s.world.admission];for(const[k,v]of Object.entries(a.gift||{}))s.resources[k]+=v;if(a.mastery)s.mastery=Math.min(10*(s.realm+1),s.mastery+a.mastery);s.world.admissionGiftAwarded=true;log(s,`Ты вступил: ${a.name}. ${a.text}`);}
     } else if (type === 'breakthrough') {
@@ -786,7 +833,6 @@
       const danDu = s.alchemy?.meridians?.danDu || 0;
       if (!s.found || s.xp < needed(s) || !affordable(s, c) || danDu >= 80) return false;
       spend(s, c); s.xp -= needed(s); s.realm++;
-      if (s.unlocked && s.realm >= 1) s.unlocked.alchemy = true;
       if (Alchemy && Alchemy.cleanseDanDu) Alchemy.cleanseDanDu(s, 25);
       if (value === 'bones') {
         s.body = Math.min(10 * (s.realm + 1), s.body + 0.3);
@@ -1213,6 +1259,6 @@
   const chapterFourBeat = (s, step, lang) => ChapterFour ? ChapterFour.getBeat(s, step, lang) : null;
   const chapterFiveBeat = (s, step, lang) => ChapterFive ? ChapterFive.getBeat(s, step, lang) : null;
   const chapterSixBeat = (s, step, lang) => ChapterSix ? ChapterSix.getBeat(s, step, lang) : null;
-  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, chapterFour: ChapterFour, chapterFourBeat, chapterFive: ChapterFive, chapterFiveBeat, chapterSix: ChapterSix, chapterSixBeat, celestial: Celestial, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked };
+  const api = { alchemy: Alchemy, chapterTwo: ChapterTwo, chapterTwoBeat, chapterThree: ChapterThree, chapterThreeBeat, chapterFour: ChapterFour, chapterFourBeat, chapterFive: ChapterFive, chapterFiveBeat, chapterSix: ChapterSix, chapterSixBeat, celestial: Celestial, combat: Combat, returnReport:R, sects:S, routineReady, workMastered, automationHint, atlas:Atlas, achievements:A, achievementActions, world:W, techniqueActions, canTechniqueAction, techniqueActionHint, techniques, techniqueCost, techniqueNeeded, techniqueBonus, canLearn, stages, names, activities, projects, jobs, clicks, orders, orderPay, orderAvailable, canWorkOrder, canClaimOrder, canOrder, story, prologueChoices, sectChoices, interruptActivity, techniquePractice, staminaMax, staminaRecovery, taskPractice, choicePractice, taskPracticeText, choiceExplanation, guidance, clickVisible, activityVisible, canClick, canAdvance, canActivity, activityRunning, fresh, log, speed, needed, power, enemy, battlePower, affordable, buildCost, breakthroughCost, action, advance, validate, realmName, heroHeading, chapterIntro, storyBeat, storyChronicle, firstRoutes, firstRouteReady, firstResolution, techniqueSource, orderName, canFight, isUnlocked, defaultUnlocked, mapTier, tomes, getCanonicalChapter };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Isekai = api;
 })(globalThis);

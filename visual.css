@@ -1172,10 +1172,32 @@ html:not([data-interface="data"]) #open-fate-tree[data-locked="false"],
 html:not([data-interface="data"]) #open-alchemy[data-locked="false"] {
   animation: unlockPulse 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+/* ══════════════════════════════════════════════════════════════
+   TIERED MAP EVOLUTION (Tier 0 to Tier 4+)
+   Progressively expands map complexity as the mortal story deepens
+   ══════════════════════════════════════════════════════════════ */
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-sidebar,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-survey,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-filter,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] #map-toggle-secrets,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-bagua-compass,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-dragon-vein {
+  display: none !important;
+}
 
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="0"] .map-workspace {
+  grid-template-columns: 1fr !important;
+}
 
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="1"] #map-survey,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="1"] #map-toggle-secrets,
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="1"] .map-bagua-compass {
+  display: none !important;
+}
 
-
+html:not([data-interface="data"]) #world-map-dialog[data-map-tier="2"] #map-toggle-secrets {
+  display: none !important;
+}
 
 
 

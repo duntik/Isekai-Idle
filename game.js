@@ -604,7 +604,11 @@
   }
   function renderMap(){
     const language=L?.language||'ru',en=language==='en',map=E.world.map(s,language),viewport=$('map-viewport');
-    const canvas=$('map-canvas'),openNodes=Array.from(canvas.querySelectorAll?.('details[open]')||[]).map(node=>node.closest('[data-map-node]')?.dataset.mapNode);
+    const tier = E.mapTier ? E.mapTier(s) : (s.stage || 0);
+    const mapDialog = $('world-map-dialog');
+    if (mapDialog?.setAttribute) mapDialog.setAttribute('data-map-tier', String(tier));
+    const canvas=$('map-canvas'),openNodes=Array.from(canvas?.querySelectorAll?.('details[open]')||[]).map(node=>node.closest('[data-map-node]')?.dataset.mapNode);
+    if (canvas?.setAttribute) canvas.setAttribute('data-map-tier', String(tier));
     const sidebarOpen=Array.from($('map-intelligence').querySelectorAll?.('details')||[]).map(node=>node.open);
     const focused=document.activeElement,focus=canvas.contains?.(focused)?{action:focused?.dataset?.action,value:focused?.dataset?.value,node:focused?.closest?.('[data-map-node]')?.dataset.mapNode,summary:focused?.tagName==='SUMMARY'}:null;
     const scroll=[viewport.scrollLeft||0,viewport.scrollTop||0],byId=new Map(map.nodes.map(n=>[n.id,n]));
@@ -1537,7 +1541,8 @@
     $('player-name').textContent=s.playerName||'';
     updateAudioUi();
     const stage = E.stages[s.stage], next = E.stages[s.stage];
-    $('chapter').textContent = `ГЛАВА ${s.stage + 1} · ${stage.name.toUpperCase()}`;
+    const canonicalCh = E.getCanonicalChapter ? E.getCanonicalChapter(s) : (s.stage + 1);
+    $('chapter').textContent = `ТОМ ${s.stage + 1} · ${stage.name.toUpperCase()} · ГЛАВА ${canonicalCh} ИЗ 56`;
     const heading=E.heroHeading(s);
     $('hero-title').innerHTML=h(`${heading.title}<br><em>${heading.accent}</em>`);
     $('hero-description').textContent = heading.description;
@@ -2003,8 +2008,8 @@
       $('open-fate-tree')?.setAttribute?.('data-locked', E.isUnlocked(s, 'fate') ? 'false' : 'true');
     }
     if($('open-alchemy')){
-      const hasGardenReady = s.alchemy?.garden?.plots?.some(p => p.stage >= 2);
-      const hasDewFull = s.alchemy?.garden?.dew >= (s.alchemy?.garden?.dewMax || 5);
+      const hasGardenReady = E.isUnlocked(s, 'garden') && s.alchemy?.garden?.plots?.some(p => p.stage >= 2);
+      const hasDewFull = E.isUnlocked(s, 'garden') && s.alchemy?.garden?.dew >= (s.alchemy?.garden?.dewMax || 5);
       const badge = (hasGardenReady || hasDewFull) ? ' ●' : '';
       $('open-alchemy').textContent = uiText(`🧪 Алхимия${badge}`, `🧪 Alchemy${badge}`);
       $('open-alchemy')?.setAttribute?.('data-locked', E.isUnlocked(s, 'alchemy') ? 'false' : 'true');
@@ -2157,7 +2162,7 @@
     if(tabs){
       const isAlcTabUnlocked = (k) => {
         if (k === 'cauldron' || k === 'crucible' || k === 'shop') return true;
-        if (k === 'garden') return true;
+        if (k === 'garden') return E.isUnlocked(s, 'garden');
         if (k === 'market') return s.stage >= 1 || (s.storyStep || 0) >= 4;
         if (k === 'pouch') return E.isUnlocked(s, 'combat');
         if (k === 'flame') return E.isUnlocked(s, 'flames');
@@ -4374,10 +4379,11 @@
       return;
     }
     if (e.key === '1') { tab = 'hero'; render(); return; }
-    if (e.key === '2') { tab = 'combat'; render(); return; }
-    if (e.key === '3') { tab = 'world'; render(); return; }
+    if (e.key === '2' && E.isUnlocked(s, 'combat')) { tab = 'combat'; render(); return; }
+    if (e.key === '3' && E.isUnlocked(s, 'map')) { tab = 'world'; render(); return; }
     if (e.key === '4' && s.stage >= 2) { tab = 'sect'; render(); return; }
     if ((e.key === 'm' || e.key === 'M' || e.key === 'ь' || e.key === 'Ь') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (!E.isUnlocked(s, 'map')) return;
       if ($('world-map-dialog')?.open) { $('world-map-dialog').close?.(); }
       else { renderMap(); $('world-map-dialog')?.showModal?.(); centerMap(); }
       return;
